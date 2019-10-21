@@ -1,1 +1,2 @@
-Your project website is available at http://cybertron.cg.tu-berlin.de/p/cgp-ws19/brdf-estimation. All files inside of your documentation/website folder are mirrored whenever you push something to this folder in your repository. Thus, do not move or rename this folder.
+# svbrdf-estimation
+Image-based SVBRDF Estimation
