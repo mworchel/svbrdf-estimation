@@ -56,9 +56,27 @@ class DecodingLayer(nn.Module):
         
         return x
 
+class CoordLayer(nn.Module):
+    def __init__(self):
+        super(CoordLayer, self).__init__()
+
+    def forward(self, x):
+        w          = x.shape[-1] # x.shape = (batch, channels, height, width)
+        h          = x.shape[-2] #
+        batch_size = x.shape[0]  #
+
+        xcoords_row  = torch.linspace(-1, 1, w).cuda()
+        xcoords      = xcoords_row.unsqueeze(0).expand(h, w).unsqueeze(0)
+        ycoords      = -1 * torch.transpose(xcoords, dim0=1, dim1=2)
+        coords       = torch.cat((xcoords, ycoords), dim=0)
+        batch_coords = coords.unsqueeze(0).expand(batch_size, 2, h, w)
+
+        return torch.cat((x, batch_coords), dim=1) # Concatenation in feature dimension
+
 
 class Generator(nn.Module):
     input_channel_count  = 3
+    use_coords           = True
     output_channel_count = 64 
     filters_count        = 64 # "ngf" in the original code
 
@@ -70,11 +88,12 @@ class Generator(nn.Module):
         self.create_layers()
 
     def create_layers(self):
-        # TODO: Handle useCoordConv
+        self.coord = CoordLayer() if self.use_coords else None
 
         # TODO: Handle global track   
 
-        self.enc1 = EncodingLayer(self.input_channel_count,       self.number_of_filters    , False, False) # encoder_1: [batch, 256, 256, 3      ] => [batch, 128, 128, ngf    ]
+        encoding_input_channel_count = self.input_channel_count + 2 if self.use_coords else self.input_channel_count
+        self.enc1 = EncodingLayer(encoding_input_channel_count,   self.number_of_filters    , False, False) # encoder_1: [batch, 256, 256, 3      ] => [batch, 128, 128, ngf    ]
         self.enc2 = EncodingLayer(self.enc1.output_channel_count, self.number_of_filters * 2,  True)        # encoder_2: [batch, 128, 128, ngf    ] => [batch,  64,  64, ngf * 2]
         self.enc3 = EncodingLayer(self.enc2.output_channel_count, self.number_of_filters * 4,  True)        # encoder_3: [batch,  64,  64, ngf * 2] => [batch,  32,  32, ngf * 4]
         self.enc4 = EncodingLayer(self.enc3.output_channel_count, self.number_of_filters * 8,  True)        # encoder_4: [batch,  32,  32, ngf * 4] => [batch,  16,  16, ngf * 8]
@@ -93,8 +112,13 @@ class Generator(nn.Module):
         self.dec1 = DecodingLayer(2 * self.dec2.output_channel_count, self.output_channel_count , False, False) # decoder_1: [batch, 64, 64, 2 * ngf     ] => [batch, 128, 128, 64     ]                   
 
     def forward(self, input):
+        encoding_input = input
+
+        if self.coord is not None:
+            encoding_input = self.coord(input)
+
         # Encoding
-        down1 = self.enc1(input)
+        down1 = self.enc1(encoding_input)
         down2 = self.enc2(down1)
         down3 = self.enc3(down2)
         down4 = self.enc4(down3)
