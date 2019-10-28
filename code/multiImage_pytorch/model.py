@@ -12,20 +12,27 @@ class EncodingLayer(nn.Module):
         self.use_instance_norm    = use_instance_norm
         self.use_activation       = use_activation
 
-        self.conv       = nn.Conv2d(input_channel_count, output_channel_count, (4, 4), stride=2, padding=(1,1))
-        self.norm       = torch.nn.InstanceNorm2d(output_channel_count, 1e-5, affine=True) if use_instance_norm else None
-        self.leaky_relu = nn.LeakyReLU(0.2) if use_activation else None
+        self.conv            = nn.Conv2d(input_channel_count, output_channel_count, (4, 4), stride=2, padding=(1,1))
+        self.norm            = torch.nn.InstanceNorm2d(output_channel_count, 1e-5, affine=True) if use_instance_norm else None
+        self.leaky_relu      = nn.LeakyReLU(0.2) if use_activation else None
+        self.fully_connected = nn.Linear(self.output_channel_count, self.output_channel_count, False)
 
-    def forward(self, x):
+    def forward(self, x, global_track):
         if self.leaky_relu is not None:
             x = self.leaky_relu(x)
 
         x = self.conv(x)
 
+        mean = torch.mean(x, dim=(2,3), keepdim=False)
+
         if self.norm is not None:
             x = self.norm(x)
         
-        return x
+        if global_track is not None:
+            global_track = self.fully_connected(global_track)
+            x = torch.add(x, global_track.unsqueeze(-1).unsqueeze(-1))
+
+        return x, mean
 
 class DecodingLayer(nn.Module):
     def __init__(self, input_channel_count, output_channel_count, use_instance_norm, use_dropout, use_activation=True):
@@ -41,20 +48,30 @@ class DecodingLayer(nn.Module):
         self.norm       = torch.nn.InstanceNorm2d(output_channel_count, 1e-5, affine=True) if use_instance_norm else None
         self.dropout    = nn.Dropout(0.5) if use_dropout else None
         self.leaky_relu = nn.LeakyReLU(0.2) if use_activation else None
+        self.fully_connected = nn.Linear(self.output_channel_count, self.output_channel_count, False)
 
-    def forward(self, x):
+    def forward(self, x, skip_connected_tensor, global_track):
+        if skip_connected_tensor is not None:
+            x = torch.cat((x, skip_connected_tensor), dim=1)
+
         if self.leaky_relu is not None:
             x = self.leaky_relu(x)
 
         x = self.deconv(x)
 
+        mean = torch.mean(x, dim=(2,3), keepdim=False)
+
         if self.norm is not None:
             x = self.norm(x)
+
+        if global_track is not None:
+            global_track = self.fully_connected(global_track)
+            x = torch.add(x, global_track.unsqueeze(-1).unsqueeze(-1))
 
         if self.dropout is not None:
             x = self.dropout(x)
         
-        return x
+        return x, mean
 
 class CoordLayer(nn.Module):
     def __init__(self):
@@ -73,6 +90,23 @@ class CoordLayer(nn.Module):
 
         return torch.cat((x, batch_coords), dim=1) # Concatenation in feature dimension
 
+class GlobalTrackLayer(nn.Module):
+    def __init__(self, input_channel_count, output_channel_count):
+        super(GlobalTrackLayer, self).__init__()
+
+        self.input_channel_count = input_channel_count
+        self.output_channel_count = output_channel_count
+
+        self.fully_connected = torch.nn.Linear(input_channel_count, output_channel_count)
+        self.selu            = torch.nn.SELU()
+
+    def forward(self, local_mean, global_track):
+        if global_track is not None:
+            global_track = torch.cat((global_track, local_mean), dim=1)
+        else:
+            global_track = local_mean
+
+        return self.selu(self.fully_connected(global_track))
 
 class Generator(nn.Module):
     input_channel_count  = 3
@@ -88,9 +122,7 @@ class Generator(nn.Module):
         self.create_layers()
 
     def create_layers(self):
-        self.coord = CoordLayer() if self.use_coords else None
-
-        # TODO: Handle global track   
+        self.coord = CoordLayer() if self.use_coords else None   
 
         encoding_input_channel_count = self.input_channel_count + 2 if self.use_coords else self.input_channel_count
         self.enc1 = EncodingLayer(encoding_input_channel_count,   self.number_of_filters    , False, False) # encoder_1: [batch, 256, 256, 3      ] => [batch, 128, 128, ngf    ]
@@ -111,33 +143,69 @@ class Generator(nn.Module):
         self.dec2 = DecodingLayer(2 * self.dec3.output_channel_count, self.number_of_filters    ,  True, False) # decoder_2: [batch, 64, 64, 2 * ngf * 2 ] => [batch, 128, 128, ngf    ]
         self.dec1 = DecodingLayer(2 * self.dec2.output_channel_count, self.output_channel_count , False, False) # decoder_1: [batch, 64, 64, 2 * ngf     ] => [batch, 128, 128, 64     ]                   
 
-    def forward(self, input):
-        encoding_input = input
+        self.gte1 = GlobalTrackLayer(encoding_input_channel_count,       self.enc2.output_channel_count)
+        self.gte2 = GlobalTrackLayer(2 * self.enc2.output_channel_count, self.enc3.output_channel_count)
+        self.gte3 = GlobalTrackLayer(2 * self.enc3.output_channel_count, self.enc4.output_channel_count)
+        self.gte4 = GlobalTrackLayer(2 * self.enc4.output_channel_count, self.enc5.output_channel_count)
+        self.gte5 = GlobalTrackLayer(2 * self.enc5.output_channel_count, self.enc6.output_channel_count)
+        self.gte6 = GlobalTrackLayer(2 * self.enc6.output_channel_count, self.enc7.output_channel_count)
+        self.gte7 = GlobalTrackLayer(2 * self.enc7.output_channel_count, self.enc8.output_channel_count)
+        self.gte8 = GlobalTrackLayer(2 * self.enc8.output_channel_count, self.dec8.output_channel_count)
 
+        self.gtd8 = GlobalTrackLayer(2 * self.dec8.output_channel_count, self.dec7.output_channel_count)
+        self.gtd7 = GlobalTrackLayer(2 * self.dec7.output_channel_count, self.dec6.output_channel_count)
+        self.gtd6 = GlobalTrackLayer(2 * self.dec6.output_channel_count, self.dec5.output_channel_count)
+        self.gtd5 = GlobalTrackLayer(2 * self.dec5.output_channel_count, self.dec4.output_channel_count)
+        self.gtd4 = GlobalTrackLayer(2 * self.dec4.output_channel_count, self.dec3.output_channel_count)
+        self.gtd3 = GlobalTrackLayer(2 * self.dec3.output_channel_count, self.dec2.output_channel_count)
+        self.gtd2 = GlobalTrackLayer(2 * self.dec2.output_channel_count, self.dec1.output_channel_count)
+        self.gtd1 = GlobalTrackLayer(2 * self.dec1.output_channel_count, self.output_channel_count)
+
+        self.final_activation = torch.nn.Sigmoid()
+
+    def forward(self, input):
         if self.coord is not None:
-            encoding_input = self.coord(input)
+            input = self.coord(input)
+
+        input_mean = torch.mean(input, dim=(2,3), keepdim=False)
 
         # Encoding
-        down1 = self.enc1(encoding_input)
-        down2 = self.enc2(down1)
-        down3 = self.enc3(down2)
-        down4 = self.enc4(down3)
-        down5 = self.enc5(down4)
-        down6 = self.enc6(down5)
-        down7 = self.enc7(down6)
-        down8 = self.enc8(down7)
+        down1, _          = self.enc1(input,      None)
+        global_track      = self.gte1(input_mean, None)
+        down2, down2_mean = self.enc2(down1,      global_track)
+        global_track      = self.gte2(down2_mean, global_track)
+        down3, down3_mean = self.enc3(down2,      global_track)
+        global_track      = self.gte3(down3_mean, global_track)
+        down4, down4_mean = self.enc4(down3,      global_track)
+        global_track      = self.gte4(down4_mean, global_track)
+        down5, down5_mean = self.enc5(down4,      global_track)
+        global_track      = self.gte5(down5_mean, global_track)
+        down6, down6_mean = self.enc6(down5,      global_track)
+        global_track      = self.gte6(down6_mean, global_track)
+        down7, down7_mean = self.enc7(down6,      global_track)
+        global_track      = self.gte7(down7_mean, global_track)
+        down8, down8_mean = self.enc8(down7,      global_track)
+        global_track      = self.gte8(down8_mean, global_track)
 
         # Decoding
-        up8 = self.dec8(                down8)
-        up7 = self.dec7(torch.cat((up8, down7), dim=1))
-        up6 = self.dec6(torch.cat((up7, down6), dim=1))
-        up5 = self.dec5(torch.cat((up6, down5), dim=1))
-        up4 = self.dec4(torch.cat((up5, down4), dim=1))
-        up3 = self.dec3(torch.cat((up4, down3), dim=1))
-        up2 = self.dec2(torch.cat((up3, down2), dim=1))
-        up1 = self.dec1(torch.cat((up2, down1), dim=1))
+        up8, up8_mean = self.dec8(down8, None, global_track)
+        global_track  = self.gtd8(up8_mean,    global_track)
+        up7, up7_mean = self.dec7(up8, down7,  global_track)
+        global_track  = self.gtd7(up7_mean,    global_track)
+        up6, up6_mean = self.dec6(up7, down6,  global_track)
+        global_track  = self.gtd6(up6_mean,    global_track)
+        up5, up5_mean = self.dec5(up6, down5,  global_track)
+        global_track  = self.gtd5(up5_mean,    global_track)
+        up4, up4_mean = self.dec4(up5, down4,  global_track)
+        global_track  = self.gtd4(up4_mean,    global_track)
+        up3, up3_mean = self.dec3(up4, down3,  global_track)
+        global_track  = self.gtd3(up3_mean,    global_track)
+        up2, up2_mean = self.dec2(up3, down2,  global_track)
+        global_track  = self.gtd2(up2_mean,    global_track)
+        up1, up1_mean = self.dec1(up2, down1,  global_track)
+        global_track  = self.gtd1(up1_mean,    global_track)
 
-        return up1
+        return self.final_activation(up1)
 
 def gamma_decode(images):
     return torch.pow(images, 2.2)
