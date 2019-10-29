@@ -44,7 +44,12 @@ class DecodingLayer(nn.Module):
         self.use_dropout          = use_dropout
         self.use_activation       = use_activation
 
-        self.deconv     = nn.ConvTranspose2d(input_channel_count, output_channel_count, (4, 4), stride=2, padding=(1, 1))
+        self.deconv     = nn.Sequential(
+            nn.UpsamplingNearest2d(scale_factor=2.0),
+            nn.Conv2d(input_channel_count,  output_channel_count, (3, 3), padding=(1, 1)), # TODO: padding_mode="same"
+            nn.Conv2d(output_channel_count, output_channel_count, (3, 3), padding=(1, 1)), # TODO: padding_mode="same"
+        )
+        
         self.norm       = torch.nn.InstanceNorm2d(output_channel_count, 1e-5, affine=True) if use_instance_norm else None
         self.dropout    = nn.Dropout(0.5) if use_dropout else None
         self.leaky_relu = nn.LeakyReLU(0.2) if use_activation else None
