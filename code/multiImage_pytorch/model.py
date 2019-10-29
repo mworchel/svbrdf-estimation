@@ -224,7 +224,7 @@ def gamma_encode(images):
 
 writer = SummaryWriter("./logs")
 
-generator = Generator(3).cuda() # For 12 we need loss function that weights the individual components individually instead of pushing everything into one L1
+generator = Generator(12).cuda()
 print(generator)
 
 img1 = plt.imread("./out1.png")
@@ -238,7 +238,7 @@ def read_data(paths):
         img  = gamma_decode(torch.Tensor(plt.imread(path)).permute(2, 0, 1))
         imgs = torch.cat(img.unsqueeze(0).split(256, dim=-1), 0)
         input  = imgs[-5].unsqueeze(0)
-        target = torch.cat(imgs[10:11].split(1, dim=0), dim=1)
+        target = torch.cat(imgs[10:].split(1, dim=0), dim=1)
         
         if inputs is None:
             inputs = input
@@ -257,7 +257,7 @@ inputs, targets = read_data(["./in1.png", "./in2.png", "./in3.png"])
 input = gamma_decode(torch.tensor([img1, img2]).permute(0, 3, 1, 2).cuda())
 criterion = nn.L1Loss()
 optimizer = torch.optim.Adam(generator.parameters(), lr=1e-4)
-for epoch in range(1000):
+for epoch in range(150):
 
     batch_inputs  = inputs[:2].cuda()
     batch_targets = targets[:2].cuda()
@@ -291,12 +291,12 @@ for i in range(inputs.shape[0]):
     fig.add_subplot(inputs.shape[0], 5, i * 5 + 2)
     plt.imshow(gamma_encode(images[0]))
 
-    # fig.add_subplot(inputs.shape[0], 5, i * 5 + 3)
-    # plt.imshow(gamma_encode(images[1]))
+    fig.add_subplot(inputs.shape[0], 5, i * 5 + 3)
+    plt.imshow(gamma_encode(images[1]))
 
-    # fig.add_subplot(inputs.shape[0], 5, i * 5 + 4)
-    # plt.imshow(gamma_encode(images[2]))
+    fig.add_subplot(inputs.shape[0], 5, i * 5 + 4)
+    plt.imshow(gamma_encode(images[2]))
 
-    # fig.add_subplot(inputs.shape[0], 5, i * 5 + 5)
-    # plt.imshow(gamma_encode(images[3]))
+    fig.add_subplot(inputs.shape[0], 5, i * 5 + 5)
+    plt.imshow(gamma_encode(images[3]))
 plt.show()
