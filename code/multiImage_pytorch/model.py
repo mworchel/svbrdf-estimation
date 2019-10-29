@@ -10,10 +10,13 @@ class EncodingLayer(nn.Module):
         self.use_instance_norm    = use_instance_norm
         self.use_activation       = use_activation
 
-        self.conv            = nn.Conv2d(input_channel_count, output_channel_count, (4, 4), stride=2, padding=(1,1))
+        # TODO: Actually the conv here does not use bias in the reference implementation
+        self.conv            = nn.Conv2d(input_channel_count, output_channel_count, (4, 4), stride=2, padding=(1,1))            
         self.norm            = torch.nn.InstanceNorm2d(output_channel_count, 1e-5, affine=True) if use_instance_norm else None
         self.leaky_relu      = nn.LeakyReLU(0.2) if use_activation else None
         self.fully_connected = nn.Linear(self.output_channel_count, self.output_channel_count, False)
+
+        # TODO: conv and fully_connected are initialized in the reference implementation
 
     def forward(self, x, global_track):
         if self.leaky_relu is not None:
@@ -42,6 +45,7 @@ class DecodingLayer(nn.Module):
         self.use_dropout          = use_dropout
         self.use_activation       = use_activation
 
+        # TODO: Actually the convs here do not use bias in the reference implementation
         self.deconv     = nn.Sequential(
             nn.UpsamplingNearest2d(scale_factor=2.0),
             nn.ZeroPad2d((1, 2, 1, 2)),
@@ -54,6 +58,8 @@ class DecodingLayer(nn.Module):
         self.dropout    = nn.Dropout(0.5) if use_dropout else None
         self.leaky_relu = nn.LeakyReLU(0.2) if use_activation else None
         self.fully_connected = nn.Linear(self.output_channel_count, self.output_channel_count, False)
+
+        # TODO: convs and fully_connected are initialized in the reference implementation
 
     def forward(self, x, skip_connected_tensor, global_track):
         if skip_connected_tensor is not None:
@@ -102,8 +108,10 @@ class GlobalTrackLayer(nn.Module):
         self.input_channel_count = input_channel_count
         self.output_channel_count = output_channel_count
 
-        self.fully_connected = torch.nn.Linear(input_channel_count, output_channel_count)
+        self.fully_connected = torch.nn.Linear(input_channel_count, output_channel_count, bias=True)
         self.selu            = torch.nn.SELU()
+
+        # TODO: fully_connected is initialized in the reference implementation
 
     def forward(self, local_mean, global_track):
         if global_track is not None:
