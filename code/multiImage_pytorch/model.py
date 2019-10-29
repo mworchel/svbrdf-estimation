@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from tensorboardX import SummaryWriter
 import matplotlib.pyplot as plt
+import losses
 
 class EncodingLayer(nn.Module):
     def __init__(self, input_channel_count, output_channel_count, use_instance_norm, use_activation=True):
@@ -255,7 +256,7 @@ def read_data(paths):
 inputs, targets = read_data(["./in1.png", "./in2.png", "./in3.png"])
 
 input = gamma_decode(torch.tensor([img1, img2]).permute(0, 3, 1, 2).cuda())
-criterion = nn.L1Loss()
+criterion = losses.SVBRDFL1Loss()
 optimizer = torch.optim.Adam(generator.parameters(), lr=1e-4)
 for epoch in range(150):
 
