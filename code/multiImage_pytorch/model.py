@@ -113,6 +113,7 @@ class Generator(nn.Module):
     output_channel_count = 64 
     filters_count        = 64 # "ngf" in the original code
     use_coords           = False
+    use_global_track     = True
 
     def __init__(self, output_channel_count, number_of_filters = 64):
         super(Generator, self).__init__()
@@ -143,23 +144,26 @@ class Generator(nn.Module):
         self.dec2 = DecodingLayer(2 * self.dec3.output_channel_count, self.number_of_filters    ,  True, False) # decoder_2: [batch, 64, 64, 2 * ngf * 2 ] => [batch, 128, 128, ngf    ]
         self.dec1 = DecodingLayer(2 * self.dec2.output_channel_count, self.output_channel_count , False, False) # decoder_1: [batch, 64, 64, 2 * ngf     ] => [batch, 128, 128, 64     ]                   
 
-        self.gte1 = GlobalTrackLayer(encoding_input_channel_count,       self.enc2.output_channel_count)
-        self.gte2 = GlobalTrackLayer(2 * self.enc2.output_channel_count, self.enc3.output_channel_count)
-        self.gte3 = GlobalTrackLayer(2 * self.enc3.output_channel_count, self.enc4.output_channel_count)
-        self.gte4 = GlobalTrackLayer(2 * self.enc4.output_channel_count, self.enc5.output_channel_count)
-        self.gte5 = GlobalTrackLayer(2 * self.enc5.output_channel_count, self.enc6.output_channel_count)
-        self.gte6 = GlobalTrackLayer(2 * self.enc6.output_channel_count, self.enc7.output_channel_count)
-        self.gte7 = GlobalTrackLayer(2 * self.enc7.output_channel_count, self.enc8.output_channel_count)
-        self.gte8 = GlobalTrackLayer(2 * self.enc8.output_channel_count, self.dec8.output_channel_count)
+        def bi_noop(x, y):
+            return None
 
-        self.gtd8 = GlobalTrackLayer(2 * self.dec8.output_channel_count, self.dec7.output_channel_count)
-        self.gtd7 = GlobalTrackLayer(2 * self.dec7.output_channel_count, self.dec6.output_channel_count)
-        self.gtd6 = GlobalTrackLayer(2 * self.dec6.output_channel_count, self.dec5.output_channel_count)
-        self.gtd5 = GlobalTrackLayer(2 * self.dec5.output_channel_count, self.dec4.output_channel_count)
-        self.gtd4 = GlobalTrackLayer(2 * self.dec4.output_channel_count, self.dec3.output_channel_count)
-        self.gtd3 = GlobalTrackLayer(2 * self.dec3.output_channel_count, self.dec2.output_channel_count)
-        self.gtd2 = GlobalTrackLayer(2 * self.dec2.output_channel_count, self.dec1.output_channel_count)
-        self.gtd1 = GlobalTrackLayer(2 * self.dec1.output_channel_count, self.output_channel_count)
+        self.gte1 = GlobalTrackLayer(encoding_input_channel_count,       self.enc2.output_channel_count) if self.use_global_track else bi_noop
+        self.gte2 = GlobalTrackLayer(2 * self.enc2.output_channel_count, self.enc3.output_channel_count) if self.use_global_track else bi_noop
+        self.gte3 = GlobalTrackLayer(2 * self.enc3.output_channel_count, self.enc4.output_channel_count) if self.use_global_track else bi_noop
+        self.gte4 = GlobalTrackLayer(2 * self.enc4.output_channel_count, self.enc5.output_channel_count) if self.use_global_track else bi_noop
+        self.gte5 = GlobalTrackLayer(2 * self.enc5.output_channel_count, self.enc6.output_channel_count) if self.use_global_track else bi_noop
+        self.gte6 = GlobalTrackLayer(2 * self.enc6.output_channel_count, self.enc7.output_channel_count) if self.use_global_track else bi_noop
+        self.gte7 = GlobalTrackLayer(2 * self.enc7.output_channel_count, self.enc8.output_channel_count) if self.use_global_track else bi_noop
+        self.gte8 = GlobalTrackLayer(2 * self.enc8.output_channel_count, self.dec8.output_channel_count) if self.use_global_track else bi_noop
+
+        self.gtd8 = GlobalTrackLayer(2 * self.dec8.output_channel_count, self.dec7.output_channel_count) if self.use_global_track else bi_noop
+        self.gtd7 = GlobalTrackLayer(2 * self.dec7.output_channel_count, self.dec6.output_channel_count) if self.use_global_track else bi_noop
+        self.gtd6 = GlobalTrackLayer(2 * self.dec6.output_channel_count, self.dec5.output_channel_count) if self.use_global_track else bi_noop
+        self.gtd5 = GlobalTrackLayer(2 * self.dec5.output_channel_count, self.dec4.output_channel_count) if self.use_global_track else bi_noop
+        self.gtd4 = GlobalTrackLayer(2 * self.dec4.output_channel_count, self.dec3.output_channel_count) if self.use_global_track else bi_noop
+        self.gtd3 = GlobalTrackLayer(2 * self.dec3.output_channel_count, self.dec2.output_channel_count) if self.use_global_track else bi_noop
+        self.gtd2 = GlobalTrackLayer(2 * self.dec2.output_channel_count, self.dec1.output_channel_count) if self.use_global_track else bi_noop
+        self.gtd1 = GlobalTrackLayer(2 * self.dec1.output_channel_count, self.output_channel_count)      if self.use_global_track else bi_noop
 
         self.final_activation = torch.nn.Sigmoid()
 
@@ -167,7 +171,7 @@ class Generator(nn.Module):
         if self.coord is not None:
             input = self.coord(input)
 
-        input_mean = torch.mean(input, dim=(2,3), keepdim=False)
+        input_mean = torch.mean(input, dim=(2,3), keepdim=False) if self.use_global_track else None
 
         # Encoding
         down1, _          = self.enc1(input,      None)
@@ -247,7 +251,7 @@ inputs, targets = read_data(["./in1.png", "./in2.png", "./in3.png"])
 
 input = gamma_decode(torch.tensor([img1, img2]).permute(0, 3, 1, 2).cuda())
 criterion = nn.L1Loss()
-optimizer = torch.optim.Adam(generator.parameters(), lr=1e-5)
+optimizer = torch.optim.Adam(generator.parameters(), lr=1e-4)
 for epoch in range(1000):
 
     batch_inputs  = inputs[:2].cuda()
