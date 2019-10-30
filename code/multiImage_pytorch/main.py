@@ -3,6 +3,7 @@ from tensorboardX import SummaryWriter
 import matplotlib.pyplot as plt
 import model
 import losses
+import os
 
 def gamma_decode(images):
     return torch.pow(images, 2.2)
@@ -31,54 +32,89 @@ def read_data(paths):
 
     return inputs, targets
 
-writer = SummaryWriter("./logs")
 
 generator = model.Generator(12).cuda()
 print(generator)
 
+
 inputs, targets = read_data(["./in1.png", "./in2.png", "./in3.png"])
-criterion = losses.SVBRDFL1Loss()
-optimizer = torch.optim.Adam(generator.parameters(), lr=1e-4)
-for epoch in range(100):
 
-    batch_inputs  = inputs[:2].cuda()
-    batch_targets = targets[:2].cuda()
+# Load on demand
+load_model = False
+model_dir  = "./models"
+model_path = os.path.join(model_dir, "generator.model")
+if load_model:
+    generator.load_state_dict(torch.load(model_path))
+else:
+    writer = SummaryWriter("./logs")
+    criterion = losses.SVBRDFL1Loss()
+    optimizer = torch.optim.Adam(generator.parameters(), lr=1e-4)
+    for epoch in range(500):
 
-    # in your training loop:
-    optimizer.zero_grad()   # zero the gradient buffers
-    outputs = generator(batch_inputs)
-    loss = criterion(outputs, batch_targets)
-    loss.backward()
-    optimizer.step()    # Does the update
+        batch_inputs  = inputs[:2].cuda()
+        batch_targets = targets[:2].cuda()
 
-    writer.add_scalar("loss", loss.item(), epoch)
+        # in your training loop:
+        optimizer.zero_grad()   # zero the gradient buffers
+        outputs = generator(batch_inputs)
+        loss = criterion(outputs, batch_targets)
+        loss.backward()
+        optimizer.step()    # Does the update
 
-    print("Epoch {:d}, loss: {:f}".format(epoch + 1, loss.item()))
+        writer.add_scalar("loss", loss.item(), epoch)
 
-writer.add_graph(generator, inputs.cuda())
-writer.close()
+        print("Epoch {:d}, loss: {:f}".format(epoch + 1, loss.item()))
+
+    # Save a snapshot of the model
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+    torch.save(generator.state_dict(), model_path)
+    writer.add_graph(generator, inputs.cuda())
+    writer.close()
 
 fig=plt.figure(figsize=(8, 8))
-for i in range(inputs.shape[0]):
-    input = inputs[i].unsqueeze(0).cuda()
-    #target = targets[i]
+row_count = 2 * inputs.shape[0]
+col_count = 5
+for i_row, i in enumerate(range(inputs.shape[0])):
+    output = generator(inputs[i].unsqueeze(0).cuda())
 
-    output = generator(input)
-             
-    images = torch.cat(output.split(3, dim=1), dim=0).clone().cpu().detach().permute(0, 2, 3, 1)
+    output_svbrdf = gamma_encode(torch.cat(output.split(3, dim=1), dim=0).clone().cpu().detach().permute(0, 2, 3, 1))
+    target_svbrdf = gamma_encode(torch.cat(targets[i].unsqueeze(0).split(3, dim=1), dim=0).clone().permute(0, 2, 3, 1))
+    input         = gamma_encode(inputs[i]).permute(1, 2, 0)
 
-    fig.add_subplot(inputs.shape[0], 5, i * 5 + 1)
-    plt.imshow(gamma_encode(inputs[i].clone().cpu().detach().permute(1, 2, 0)))
+    fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 1)
+    plt.imshow(input)
+    plt.axis('off')
 
-    fig.add_subplot(inputs.shape[0], 5, i * 5 + 2)
-    plt.imshow(gamma_encode(images[0]))
+    fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 2)
+    plt.imshow(target_svbrdf[0])
+    plt.axis('off')
 
-    fig.add_subplot(inputs.shape[0], 5, i * 5 + 3)
-    plt.imshow(gamma_encode(images[1]))
+    fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 3)
+    plt.imshow(target_svbrdf[1])
+    plt.axis('off')
 
-    fig.add_subplot(inputs.shape[0], 5, i * 5 + 4)
-    plt.imshow(gamma_encode(images[2]))
+    fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 4)
+    plt.imshow(target_svbrdf[2])
+    plt.axis('off')
 
-    fig.add_subplot(inputs.shape[0], 5, i * 5 + 5)
-    plt.imshow(gamma_encode(images[3]))
+    fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 5)
+    plt.imshow(target_svbrdf[3])
+    plt.axis('off')
+
+    fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 7)
+    plt.imshow(output_svbrdf[0])
+    plt.axis('off')
+
+    fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 8)
+    plt.imshow(output_svbrdf[1])
+    plt.axis('off')
+
+    fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 9)
+    plt.imshow(output_svbrdf[2])
+    plt.axis('off')
+
+    fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 10)
+    plt.imshow(output_svbrdf[3])
+    plt.axis('off')
 plt.show()
