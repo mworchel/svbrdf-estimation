@@ -46,6 +46,7 @@ model_path = os.path.join(model_dir, "generator.model")
 if load_model:
     generator.load_state_dict(torch.load(model_path))
 else:
+    generator.train(True)
     writer = SummaryWriter("./logs")
     criterion = losses.SVBRDFL1Loss()
     optimizer = torch.optim.Adam(generator.parameters(), lr=1e-4)
@@ -64,6 +65,7 @@ else:
         writer.add_scalar("loss", loss.item(), epoch)
 
         print("Epoch {:d}, loss: {:f}".format(epoch + 1, loss.item()))
+    generator.train(False)
 
     # Save a snapshot of the model
     if not os.path.exists(model_dir):
