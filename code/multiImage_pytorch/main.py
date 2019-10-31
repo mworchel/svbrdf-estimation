@@ -1,9 +1,20 @@
-import torch
-from tensorboardX import SummaryWriter
+import losses
 import matplotlib.pyplot as plt
 import model
-import losses
+import numpy as np
 import os
+import random
+from tensorboardX import SummaryWriter
+import torch
+
+# Make the result reproducible
+seed = 313
+random.seed(seed)
+np.random.seed(seed)
+torch.cuda.manual_seed(seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+torch.manual_seed(seed)
 
 def gamma_decode(images):
     return torch.pow(images, 2.2)
