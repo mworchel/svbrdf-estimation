@@ -24,4 +24,4 @@ ffmpeg ^
 -filter_complex "[0]%PAD_COMMAND_TOP%[0v];[1]%PAD_COMMAND_TOP%[1v];[2]%PAD_COMMAND_TOP%[2v];[3]%PAD_COMMAND_TOP%[3v];[4]%PAD_COMMAND_TOP_LAST%[4v];[5]%PAD_COMMAND_BOT%[5v];[6]%PAD_COMMAND_BOT%[6v];[7]%PAD_COMMAND_BOT%[7v];[8]%PAD_COMMAND_BOT%[8v];[9]%PAD_COMMAND_BOT_LAST%[9v];[0v][1v][2v][3v][4v]hstack=inputs=5[t];[5v][6v][7v][8v][9v]hstack=inputs=5[b];[t][b]vstack[v]" ^
 -map "[v]" -pix_fmt yuv420p %OUTPUT_DIR%/%INPUT_NAME%_temp.mp4
 
-ffmpeg -i %OUTPUT_DIR%/train_sample_temp.mp4 -i %OUTPUT_DIR%test_sample_temp.mp4 -filter_complex "[0]pad=iw:ih+%V_PAD%:color=white[0v];[0v][1v]vstack" %OUTPUT_DIR%/train_test_sample.mp4
+ffmpeg -i %OUTPUT_DIR%/train_sample_temp.mp4 -i %OUTPUT_DIR%test_sample_temp.mp4 -filter_complex "[0]pad=width=iw:height=ih+60+%V_PAD%:y=60:color=white[0v];[0v]drawtext=text='Epoch\: %%{n}':x=(w/2-text_w/2):y=((60-text_h)/2):fontfile=C\\:/Windows/fonts/consola.ttf:fontsize=50:fontcolor=black[0v];[0v][1v]vstack" %OUTPUT_DIR%/train_test_sample.mp4
