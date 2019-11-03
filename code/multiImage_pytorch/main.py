@@ -6,6 +6,7 @@ import os
 import random
 from tensorboardX import SummaryWriter
 import torch
+import utils
 
 # Make the result reproducible
 seed = 313
@@ -16,19 +17,13 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 torch.manual_seed(seed)
 
-def gamma_decode(images):
-    return torch.pow(images, 2.2)
-
-def gamma_encode(images):
-    return torch.pow(images, 1.0/2.2)
-
 def read_data(paths):
     inputs  = None
     targets = None
     for path in paths:
-        img  = gamma_decode(torch.Tensor(plt.imread(path)).permute(2, 0, 1))
+        img  = torch.Tensor(plt.imread(path)).permute(2, 0, 1)
         imgs = torch.cat(img.unsqueeze(0).split(256, dim=-1), 0)
-        input  = imgs[-5].unsqueeze(0)
+        input  = utils.gamma_decode(imgs[-5].unsqueeze(0))
         target = torch.cat(imgs[10:].split(1, dim=0), dim=1)
         
         if inputs is None:
@@ -91,9 +86,9 @@ col_count = 5
 for i_row, i in enumerate(range(inputs.shape[0])):
     output = generator(inputs[i].unsqueeze(0).cuda())
 
-    output_svbrdf = gamma_encode(torch.cat(output.split(3, dim=1), dim=0).clone().cpu().detach().permute(0, 2, 3, 1))
-    target_svbrdf = gamma_encode(torch.cat(targets[i].unsqueeze(0).split(3, dim=1), dim=0).clone().permute(0, 2, 3, 1))
-    input         = gamma_encode(inputs[i]).permute(1, 2, 0)
+    output_svbrdf = torch.cat(output.split(3, dim=1), dim=0).clone().cpu().detach().permute(0, 2, 3, 1)
+    target_svbrdf = torch.cat(targets[i].unsqueeze(0).split(3, dim=1), dim=0).clone().permute(0, 2, 3, 1)
+    input         = utils.gamma_encode(inputs[i]).permute(1, 2, 0)
 
     fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 1)
     plt.imshow(input)
