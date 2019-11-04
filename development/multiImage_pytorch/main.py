@@ -1,3 +1,4 @@
+import dataset
 import losses
 import matplotlib.pyplot as plt
 import model
@@ -42,6 +43,8 @@ def read_data(paths):
 generator = model.Generator(12).cuda()
 print(generator)
 
+train_data = dataset.SvbrdfDataset(data_directory="./data/train", input_image_count=10, used_input_image_count=1)
+train_dataloader = torch.utils.data.DataLoader(train_data, batch_size=2, pin_memory=True)
 
 inputs, targets = read_data(["./in1.png", "./in2.png", "./in3.png"])
 
@@ -56,21 +59,28 @@ else:
     writer = SummaryWriter("./logs")
     criterion = losses.SVBRDFL1Loss()
     optimizer = torch.optim.Adam(generator.parameters(), lr=1e-4)
-    for epoch in range(500):
+    for epoch in range(1):
+        for batch in train_dataloader:
+            # Construct inputs
+            batch_inputs = batch["inputs"].cuda()
+            batch_svbrdf = batch["svbrdf"].cuda()
 
-        batch_inputs  = inputs[:2].cuda()
-        batch_targets = targets[:2].cuda()
+            # We know we only require one input image
+            batch_inputs.squeeze_(1)
 
-        # in your training loop:
-        optimizer.zero_grad()   # zero the gradient buffers
-        outputs = generator(batch_inputs)
-        loss = criterion(outputs, batch_targets)
-        loss.backward()
-        optimizer.step()    # Does the update
+            # batch_inputs  = inputs[:2].cuda()
+            # batch_targets = targets[:2].cuda()
 
-        writer.add_scalar("loss", loss.item(), epoch)
+            # in your training loop:
+            optimizer.zero_grad()   # zero the gradient buffers
+            outputs = generator(batch_inputs)
+            loss = criterion(outputs, batch_svbrdf)
+            loss.backward()
+            optimizer.step()    # Does the update
 
-        print("Epoch {:d}, loss: {:f}".format(epoch + 1, loss.item()))
+            writer.add_scalar("loss", loss.item(), epoch)
+
+            print("Epoch {:d}, loss: {:f}".format(epoch + 1, loss.item()))
     generator.train(False)
 
     # Save a snapshot of the model
@@ -80,9 +90,23 @@ else:
     writer.add_graph(generator, inputs.cuda())
     writer.close()
 
+test_data = dataset.SvbrdfDataset(data_directory="./data/test", input_image_count=10, used_input_image_count=1)
+test_dataloader = torch.utils.data.DataLoader(torch.utils.data.ConcatDataset([train_data, test_data]), batch_size=1, pin_memory=True)
+
 fig=plt.figure(figsize=(8, 8))
-row_count = 2 * inputs.shape[0]
+row_count = 2 * (len(train_data) + len(test_data))# inputs.shape[0]
 col_count = 5
+
+for i_row, batch in enumerate(test_dataloader):
+    # Construct inputs
+    batch_inputs = batch["inputs"].cuda()
+    batch_svbrdf = batch["svbrdf"].cuda()
+
+    # We know we only have one input image
+    batch_inputs.squeeze_(1)
+
+    output = generator(batch_inputs).squeeze(0)
+
 for i_row, i in enumerate(range(inputs.shape[0])):
     output = generator(inputs[i].unsqueeze(0).cuda())
 
