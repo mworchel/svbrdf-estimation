@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import utils
 
 class LayerBootstrapping:
     def __init__(self, use_convolution_bias=False, use_linear_bias=False, initialize_weights=True, convolution_init_scale=0.02, linear_init_scale=0.01):
@@ -257,4 +258,54 @@ class Generator(nn.Module):
         up1, up1_mean = self.dec1(up2, down1,  global_track)
         global_track  = self.gtd1(up1_mean,    global_track)
 
-        return self.final_activation(up1)
+        #return self.final_activation(up1)
+        return up1, global_track
+
+class SingleViewModel(nn.Module):
+    def __init__(self):
+        super(SingleViewModel, self).__init__()
+
+        self.generator = Generator(9)
+        self.activation = nn.Tanh()
+
+    def forward(self, input):
+        output, _ = self.generator(input)
+        output    = self.activation(output)
+        #svbrdf   = utils.decode_svbrdf(output) # 9 channel SVBRDF to 12 channels
+        #svbrdf   = (svbrdf + 1.0) / 2.0        # Normalization to [0, 1] range of channels
+        #return svbrdf
+
+class MultiViewModel(nn.Module):
+    def __init__(self):
+        super(MultiViewModel, self).__init__()
+
+        # Create the generator
+        self.generator = Generator(64)
+
+        # TODO: Fusion (Pooling and conv features)
+
+    def forward(self, input):
+        # Split the input of shape (B, N, C, H, W) into a list over the input images [(B, 1, C, H, W)_1, ..., (B, 1, C, H, W)_N]
+        input_images = torch.split(input, 1, dim=1) 
+
+        # Invoke the generator for all the input images
+        encoder_decoder_outputs = []
+        global_track_outputs = []
+        for input_image in input_images
+            encoder_decoder_output, global_track_output = self.generator(input_image.squeeze(1))
+            encoder_decoder_outputs.append(encoder_decoder_output.unsqueeze(1))
+            global_track_outputs.append(global_track_output.unsqueeze(1))
+            batch_outputs = batch_output if batch_outputs.unsqueeze(1) is None else torch.cat([batch_outputs, batch_output], dim=1)
+
+        # Merge the outputs back into a tensors of shape (B, N, C, H, W)
+        encoder_decoder_outputs = torch.cat(encoder_decoder_outputs, dim=1)
+        global_track_outputs    = torch.cat(global_track_outputs, dim=1)
+
+        # Pool over the input image dimension
+        pooled_encoder_decoder_outputs = torch.max(encoder_decoder_outputs, dim=1)
+        pooled_global_track_outputs    = torch.max(global_track_outputs, dim=1)
+
+        # TODO: Feature extraction and activation...
+
+        # TODO: Deprocess images (SVBRDF decoding)
+        
