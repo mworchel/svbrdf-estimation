@@ -51,9 +51,12 @@ def decode_svbrdf(svbrdf):
     roughness = roughness.repeat(roughness_repetition)
 
     normals_x, normals_y = normals.split(1, dim=-3)
-    ones                 = torch.ones_like(normals_x)
-    normals_z            = torch.sqrt(ones - (normals_x**2 + normals_y**2))
+    normals_x            = normals_x * 3.0
+    normals_y            = normals_y * 3.0
+    normals_z            = torch.ones_like(normals_x)
     normals              = torch.cat([normals_x, normals_y, normals_z], dim=-3)
+    norm                 = torch.sqrt(normals_x**2 + normals_y**2 + normals_z**2)
+    normals              = torch.div(normals, norm)
 
     return pack_svbrdf(normals, diffuse, roughness, specular)
 
