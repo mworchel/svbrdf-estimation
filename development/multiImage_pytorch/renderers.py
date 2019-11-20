@@ -9,15 +9,30 @@ def normalize(a):
     return torch.div(a, torch.sqrt(dot_product(a, a)))
 
 class LocalRenderer:
+    def xi(self, x):
+        return (x > 0.0) * torch.ones_like(x)
+
     def compute_diffuse_term(self, diffuse, specular):
         return diffuse * (1.0 - specular) / math.pi
 
     def compute_microfacet_distribution(self, roughness, NH):
+        alpha            = roughness**2
+        alpha_squared    = alpha**2 
+        NH_squared       = NH**2
+        denominator_part = torch.clamp(NH_squared * (alpha_squared + (1 - NH_squared) / NH_squared), min=0.001)
+        return (alpha_squared * self.xi(NH)) / (math.pi * denominator_part**2)
+
+    def compute_fresnel(self, specular, VH):
+        return specular + (1.0 - specular) * (1.0 - VH)**5
+
+    def compute_g1(self, roughness, XH, XN):
         alpha         = roughness**2
         alpha_squared = alpha**2
-        NH_squared    = NH**2
-        denominator   = NH_squared * alpha_squared + (1.0 - NH_squared)
-        return alpha_squared / (math.pi * denominator * denominator)
+        XN_squared    = XN**2
+        return 2 * self.xi(XH / XN) / (1 + torch.sqrt(1 + alpha_squared * (1.0 - XN_squared) / XN_squared))
+
+    def compute_geometry(self, roughness, VH, LH, VN, LN):
+        return self.compute_g1(roughness, VH, VN) * self.compute_g1(roughness, LH, LN)
 
     def compute_specular_term(self, wi, wo, normals, diffuse, roughness, specular):
         # Compute the half direction
@@ -26,16 +41,15 @@ class LocalRenderer:
         # Precompute some dot product
         NH  = dot_product(normals, H)
         VH  = dot_product(wo, H)
-        NL  = dot_product(normals, wi)
-        NV  = dot_product(normals, wo) 
+        LH  = dot_product(wi, H)
+        VN  = dot_product(wo, normals) 
+        LN  = dot_product(wi, normals)
 
+        F = self.compute_fresnel(specular, VH)
+        G = self.compute_geometry(roughness, VH, LH, VN, LN)
         D = self.compute_microfacet_distribution(roughness, NH)
-
-        # Cook-Torrance model
-        #return F * G * D * 0.25
         
-        # Temporarily use Blinn-Phong model
-        return specular * torch.pow(NH, (1.0 - roughness) * 125) 
+        return F * G * D / (4.0 * VN * LN)
 
     def evaluate_brdf(self, wi, wo, normals, diffuse, roughness, specular):
         diffuse_term  = self.compute_diffuse_term(diffuse, specular)
@@ -55,19 +69,24 @@ class LocalRenderer:
         coords       = torch.cat((xcoords, ycoords, torch.zeros_like(xcoords)), dim=0)
 
         # We treat the center of the material patch as focal point of the camera
-        wo = normalize(camera - coords)
+        camera_dir = camera - coords
+        wo         = normalize(camera_dir)
 
         normals, diffuse, roughness, specular = utils.unpack_svbrdf(svbrdf)
 
+        # Avoid zero roughness (i. e., potential division by zero)
+        roughness = torch.clamp(roughness, min=0.001)
+
         # For each light do:
-        light  = scene.light.pos.unsqueeze(-1).unsqueeze(-1)
-        wi     = normalize(light - coords)
+        light_dir = scene.light.pos.unsqueeze(-1).unsqueeze(-1) - coords
+        wi        = normalize(light_dir)
 
         f        = self.evaluate_brdf(wi, wo, normals, diffuse, roughness, specular)
         wi_dot_N = torch.clamp(dot_product(wi, normals), min=0.0) # Only consider the upper hemisphere
 
         light_color = scene.light.color.unsqueeze(-1).unsqueeze(-1).unsqueeze(0)
-        radiance = torch.mul(torch.mul(f, light_color), wi_dot_N)
+        falloff     = 1.0 / torch.sqrt(dot_product(light_dir, light_dir))**2     # Radial light intensity falloff
+        radiance    = torch.mul(torch.mul(f, light_color * falloff), wi_dot_N)
 
         return radiance
 
@@ -95,7 +114,7 @@ if __name__ == '__main__':
     loader = torch.utils.data.DataLoader(data, batch_size=1, pin_memory=False)
 
     renderer = LocalRenderer()
-    scene    = Scene(Camera([0.0, 0.0, 2.0]), Light([0.0, 0.0, 2.0], [5.0, 5.0, 5.0]))
+    scene    = Scene(Camera([0.0, 0.0, 2.0]), Light([-1.0, -1.0, 2.0], [50.0, 50.0, 50.0]))
 
     fig = plt.figure(figsize=(8, 8))
     row_count = len(data)
