@@ -34,17 +34,22 @@ class LocalRenderer:
         # [x,y,z] (shape = (3)) -> [[[x]], [[y]], [[z]]] (shape = (3, 1, 1))
         camera = scene.camera.pos.unsqueeze(-1).unsqueeze(-1)
 
-        # Origin of the global coordinate system is the upper left corner of the material plane.
-        # We assume this to be the focus point of the orthographic camera
-        wo = normalize(camera)
-        wo = wo.repeat([1, 1, svbrdf.shape[-2], svbrdf.shape[-1]])                    # Orthographic camera
+        # Generate surface coordinates for the material patch
+        # The center point of the patch is located at (0, 0, 0) which is the center of the global coordinate system.
+        # The patch itself spans from (-1, -1, 0) to (1, 1, 0).
+        xcoords_row  = torch.linspace(-1, 1, svbrdf.shape[-1])
+        xcoords      = xcoords_row.unsqueeze(0).expand(svbrdf.shape[-2], svbrdf.shape[-1]).unsqueeze(0)
+        ycoords      = -1 * torch.transpose(xcoords, dim0=1, dim1=2)
+        coords       = torch.cat((xcoords, ycoords, torch.zeros_like(xcoords)), dim=0)
+
+        # We treat the center of the material patch as focal point of the camera
+        wo = normalize(camera - coords)
 
         normals, diffuse, roughness, specular = utils.unpack_svbrdf(svbrdf)
 
         # For each light do:
         light  = scene.light.pos.unsqueeze(-1).unsqueeze(-1)
-        wi     = normalize(light)
-        wi     = wi.repeat([1, 1, svbrdf.shape[-2], svbrdf.shape[-1]])                    # Orthographic light? Hmm...
+        wi     = normalize(light - coords)
 
         f        = self.evaluate_brdf(wi, wo, normals, diffuse, roughness, specular)
         wi_dot_N = torch.clamp(dot_product(wi, normals), 0.0, 1.0) # Only consider the upper hemisphere
