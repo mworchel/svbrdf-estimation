@@ -9,10 +9,17 @@ def normalize(a):
     return torch.div(a, torch.sqrt(dot_product(a, a)))
 
 class LocalRenderer:
-    def evaluate_diffuse_term(self, diffuse, specular):
+    def compute_diffuse_term(self, diffuse, specular):
         return diffuse * (1.0 - specular) / math.pi
 
-    def evaluate_specular_term(self, wi, wo, normals, diffuse, roughness, specular):
+    def compute_microfacet_distribution(self, roughness, NH):
+        alpha         = roughness**2
+        alpha_squared = alpha**2
+        NH_squared    = NH**2
+        denominator   = NH_squared * alpha_squared + (1.0 - NH_squared)
+        return alpha_squared / (math.pi * denominator * denominator)
+
+    def compute_specular_term(self, wi, wo, normals, diffuse, roughness, specular):
         # Compute the half direction
         H = normalize((wi + wo) / 2.0)
 
@@ -22,12 +29,17 @@ class LocalRenderer:
         NL  = dot_product(normals, wi)
         NV  = dot_product(normals, wo) 
 
-        #return F * (G * D * 0.25)
-        return 0.0
+        D = self.compute_microfacet_distribution(roughness, NH)
+
+        # Cook-Torrance model
+        #return F * G * D * 0.25
+        
+        # Temporarily use Blinn-Phong model
+        return specular * torch.pow(NH, (1.0 - roughness) * 125) 
 
     def evaluate_brdf(self, wi, wo, normals, diffuse, roughness, specular):
-        diffuse_term  = self.evaluate_diffuse_term(diffuse, specular)
-        specular_term = self.evaluate_specular_term(wi, wo, normals, diffuse, roughness, specular)
+        diffuse_term  = self.compute_diffuse_term(diffuse, specular)
+        specular_term = self.compute_specular_term(wi, wo, normals, diffuse, roughness, specular)
         return diffuse_term + specular_term
 
     def render(self, scene, svbrdf):
@@ -52,7 +64,7 @@ class LocalRenderer:
         wi     = normalize(light - coords)
 
         f        = self.evaluate_brdf(wi, wo, normals, diffuse, roughness, specular)
-        wi_dot_N = torch.clamp(dot_product(wi, normals), 0.0, 1.0) # Only consider the upper hemisphere
+        wi_dot_N = torch.clamp(dot_product(wi, normals), min=0.0) # Only consider the upper hemisphere
 
         light_color = scene.light.color.unsqueeze(-1).unsqueeze(-1).unsqueeze(0)
         radiance = torch.mul(torch.mul(f, light_color), wi_dot_N)
@@ -83,7 +95,7 @@ if __name__ == '__main__':
     loader = torch.utils.data.DataLoader(data, batch_size=1, pin_memory=False)
 
     renderer = LocalRenderer()
-    scene    = Scene(Camera([0.0, 0.0, 2.0]), Light([0.0, 0.0, 2.0], [1.0, 1.0, 1.0]))
+    scene    = Scene(Camera([0.0, 0.0, 2.0]), Light([0.0, 0.0, 2.0], [5.0, 5.0, 5.0]))
 
     fig = plt.figure(figsize=(8, 8))
     row_count = len(data)
