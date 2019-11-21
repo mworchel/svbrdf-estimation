@@ -85,12 +85,12 @@ class LocalRenderer:
         relative_light_pos = light_pos - coords
         wi                 = normalize(relative_light_pos)
 
-        f        = self.evaluate_brdf(wi, wo, normals, diffuse, roughness, specular)
-        wi_dot_N = torch.clamp(dot_product(wi, normals), min=0.0) # Only consider the upper hemisphere
+        f  = self.evaluate_brdf(wi, wo, normals, diffuse, roughness, specular)
+        LN = torch.clamp(dot_product(wi, normals), min=0.0) # Only consider the upper hemisphere
 
         light_color = scene.light.color.unsqueeze(-1).unsqueeze(-1).unsqueeze(0)
         falloff     = 1.0 / torch.sqrt(dot_product(relative_light_pos, relative_light_pos))**2     # Radial light intensity falloff
-        radiance    = torch.mul(torch.mul(f, light_color * falloff), wi_dot_N)
+        radiance    = torch.mul(torch.mul(f, light_color * falloff), LN)
 
         # TODO: Add camera exposure
 
