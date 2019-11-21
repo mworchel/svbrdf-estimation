@@ -55,7 +55,7 @@ class LocalRenderer:
 
     def evaluate_brdf(self, wi, wo, normals, diffuse, roughness, specular):
         specular_term, ks = self.compute_specular_term(wi, wo, normals, diffuse, roughness, specular)
-        diffuse_term      = self.compute_diffuse_term(diffuse, specular)
+        diffuse_term      = self.compute_diffuse_term(diffuse, ks)
         return diffuse_term + specular_term
 
     def render(self, scene, svbrdf):
