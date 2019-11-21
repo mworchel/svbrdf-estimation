@@ -12,8 +12,9 @@ class LocalRenderer:
     def xi(self, x):
         return (x > 0.0) * torch.ones_like(x)
 
-    def compute_diffuse_term(self, diffuse, specular):
-        return diffuse * (1.0 - specular) / math.pi
+    def compute_diffuse_term(self, diffuse, ks):
+        kd = (1.0 - ks)
+        return  kd * diffuse / math.pi
 
     def compute_microfacet_distribution(self, roughness, NH):
         alpha            = roughness**2
@@ -49,11 +50,12 @@ class LocalRenderer:
         G = self.compute_geometry(roughness, VH, LH, VN, LN)
         D = self.compute_microfacet_distribution(roughness, NH)
         
-        return F * G * D / (4.0 * VN * LN)
+        # We treat the fresnel term as the portion of light that is reflected
+        return F * G * D / (4.0 * VN * LN), F
 
     def evaluate_brdf(self, wi, wo, normals, diffuse, roughness, specular):
-        diffuse_term  = self.compute_diffuse_term(diffuse, specular)
-        specular_term = self.compute_specular_term(wi, wo, normals, diffuse, roughness, specular)
+        specular_term, ks = self.compute_specular_term(wi, wo, normals, diffuse, roughness, specular)
+        diffuse_term      = self.compute_diffuse_term(diffuse, specular)
         return diffuse_term + specular_term
 
     def render(self, scene, svbrdf):
