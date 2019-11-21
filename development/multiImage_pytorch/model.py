@@ -214,8 +214,6 @@ class Generator(nn.Module):
         self.gtd2 = GlobalTrackLayer(gt_boostrap, 2 * self.dec2.output_channel_count, self.dec1.output_channel_count) if self.use_global_track else bi_noop
         self.gtd1 = GlobalTrackLayer(gt_boostrap, 2 * self.dec1.output_channel_count, self.output_channel_count)      if self.use_global_track else bi_noop
 
-        self.final_activation = torch.nn.Sigmoid()
-
     def forward(self, input):
         if self.coord is not None:
             input = self.coord(input)
@@ -258,22 +256,21 @@ class Generator(nn.Module):
         up1, up1_mean = self.dec1(up2, down1,  global_track)
         global_track  = self.gtd1(up1_mean,    global_track)
 
-        #return self.final_activation(up1)
         return up1, global_track
 
 class SingleViewModel(nn.Module):
     def __init__(self):
         super(SingleViewModel, self).__init__()
 
-        self.generator = Generator(9)
+        self.generator  = Generator(9)
         self.activation = nn.Tanh()
 
     def forward(self, input):
-        output, _ = self.generator(input)
-        output    = self.activation(output)
-        #svbrdf   = utils.decode_svbrdf(output) # 9 channel SVBRDF to 12 channels
-        #svbrdf   = (svbrdf + 1.0) / 2.0        # Normalization to [0, 1] range of channels
-        #return svbrdf
+        svbrdf, _ = self.generator(input)
+        svbrdf    = self.activation(svbrdf)
+        svbrdf    = utils.decode_svbrdf(svbrdf) # 9 channel SVBRDF to 12 channels
+        svbrdf    = (svbrdf + 1.0) / 2.0        # Normalization to [0, 1] range of channels
+        return svbrdf
 
 class MultiViewModel(nn.Module):
     def __init__(self):
@@ -291,7 +288,7 @@ class MultiViewModel(nn.Module):
         # Invoke the generator for all the input images
         encoder_decoder_outputs = []
         global_track_outputs = []
-        for input_image in input_images
+        for input_image in input_images:
             encoder_decoder_output, global_track_output = self.generator(input_image.squeeze(1))
             encoder_decoder_outputs.append(encoder_decoder_output.unsqueeze(1))
             global_track_outputs.append(global_track_output.unsqueeze(1))

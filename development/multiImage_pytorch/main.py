@@ -18,8 +18,8 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 torch.manual_seed(seed)
 
-# Create the model (currently only generator)
-generator = model.Generator(12).cuda()
+# Create the model
+generator = model.SingleViewModel().cuda() 
 print(generator)
 
 train_data       = dataset.SvbrdfDataset(data_directory="./data/train", input_image_count=10, used_input_image_count=1)
@@ -64,7 +64,7 @@ else:
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
     torch.save(generator.state_dict(), model_path)
-    writer.add_graph(generator, last_batch_inputs)
+    #writer.add_graph(generator, last_batch_inputs)
     writer.close()
 
 test_data      = dataset.SvbrdfDataset(data_directory="./data/test", input_image_count=10, used_input_image_count=1)
