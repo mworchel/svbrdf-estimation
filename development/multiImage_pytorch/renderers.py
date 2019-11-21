@@ -59,8 +59,6 @@ class LocalRenderer:
         return diffuse_term + specular_term
 
     def render(self, scene, svbrdf):
-        # [x,y,z] (shape = (3)) -> [[[x]], [[y]], [[z]]] (shape = (3, 1, 1))
-        camera = scene.camera.pos.unsqueeze(-1).unsqueeze(-1)
 
         # Generate surface coordinates for the material patch
         # The center point of the patch is located at (0, 0, 0) which is the center of the global coordinate system.
@@ -70,9 +68,11 @@ class LocalRenderer:
         ycoords      = -1 * torch.transpose(xcoords, dim0=1, dim1=2)
         coords       = torch.cat((xcoords, ycoords, torch.zeros_like(xcoords)), dim=0)
 
+        # [x,y,z] (shape = (3)) -> [[[x]], [[y]], [[z]]] (shape = (3, 1, 1))
+        camera_pos          = scene.camera.pos.unsqueeze(-1).unsqueeze(-1)
         # We treat the center of the material patch as focal point of the camera
-        camera_dir = camera - coords
-        wo         = normalize(camera_dir)
+        relative_camera_pos = camera_pos - coords
+        wo                  = normalize(relative_camera_pos)
 
         normals, diffuse, roughness, specular = utils.unpack_svbrdf(svbrdf)
 
@@ -80,14 +80,16 @@ class LocalRenderer:
         roughness = torch.clamp(roughness, min=0.001)
 
         # For each light do:
-        light_dir = scene.light.pos.unsqueeze(-1).unsqueeze(-1) - coords
-        wi        = normalize(light_dir)
+        # [x,y,z] (shape = (3)) -> [[[x]], [[y]], [[z]]] (shape = (3, 1, 1))
+        light_pos          = scene.light.pos.unsqueeze(-1).unsqueeze(-1)
+        relative_light_pos = light_pos - coords
+        wi                 = normalize(relative_light_pos)
 
         f        = self.evaluate_brdf(wi, wo, normals, diffuse, roughness, specular)
         wi_dot_N = torch.clamp(dot_product(wi, normals), min=0.0) # Only consider the upper hemisphere
 
         light_color = scene.light.color.unsqueeze(-1).unsqueeze(-1).unsqueeze(0)
-        falloff     = 1.0 / torch.sqrt(dot_product(light_dir, light_dir))**2     # Radial light intensity falloff
+        falloff     = 1.0 / torch.sqrt(dot_product(relative_light_pos, relative_light_pos))**2     # Radial light intensity falloff
         radiance    = torch.mul(torch.mul(f, light_color * falloff), wi_dot_N)
 
         return radiance
