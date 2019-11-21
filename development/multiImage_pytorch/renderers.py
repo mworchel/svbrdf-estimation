@@ -92,7 +92,11 @@ class LocalRenderer:
         falloff     = 1.0 / torch.sqrt(dot_product(relative_light_pos, relative_light_pos))**2     # Radial light intensity falloff
         radiance    = torch.mul(torch.mul(f, light_color * falloff), wi_dot_N)
 
-        return radiance
+        # TODO: Add camera exposure
+
+        # TODO: Perform tone-mapping from HDR to SDR
+
+        return torch.clamp(radiance, min=0.0, max=1.0)
 
 class Camera:
     def __init__(self, pos):
