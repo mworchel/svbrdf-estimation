@@ -40,11 +40,11 @@ class LocalRenderer:
         H = normalize((wi + wo) / 2.0)
 
         # Precompute some dot product
-        NH  = dot_product(normals, H)
-        VH  = dot_product(wo, H)
-        LH  = dot_product(wi, H)
-        VN  = dot_product(wo, normals) 
-        LN  = dot_product(wi, normals)
+        NH  = torch.clamp(dot_product(normals, H),  min=0.001)
+        VH  = torch.clamp(dot_product(wo, H),       min=0.001)
+        LH  = torch.clamp(dot_product(wi, H),       min=0.001)
+        VN  = torch.clamp(dot_product(wo, normals), min=0.001)
+        LN  = torch.clamp(dot_product(wi, normals), min=0.001)
 
         F = self.compute_fresnel(specular, VH)
         G = self.compute_geometry(roughness, VH, LH, VN, LN)
