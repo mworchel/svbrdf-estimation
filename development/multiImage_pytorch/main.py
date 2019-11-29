@@ -34,7 +34,7 @@ if load_model:
 else:
     model.train(True)
     writer = SummaryWriter("./logs")
-    criterion = losses.SVBRDFL1Loss()
+    criterion = losses.MixedLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     last_batch_inputs = None
     for epoch in range(100):
