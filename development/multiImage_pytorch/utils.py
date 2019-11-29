@@ -58,6 +58,16 @@ def decode_svbrdf(svbrdf):
 
     return pack_svbrdf(normals, diffuse, roughness, specular)
 
+# Transforms range [-1, 1] to [0, 1]
+# Corresponds to helpers.deprocess() in the reference code
+def encode_as_unit_interval(tensor):
+    return (tensor + 1) / 2
+
+# Transforms range [0, 1] to [-1, 1]
+# Corresponds to helpers.preprocess() in the reference code
+def decode_from_unit_interval(tensor):
+    return tensor * 2 - 1
+
 if __name__ == '__main__':
     import math
     import unittest
