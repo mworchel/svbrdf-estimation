@@ -197,14 +197,14 @@ if __name__ == '__main__':
         input       = utils.gamma_encode(batch_inputs)
         svbrdf      = batch_svbrdf
 
-        normals_packed, diffuse, roughness, specular = utils.unpack_svbrdf(svbrdf)
+        normals, diffuse, roughness, specular = utils.unpack_svbrdf(svbrdf)
 
         fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 1)
         plt.imshow(input.squeeze(0).permute(1, 2, 0))
         plt.axis('off')
 
         fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 2)
-        plt.imshow(normals_packed.squeeze(0).permute(1, 2, 0))
+        plt.imshow(utils.encode_as_unit_interval(normals.squeeze(0).permute(1, 2, 0)))
         plt.axis('off')
 
         fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 3)
@@ -219,7 +219,6 @@ if __name__ == '__main__':
         plt.imshow(specular.squeeze(0).permute(1, 2, 0))
         plt.axis('off')
         
-        normals      = normals_packed * 2.0 - 1.0
         rendering    = utils.gamma_encode(renderer.render(scene, utils.pack_svbrdf(normals, diffuse, roughness, specular))).squeeze(0).permute(1, 2, 0)
         fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 6)
         plt.imshow(rendering)
