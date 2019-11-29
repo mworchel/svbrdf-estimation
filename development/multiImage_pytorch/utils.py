@@ -42,7 +42,7 @@ def encode_svbrdf(svbrdf):
 
 # Assumes SVBRDF channels are in range [-1, 1]
 def decode_svbrdf(svbrdf):
-    normals, diffuse, roughness, specular  = unpack_svbrdf(svbrdf, True)
+    normals_xy, diffuse, roughness, specular  = unpack_svbrdf(svbrdf, True)
 
     # Repeat roughness channel three times
     # The weird syntax is due to uniform handling of batches of SVBRDFs and single SVBRDFs
@@ -50,12 +50,23 @@ def decode_svbrdf(svbrdf):
     roughness_repetition[-3] = 3
     roughness = roughness.repeat(roughness_repetition)
 
-    normals_x, normals_y = normals.split(1, dim=-3)
-    ones                 = torch.ones_like(normals_x)
-    normals_z            = torch.sqrt(ones - (normals_x**2 + normals_y**2))
+    normals_x, normals_y = torch.split(normals_xy.mul(3.0), 1, dim=-3)
+    normals_z            = torch.ones_like(normals_x)
     normals              = torch.cat([normals_x, normals_y, normals_z], dim=-3)
+    norm                 = torch.sqrt(torch.sum(torch.pow(normals, 2.0), dim=-3, keepdim=True))
+    normals              = torch.div(normals, norm)
 
     return pack_svbrdf(normals, diffuse, roughness, specular)
+
+# Transforms range [-1, 1] to [0, 1]
+# Corresponds to helpers.deprocess() in the reference code
+def encode_as_unit_interval(tensor):
+    return (tensor + 1) / 2
+
+# Transforms range [0, 1] to [-1, 1]
+# Corresponds to helpers.preprocess() in the reference code
+def decode_from_unit_interval(tensor):
+    return tensor * 2 - 1
 
 if __name__ == '__main__':
     import math
