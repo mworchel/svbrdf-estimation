@@ -51,6 +51,7 @@ class LocalRenderer:
         D = self.compute_microfacet_distribution(roughness, NH)
         
         # We treat the fresnel term as the portion of light that is reflected
+        # FIXME: That means we cannot model perfectly diffuse surfaces (at steep angle we always have reflections) but does that matter?
         return F * G * D / (4.0 * VN * LN), F
 
     def evaluate_brdf(self, wi, wo, normals, diffuse, roughness, specular):
@@ -89,7 +90,7 @@ class LocalRenderer:
         LN = torch.clamp(dot_product(wi, normals), min=0.0) # Only consider the upper hemisphere
 
         light_color = scene.light.color.unsqueeze(-1).unsqueeze(-1).unsqueeze(0)
-        falloff     = 1.0 / torch.sqrt(dot_product(relative_light_pos, relative_light_pos))**2     # Radial light intensity falloff
+        falloff     = 1.0 / torch.sqrt(dot_product(relative_light_pos, relative_light_pos))**2 # Radial light intensity falloff
         radiance    = torch.mul(torch.mul(f, light_color * falloff), LN)
 
         # TODO: Add camera exposure
@@ -171,12 +172,14 @@ if __name__ == '__main__':
         [256,256, 1],
         [256,  0, 1],
     ])
+
     target_points = np.float32([
         [ -1,  1, 0, 1],
         [ -1, -1, 0, 1],
         [  1, -1, 0, 1],
         [  1,  1, 0, 1],
     ])
+    
     target_points = np.transpose(np.dot(P, np.transpose(target_points)))
     target_points = np.divide(target_points, target_points[:,2:3])
     H, _          = cv2.findHomography(src_points, target_points) # Ta-dah, there's the magic ortho-to-projective mapping
