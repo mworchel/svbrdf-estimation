@@ -268,9 +268,17 @@ class SingleViewModel(nn.Module):
     def forward(self, input):
         svbrdf, _ = self.generator(input)
         svbrdf    = self.activation(svbrdf)
-        svbrdf    = utils.decode_svbrdf(svbrdf) # 9 channel SVBRDF to 12 channels
-        svbrdf    = (svbrdf + 1.0) / 2.0        # Normalization to [0, 1] range of channels
-        return svbrdf
+
+        # 9 channel SVBRDF to 12 channels
+        svbrdf    = utils.decode_svbrdf(svbrdf) 
+
+        # Map ranges from [-1, 1] to [0, 1], except for the normals
+        normals, diffuse, roughness, specular = utils.unpack_svbrdf(svbrdf)
+        diffuse   = utils.encode_as_unit_interval(diffuse)
+        roughness = utils.encode_as_unit_interval(roughness)
+        specular  = utils.encode_as_unit_interval(specular)
+
+        return utils.pack_svbrdf(normals, diffuse, roughness, specular)
 
 class MultiViewModel(nn.Module):
     def __init__(self):

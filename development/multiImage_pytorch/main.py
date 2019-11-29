@@ -92,7 +92,7 @@ for i_row, batch in enumerate(all_dataloader):
     plt.axis('off')
 
     fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 2)
-    plt.imshow(target_maps[0])
+    plt.imshow(utils.encode_as_unit_interval(target_maps[0]))
     plt.axis('off')
 
     fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 3)
@@ -108,7 +108,7 @@ for i_row, batch in enumerate(all_dataloader):
     plt.axis('off')
 
     fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 7)
-    plt.imshow(output_maps[0])
+    plt.imshow(utils.encode_as_unit_interval(output_maps[0]))
     plt.axis('off')
 
     fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 8)
