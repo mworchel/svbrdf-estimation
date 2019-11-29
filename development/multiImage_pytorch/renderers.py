@@ -51,6 +51,7 @@ class LocalRenderer:
         D = self.compute_microfacet_distribution(roughness, NH)
         
         # We treat the fresnel term as the portion of light that is reflected
+        # FIXME: That means we cannot model perfectly diffuse surfaces (at steep angle we always have reflections) but does that matter?
         return F * G * D / (4.0 * VN * LN), F
 
     def evaluate_brdf(self, wi, wo, normals, diffuse, roughness, specular):
@@ -89,7 +90,7 @@ class LocalRenderer:
         LN = torch.clamp(dot_product(wi, normals), min=0.0) # Only consider the upper hemisphere
 
         light_color = scene.light.color.unsqueeze(-1).unsqueeze(-1).unsqueeze(0)
-        falloff     = 1.0 / torch.sqrt(dot_product(relative_light_pos, relative_light_pos))**2     # Radial light intensity falloff
+        falloff     = 1.0 / torch.sqrt(dot_product(relative_light_pos, relative_light_pos))**2 # Radial light intensity falloff
         radiance    = torch.mul(torch.mul(f, light_color * falloff), LN)
 
         # TODO: Add camera exposure
@@ -114,8 +115,10 @@ class Scene:
 
 if __name__ == '__main__':
     # Testing code for the renderer(s)
+    import cv2
     import dataset
     import matplotlib.pyplot as plt
+    import numpy as np
     import utils
 
     data   = dataset.SvbrdfDataset(data_directory="./data/train", input_image_count=10, used_input_image_count=1)
@@ -124,9 +127,66 @@ if __name__ == '__main__':
     renderer = LocalRenderer()
     scene    = Scene(Camera([0.0, 0.0, 2.0]), Light([-1.0, -1.0, 2.0], [50.0, 50.0, 50.0]))
 
+    # The following steps build all the ingredients to display the orthographically rendered
+    # sample perspectively aswell (because why not). Therefore, we first build a projection matrix for the camera.
+
+    # The camera's principal axis points from the camera center to the origin
+    C  = scene.camera.pos.numpy()  
+    cz = -C / np.linalg.norm(C)    
+
+    # The up direction is defined by the normal vector of the material sample plane (z axis)
+    up = np.array([0.0, 0.0, 1.0]) 
+    cx = np.cross(cz, up)          
+
+    # Handle the edge cases of cz and up being parallel
+    if np.linalg.norm(cx) == 0.0:     
+        cx = np.array([1.0, 0.0, 0.0])
+
+    # Assemble full extrinsic matrix (rotation and translation)
+    cy = np.cross(cz, cx)
+    R  = np.array([np.transpose(cx), np.transpose(cy), np.transpose(cz)])   # Camera coordinate system in global coordinates forms the rows of the rotation matrix
+    t  = -np.dot(R, C)
+    E  = np.zeros((3, 4))
+    E[0:3, 0:3] = R
+    E[0:3, 3]   = t
+
+    # We can choose the intrinsic matrix K arbitrarily.
+    # Assemble it in a way that a distance of 1 world units covers half the sensor in a distance of 1 world unit.
+    # -> The material sample (2x2 units size) covers the whole image if viewed fronto-parallel from 1 world unit distance.
+    # The image size is the only free parameter here.
+    K      = np.eye(3)
+    sensor_size = (600, 600)
+    K[0,0] = sensor_size[0] / 2.0
+    K[1,1] = sensor_size[0] / 2.0
+    K[0,2] = sensor_size[0] / 2.0
+    K[1,2] = sensor_size[1] / 2.0
+
+    # Assemble the full projection matrix
+    P      = np.dot(K, E)
+
+    # Since the material sample is a plane, we can transform the orthographically rendered sample directly
+    # into the projective camera by using a homography.
+    src_points = np.float32([
+        [0,    0, 1],
+        [0,  256, 1],
+        [256,256, 1],
+        [256,  0, 1],
+    ])
+
+    target_points = np.float32([
+        [ -1,  1, 0, 1],
+        [ -1, -1, 0, 1],
+        [  1, -1, 0, 1],
+        [  1,  1, 0, 1],
+    ])
+    
+    target_points = np.transpose(np.dot(P, np.transpose(target_points)))
+    target_points = np.divide(target_points, target_points[:,2:3])
+    H, _          = cv2.findHomography(src_points, target_points) # Ta-dah, there's the magic ortho-to-projective mapping
+
     fig = plt.figure(figsize=(8, 8))
-    row_count = len(data)
-    col_count = 6
+    row_count = 2 * len(data)
+    col_count = 5
     for i_row, batch in enumerate(loader):
         batch_inputs = batch["inputs"]
         batch_svbrdf = batch["svbrdf"]
@@ -138,30 +198,35 @@ if __name__ == '__main__':
         svbrdf      = batch_svbrdf
 
         normals_packed, diffuse, roughness, specular = utils.unpack_svbrdf(svbrdf)
-        normals   = normals_packed * 2.0 - 1.0
-        rendering = utils.gamma_encode(renderer.render(scene, utils.pack_svbrdf(normals, diffuse, roughness, specular)))
 
-        fig.add_subplot(row_count, col_count, i_row * col_count + 1)
-        plt.imshow(rendering.squeeze(0).permute(1, 2, 0))
-        plt.axis('off')
-
-        fig.add_subplot(row_count, col_count, i_row * col_count + 2)
+        fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 1)
         plt.imshow(input.squeeze(0).permute(1, 2, 0))
         plt.axis('off')
 
-        fig.add_subplot(row_count, col_count, i_row * col_count + 3)
+        fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 2)
         plt.imshow(normals_packed.squeeze(0).permute(1, 2, 0))
         plt.axis('off')
 
-        fig.add_subplot(row_count, col_count, i_row * col_count + 4)
+        fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 3)
         plt.imshow(diffuse.squeeze(0).permute(1, 2, 0))
         plt.axis('off')
 
-        fig.add_subplot(row_count, col_count, i_row * col_count + 5)
+        fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 4)
         plt.imshow(roughness.squeeze(0).permute(1, 2, 0))
         plt.axis('off')
 
-        fig.add_subplot(row_count, col_count, i_row * col_count + 6)
+        fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 5)
         plt.imshow(specular.squeeze(0).permute(1, 2, 0))
+        plt.axis('off')
+        
+        normals      = normals_packed * 2.0 - 1.0
+        rendering    = utils.gamma_encode(renderer.render(scene, utils.pack_svbrdf(normals, diffuse, roughness, specular))).squeeze(0).permute(1, 2, 0)
+        fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 6)
+        plt.imshow(rendering)
+        plt.axis('off')
+
+        perspective_rendering = cv2.warpPerspective(rendering.numpy(), H, dsize=sensor_size)
+        fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 7)
+        plt.imshow(perspective_rendering)
         plt.axis('off')
     plt.show()
