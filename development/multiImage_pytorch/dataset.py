@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import math
 import os
 import torch
 import utils
@@ -28,11 +29,20 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         file_path    = self.file_paths[idx]
         full_image   = torch.Tensor(plt.imread(file_path)).permute(2, 0, 1)
 
-        # Split the full image apart along the horizontal direction
-        image_parts  = torch.cat(full_image.unsqueeze(0).split(256, dim=-1), 0) # [n, 3, 256, 256]
+        # Split the full image apart along the horizontal direction 
+        # Magick number 4 is the number of maps in the SVBRDF
+        image_parts  = torch.cat(full_image.unsqueeze(0).chunk(self.input_image_count + 4, dim=-1), 0) # [n, 3, 256, 256]
+
+        # We read as many input images from the disk as we can and generate the rest artificially
+        read_input_image_count      = min(self.input_image_count, self.used_input_image_count)
+        generated_input_image_count = self.used_input_image_count - read_input_image_count
 
         # Use the last of the given input images
-        input_images = image_parts[(self.input_image_count - self.used_input_image_count) : self.input_image_count] # [ni, 3, 256, 256]
+        input_images = image_parts[(self.input_image_count - read_input_image_count) : self.input_image_count] # [ni, 3, 256, 256]
+
+        # TODO: Generate remaining input images by rendering
+        if generated_input_image_count > 0:
+            raise Exception('Generating input images not yet supported. Requested to generate {:d} input images by rendering.'.format(generated_input_image_count))
 
         # Transform to linear RGB
         input_images = utils.gamma_decode(input_images)
