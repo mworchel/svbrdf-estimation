@@ -60,17 +60,18 @@ class LocalRenderer:
         return diffuse_term + specular_term
 
     def render(self, scene, svbrdf):
+        device = svbrdf.device
 
         # Generate surface coordinates for the material patch
         # The center point of the patch is located at (0, 0, 0) which is the center of the global coordinate system.
         # The patch itself spans from (-1, -1, 0) to (1, 1, 0).
-        xcoords_row  = torch.linspace(-1, 1, svbrdf.shape[-1])
+        xcoords_row  = torch.linspace(-1, 1, svbrdf.shape[-1], device=device)
         xcoords      = xcoords_row.unsqueeze(0).expand(svbrdf.shape[-2], svbrdf.shape[-1]).unsqueeze(0)
         ycoords      = -1 * torch.transpose(xcoords, dim0=1, dim1=2)
         coords       = torch.cat((xcoords, ycoords, torch.zeros_like(xcoords)), dim=0)
 
         # [x,y,z] (shape = (3)) -> [[[x]], [[y]], [[z]]] (shape = (3, 1, 1))
-        camera_pos          = scene.camera.pos.unsqueeze(-1).unsqueeze(-1)
+        camera_pos          = torch.Tensor(scene.camera.pos).unsqueeze(-1).unsqueeze(-1).to(device)
         # We treat the center of the material patch as focal point of the camera
         relative_camera_pos = camera_pos - coords
         wo                  = normalize(relative_camera_pos)
@@ -82,14 +83,14 @@ class LocalRenderer:
 
         # For each light do:
         # [x,y,z] (shape = (3)) -> [[[x]], [[y]], [[z]]] (shape = (3, 1, 1))
-        light_pos          = scene.light.pos.unsqueeze(-1).unsqueeze(-1)
+        light_pos          = torch.Tensor(scene.light.pos).unsqueeze(-1).unsqueeze(-1).to(device)
         relative_light_pos = light_pos - coords
         wi                 = normalize(relative_light_pos)
 
         f  = self.evaluate_brdf(wi, wo, normals, diffuse, roughness, specular)
         LN = torch.clamp(dot_product(wi, normals), min=0.0) # Only consider the upper hemisphere
 
-        light_color = scene.light.color.unsqueeze(-1).unsqueeze(-1).unsqueeze(0)
+        light_color = torch.Tensor(scene.light.color).unsqueeze(-1).unsqueeze(-1).unsqueeze(0).to(device)
         falloff     = 1.0 / torch.sqrt(dot_product(relative_light_pos, relative_light_pos))**2 # Radial light intensity falloff
         radiance    = torch.mul(torch.mul(f, light_color * falloff), LN)
 
@@ -101,12 +102,12 @@ class LocalRenderer:
 
 class Camera:
     def __init__(self, pos):
-        self.pos = torch.Tensor(pos)
+        self.pos = pos
 
 class Light:
     def __init__(self, pos, color):
-        self.pos   = torch.Tensor(pos)
-        self.color = torch.Tensor(color)
+        self.pos   = pos
+        self.color = color
 
 class Scene:
     def __init__(self, camera, light):
@@ -131,7 +132,7 @@ if __name__ == '__main__':
     # sample perspectively aswell (because why not). Therefore, we first build a projection matrix for the camera.
 
     # The camera's principal axis points from the camera center to the origin
-    C  = scene.camera.pos.numpy()  
+    C  = np.array(scene.camera.pos)
     cz = -C / np.linalg.norm(C)    
 
     # The up direction is defined by the normal vector of the material sample plane (z axis)
