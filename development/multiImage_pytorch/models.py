@@ -23,19 +23,40 @@ class LayerBootstrapping:
 
         return m
 
-class EncodingLayer(nn.Module):
-    def __init__(self, bootstrapping, input_channel_count, output_channel_count, use_instance_norm, use_activation=True):
-        super(EncodingLayer, self).__init__()
-        
-        self.input_channel_count  = input_channel_count
-        self.output_channel_count = output_channel_count
-        self.use_instance_norm    = use_instance_norm
-        self.use_activation       = use_activation
+class MergeLayer(nn.Module):
+    """
+    Merges the global track with the convolutional track
+    """
 
-        self.conv            = nn.Conv2d(input_channel_count, output_channel_count, (4, 4), stride=2, padding=(1,1), bias=bootstrapping.use_convolution_bias)
-        self.norm            = torch.nn.InstanceNorm2d(output_channel_count, 1e-5, affine=True) if use_instance_norm else None
-        self.leaky_relu      = nn.LeakyReLU(0.2) if use_activation else None
-        self.fully_connected = nn.Linear(self.output_channel_count, self.output_channel_count, bias=bootstrapping.use_linear_bias)
+    def __init__(self, bootstrapping, channel_count):
+        super(MergeLayer, self).__init__()
+        self.channel_count   = channel_count
+        self.fully_connected = nn.Linear(self.channel_count, self.channel_count, bias=bootstrapping.use_linear_bias)
+        self.apply(bootstrapping.initialize_module)
+
+    def forward(self, x, global_track):
+        if global_track is not None:
+            global_track = self.fully_connected(global_track)
+            x = torch.add(x, global_track.unsqueeze(-1).unsqueeze(-1))
+        
+        return x
+
+class InterconnectedConvLayer(nn.Module):
+    """
+    A convolutional layer interconnected with the global track
+    """
+
+    def __init__(self, bootstrapping, conv, conv_output_channel_count, use_instance_norm, use_activation=True):
+        super(InterconnectedConvLayer, self).__init__()
+
+        self.leaky_relu = nn.LeakyReLU(0.2) if use_activation else None
+
+        self.conv                      = conv
+        self.conv_output_channel_count = conv_output_channel_count
+
+        self.norm       = nn.InstanceNorm2d(self.conv_output_channel_count, 1e-5, affine=True) if use_instance_norm else None
+
+        self.merge      = MergeLayer(bootstrapping, self.conv_output_channel_count)
 
         self.apply(bootstrapping.initialize_module)
 
@@ -49,35 +70,49 @@ class EncodingLayer(nn.Module):
 
         if self.norm is not None:
             x = self.norm(x)
-        
-        if global_track is not None:
-            global_track = self.fully_connected(global_track)
-            x = torch.add(x, global_track.unsqueeze(-1).unsqueeze(-1))
 
+        x = self.merge(x, global_track)
+        
         return x, mean
+
+class EncodingLayer(nn.Module):
+    def __init__(self, bootstrapping, input_channel_count, output_channel_count, use_instance_norm, use_activation=True):
+        super(EncodingLayer, self).__init__()
+        
+        # Just for debug purposes stored as class members
+        self.input_channel_count  = input_channel_count
+        self.output_channel_count = output_channel_count
+        self.use_instance_norm    = use_instance_norm
+        self.use_activation       = use_activation
+
+        conv            = nn.Conv2d(input_channel_count, output_channel_count, (4, 4), stride=2, padding=(1,1), bias=bootstrapping.use_convolution_bias)
+        self.conv       = InterconnectedConvLayer(bootstrapping, conv, output_channel_count, use_instance_norm, use_activation)
+
+        self.apply(bootstrapping.initialize_module)
+
+    def forward(self, x, global_track):
+        return self.conv(x, global_track)
 
 class DecodingLayer(nn.Module):
     def __init__(self, bootstrapping, input_channel_count, output_channel_count, use_instance_norm, use_dropout, use_activation=True):
         super(DecodingLayer, self).__init__()
         
+        # Just for debug purposes stored as class members
         self.input_channel_count  = input_channel_count
         self.output_channel_count = output_channel_count
         self.use_instance_norm    = use_instance_norm
         self.use_dropout          = use_dropout
         self.use_activation       = use_activation
 
-        self.deconv     = nn.Sequential(
+        deconv = nn.Sequential(
             nn.UpsamplingNearest2d(scale_factor=2.0),
             nn.ZeroPad2d((1, 2, 1, 2)),
             nn.Conv2d(input_channel_count,  output_channel_count, (4, 4), bias=bootstrapping.use_convolution_bias),
             nn.ZeroPad2d((1, 2, 1, 2)),
             nn.Conv2d(output_channel_count, output_channel_count, (4, 4), bias=bootstrapping.use_convolution_bias),
         )
-        
-        self.norm            = torch.nn.InstanceNorm2d(output_channel_count, 1e-5, affine=True) if use_instance_norm else None
-        self.dropout         = nn.Dropout(0.5) if use_dropout else None
-        self.leaky_relu      = nn.LeakyReLU(0.2) if use_activation else None
-        self.fully_connected = nn.Linear(self.output_channel_count, self.output_channel_count, bias=bootstrapping.use_linear_bias)
+        self.deconv  = InterconnectedConvLayer(bootstrapping, deconv, output_channel_count, use_instance_norm, use_activation)
+        self.dropout = nn.Dropout(0.5) if use_dropout else None
 
         self.apply(bootstrapping.initialize_module)
 
@@ -85,24 +120,29 @@ class DecodingLayer(nn.Module):
         if skip_connected_tensor is not None:
             x = torch.cat((x, skip_connected_tensor), dim=1)
 
-        if self.leaky_relu is not None:
-            x = self.leaky_relu(x)
-
-        x = self.deconv(x)
-
-        mean = torch.mean(x, dim=(2,3), keepdim=False)
-
-        if self.norm is not None:
-            x = self.norm(x)
-
-        if global_track is not None:
-            global_track = self.fully_connected(global_track)
-            x = torch.add(x, global_track.unsqueeze(-1).unsqueeze(-1))
+        x, mean = self.deconv(x, global_track)
 
         if self.dropout is not None:
             x = self.dropout(x)
         
         return x, mean
+
+class ConvFeatureLayer(nn.Module):
+    def __init__(self, bootstrapping, input_channel_count, output_channel_count, use_instance_norm, use_activation=True):
+        super(ConvFeatureLayer, self).__init__()
+
+        self.input_channel_count  = input_channel_count
+        self.output_channel_count = output_channel_count
+        self.use_instance_norm    = use_instance_norm
+        self.use_activation       = use_activation
+
+        conv = nn.Conv2d(input_channel_count, output_channel_count, (3, 3), stride=1, padding=(1,1), bias=bootstrapping.use_convolution_bias)
+        self.conv = InterconnectedConvLayer(bootstrapping, conv, output_channel_count, use_instance_norm, use_activation)
+
+        self.apply(bootstrapping.initialize_module)
+
+    def forward(self, x, global_track):
+        return self.conv(x, global_track)
 
 class CoordLayer(nn.Module):
     def __init__(self):
