@@ -266,6 +266,10 @@ class SingleViewModel(nn.Module):
         self.activation = nn.Tanh()
 
     def forward(self, input):
+        if len(input.shape) == 5:
+            # If we get multiple input images, we just ignore all but one
+            input = input[:,0,:,:,:]
+
         svbrdf, _ = self.generator(input)
         svbrdf    = self.activation(svbrdf)
 
