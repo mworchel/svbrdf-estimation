@@ -328,10 +328,24 @@ class MultiViewModel(nn.Module):
     def __init__(self):
         super(MultiViewModel, self).__init__()
 
-        # Create the generator
-        self.generator = Generator(64)
+        self.generator_output_channel_count = 64
+        self.last_layers_channel_count      = [64, 32, 9]
 
-        # TODO: Fusion (Pooling and conv features)
+        # Create the generator
+        self.generator = Generator(self.generator_output_channel_count)
+
+        gt_boostrap = LayerBootstrapping(use_linear_bias=True, initialize_weights=False, linear_init_scale=1.0)
+        self.gt1 = GlobalTrackLayer(gt_boostrap, 2 * self.generator_output_channel_count, self.last_layers_channel_count[0])
+        self.gt2 = GlobalTrackLayer(gt_boostrap, 2 * self.last_layers_channel_count[0],   self.last_layers_channel_count[1])
+        self.gt3 = GlobalTrackLayer(gt_boostrap, 2 * self.last_layers_channel_count[1],   self.last_layers_channel_count[2])
+
+        conv_bootstrap = LayerBootstrapping(use_convolution_bias=False, use_linear_bias=False, initialize_weights=False, convolution_init_scale=0.02, linear_init_scale=0.01)
+        self.merge = MergeLayer(conv_bootstrap, self.generator_output_channel_count) 
+        self.conv1 = ConvFeatureLayer(conv_bootstrap, self.generator_output_channel_count, self.last_layers_channel_count[0], True,  False)
+        self.conv2 = ConvFeatureLayer(conv_bootstrap, self.last_layers_channel_count[0],   self.last_layers_channel_count[1],   True,  True)
+        self.conv3 = ConvFeatureLayer(conv_bootstrap, self.last_layers_channel_count[1],   self.last_layers_channel_count[2],   False, True)
+
+        self.activation = nn.Tanh()
 
     def forward(self, input):
         # Split the input of shape (B, N, C, H, W) into a list over the input images [(B, 1, C, H, W)_1, ..., (B, 1, C, H, W)_N]
@@ -344,17 +358,34 @@ class MultiViewModel(nn.Module):
             encoder_decoder_output, global_track_output = self.generator(input_image.squeeze(1))
             encoder_decoder_outputs.append(encoder_decoder_output.unsqueeze(1))
             global_track_outputs.append(global_track_output.unsqueeze(1))
-            batch_outputs = batch_output if batch_outputs.unsqueeze(1) is None else torch.cat([batch_outputs, batch_output], dim=1)
 
         # Merge the outputs back into a tensors of shape (B, N, C, H, W)
         encoder_decoder_outputs = torch.cat(encoder_decoder_outputs, dim=1)
         global_track_outputs    = torch.cat(global_track_outputs, dim=1)
 
         # Pool over the input image dimension
-        pooled_encoder_decoder_outputs = torch.max(encoder_decoder_outputs, dim=1)
-        pooled_global_track_outputs    = torch.max(global_track_outputs, dim=1)
+        pooled_encoder_decoder_outputs, _ = torch.max(encoder_decoder_outputs, dim=1)
+        pooled_global_track_outputs, _    = torch.max(global_track_outputs, dim=1)
 
-        # TODO: Feature extraction and activation...
+        x            = self.merge(pooled_encoder_decoder_outputs, pooled_global_track_outputs)
+        mean         = torch.mean(pooled_encoder_decoder_outputs, dim=(2,3), keepdim=False)
+        global_track = self.gt1(mean, pooled_global_track_outputs)
+        x, mean      = self.conv1(x,  global_track)
+        global_track = self.gt2(mean, global_track)
+        x, mean      = self.conv2(x,  global_track)
+        global_track = self.gt3(mean, global_track)
+        x, mean      = self.conv3(x,  global_track)
 
-        # TODO: Deprocess images (SVBRDF decoding)
+        svbrdf    = self.activation(x)
+
+        # 9 channel SVBRDF to 12 channels
+        svbrdf    = utils.decode_svbrdf(svbrdf) 
+
+        # Map ranges from [-1, 1] to [0, 1], except for the normals
+        normals, diffuse, roughness, specular = utils.unpack_svbrdf(svbrdf)
+        diffuse   = utils.encode_as_unit_interval(diffuse)
+        roughness = utils.encode_as_unit_interval(roughness)
+        specular  = utils.encode_as_unit_interval(specular)
+
+        return utils.pack_svbrdf(normals, diffuse, roughness, specular)
         
