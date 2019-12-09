@@ -11,7 +11,7 @@ class SvbrdfDataset(torch.utils.data.Dataset):
 
     def __init__(self, data_directory, input_image_count, used_input_image_count):
         self.data_directory = data_directory
-        self.file_paths = [f for f in os.listdir(data_directory) if os.path.isfile(os.path.join(data_directory, f))]
+        self.file_paths = [os.path.join(data_directory, f) for f in os.listdir(data_directory) if os.path.isfile(os.path.join(data_directory, f))]
 
         self.input_image_count      = input_image_count
         self.used_input_image_count = used_input_image_count
