@@ -142,6 +142,8 @@ if __name__ == '__main__':
     # Handle the edge cases of cz and up being parallel
     if np.linalg.norm(cx) == 0.0:     
         cx = np.array([1.0, 0.0, 0.0])
+    else:
+        cx = cx / np.linalg.norm(cx)
 
     # Assemble full extrinsic matrix (rotation and translation)
     cy = np.cross(cz, cx)
