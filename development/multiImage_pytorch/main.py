@@ -43,9 +43,6 @@ else:
             batch_inputs = batch["inputs"].cuda()
             batch_svbrdf = batch["svbrdf"].cuda()
 
-            # We know we only require one input image
-            batch_inputs.squeeze_(1)
-
             # in your training loop:
             optimizer.zero_grad()   # zero the gradient buffers
             outputs = model(batch_inputs)
@@ -78,12 +75,9 @@ for i_row, batch in enumerate(all_dataloader):
     batch_inputs = batch["inputs"].cuda()
     batch_svbrdf = batch["svbrdf"].cuda()
 
-    # We know we only have one input image
-    batch_inputs.squeeze_(1)
-
     outputs = model(batch_inputs)
 
-    input       = utils.gamma_encode(batch_inputs.squeeze(0)).cpu().permute(1, 2, 0)
+    input       = utils.gamma_encode(batch_inputs.squeeze(0)[0]).cpu().permute(1, 2, 0)
     target_maps = torch.cat(batch_svbrdf.split(3, dim=1), dim=0).clone().cpu().detach().permute(0, 2, 3, 1)
     output_maps = torch.cat(outputs.split(3, dim=1), dim=0).clone().cpu().detach().permute(0, 2, 3, 1)
 
