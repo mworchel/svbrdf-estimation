@@ -1,4 +1,6 @@
+import cv2
 import math
+import numpy as np
 import utils
 import torch
 
@@ -114,12 +116,75 @@ class Scene:
         self.camera = camera
         self.light  = light
 
+class OrthoToPerspectiveMapping:
+    def __init__(self, camera, sensor_size):
+            self.sensor_size = sensor_size
+            
+            # The following steps build all the ingredients to display the orthographically rendered
+            # sample perspectively aswell (because why not). Therefore, we first build a projection matrix for the camera.
+
+            # The camera's principal axis points from the camera center to the origin
+            C  = np.array(camera.pos)
+            cz = -C / np.linalg.norm(C)    
+
+            # The up direction is defined by the normal vector of the material sample plane (z axis)
+            up = np.array([0.0, 0.0, 1.0]) 
+            cx = np.cross(cz, up)          
+
+            # Handle the edge cases of cz and up being parallel
+            if np.linalg.norm(cx) == 0.0:     
+                cx = np.array([1.0, 0.0, 0.0])
+            else:
+                cx = cx / np.linalg.norm(cx)
+
+            # Assemble full extrinsic matrix (rotation and translation)
+            cy = np.cross(cz, cx)
+            R  = np.array([np.transpose(cx), np.transpose(cy), np.transpose(cz)])   # Camera coordinate system in global coordinates forms the rows of the rotation matrix
+            t  = -np.dot(R, C)
+            E  = np.zeros((3, 4))
+            E[0:3, 0:3] = R
+            E[0:3, 3]   = t
+
+            # We can choose the intrinsic matrix K arbitrarily.
+            # Assemble it in a way that a distance of 1 world units covers half the sensor in a distance of 1 world unit.
+            # -> The material sample (2x2 units size) covers the whole image if viewed fronto-parallel from 1 world unit distance.
+            # The image size is the only free parameter here.
+            K      = np.eye(3)
+            K[0,0] = sensor_size[0] / 2.0
+            K[1,1] = sensor_size[0] / 2.0
+            K[0,2] = sensor_size[0] / 2.0
+            K[1,2] = sensor_size[1] / 2.0
+
+            # Assemble the full projection matrix
+            P      = np.dot(K, E)
+
+            # Since the material sample is a plane, we can transform the orthographically rendered sample directly
+            # into the projective camera by using a homography.
+            src_points = np.float32([
+                [0,    0, 1],
+                [0,  256, 1],
+                [256,256, 1],
+                [256,  0, 1],
+            ])
+
+            target_points = np.float32([
+                [ -1,  1, 0, 1],
+                [ -1, -1, 0, 1],
+                [  1, -1, 0, 1],
+                [  1,  1, 0, 1],
+            ])
+            
+            target_points = np.transpose(np.dot(P, np.transpose(target_points)))
+            target_points = np.divide(target_points, target_points[:,2:3])
+            self.H, _     = cv2.findHomography(src_points, target_points) # Ta-dah, there's the magic ortho-to-projective mapping
+
+    def apply(self, image):
+        return cv2.warpPerspective(image, self.H, dsize=self.sensor_size)
+
 if __name__ == '__main__':
     # Testing code for the renderer(s)
-    import cv2
     import dataset
     import matplotlib.pyplot as plt
-    import numpy as np
     import utils
 
     data   = dataset.SvbrdfDataset(data_directory="./data/train", input_image_count=10, used_input_image_count=1)
@@ -128,64 +193,7 @@ if __name__ == '__main__':
     renderer = LocalRenderer()
     scene    = Scene(Camera([0.0, 0.0, 2.0]), Light([-1.0, -1.0, 2.0], [50.0, 50.0, 50.0]))
 
-    # The following steps build all the ingredients to display the orthographically rendered
-    # sample perspectively aswell (because why not). Therefore, we first build a projection matrix for the camera.
-
-    # The camera's principal axis points from the camera center to the origin
-    C  = np.array(scene.camera.pos)
-    cz = -C / np.linalg.norm(C)    
-
-    # The up direction is defined by the normal vector of the material sample plane (z axis)
-    up = np.array([0.0, 0.0, 1.0]) 
-    cx = np.cross(cz, up)          
-
-    # Handle the edge cases of cz and up being parallel
-    if np.linalg.norm(cx) == 0.0:     
-        cx = np.array([1.0, 0.0, 0.0])
-    else:
-        cx = cx / np.linalg.norm(cx)
-
-    # Assemble full extrinsic matrix (rotation and translation)
-    cy = np.cross(cz, cx)
-    R  = np.array([np.transpose(cx), np.transpose(cy), np.transpose(cz)])   # Camera coordinate system in global coordinates forms the rows of the rotation matrix
-    t  = -np.dot(R, C)
-    E  = np.zeros((3, 4))
-    E[0:3, 0:3] = R
-    E[0:3, 3]   = t
-
-    # We can choose the intrinsic matrix K arbitrarily.
-    # Assemble it in a way that a distance of 1 world units covers half the sensor in a distance of 1 world unit.
-    # -> The material sample (2x2 units size) covers the whole image if viewed fronto-parallel from 1 world unit distance.
-    # The image size is the only free parameter here.
-    K      = np.eye(3)
-    sensor_size = (600, 600)
-    K[0,0] = sensor_size[0] / 2.0
-    K[1,1] = sensor_size[0] / 2.0
-    K[0,2] = sensor_size[0] / 2.0
-    K[1,2] = sensor_size[1] / 2.0
-
-    # Assemble the full projection matrix
-    P      = np.dot(K, E)
-
-    # Since the material sample is a plane, we can transform the orthographically rendered sample directly
-    # into the projective camera by using a homography.
-    src_points = np.float32([
-        [0,    0, 1],
-        [0,  256, 1],
-        [256,256, 1],
-        [256,  0, 1],
-    ])
-
-    target_points = np.float32([
-        [ -1,  1, 0, 1],
-        [ -1, -1, 0, 1],
-        [  1, -1, 0, 1],
-        [  1,  1, 0, 1],
-    ])
-    
-    target_points = np.transpose(np.dot(P, np.transpose(target_points)))
-    target_points = np.divide(target_points, target_points[:,2:3])
-    H, _          = cv2.findHomography(src_points, target_points) # Ta-dah, there's the magic ortho-to-projective mapping
+    perspective_mapping = OrthoToPerspectiveMapping(scene.camera, (600, 600))
 
     fig = plt.figure(figsize=(8, 8))
     row_count = 2 * len(data)
@@ -227,7 +235,7 @@ if __name__ == '__main__':
         plt.imshow(rendering)
         plt.axis('off')
 
-        perspective_rendering = cv2.warpPerspective(rendering.numpy(), H, dsize=sensor_size)
+        perspective_rendering = perspective_mapping.apply(rendering.numpy())
         fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 7)
         plt.imshow(perspective_rendering)
         plt.axis('off')
