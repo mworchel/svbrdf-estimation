@@ -23,6 +23,7 @@ model = models.SingleViewModel().cuda()
 print(model)
 
 train_data       = dataset.SvbrdfDataset(data_directory="./data/train", input_image_count=10, used_input_image_count=1)
+# TODO: Shuffle data when training (redo shuffling each epoch)
 train_dataloader = torch.utils.data.DataLoader(train_data, batch_size=2, pin_memory=True)
 
 # Load on demand
