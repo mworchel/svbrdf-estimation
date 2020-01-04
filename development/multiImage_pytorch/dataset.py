@@ -3,6 +3,7 @@ import math
 import os
 import torch
 import utils
+import renderers
 
 class SvbrdfDataset(torch.utils.data.Dataset):
     """
@@ -33,20 +34,7 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         # Magick number 4 is the number of maps in the SVBRDF
         image_parts  = torch.cat(full_image.unsqueeze(0).chunk(self.input_image_count + 4, dim=-1), 0) # [n, 3, 256, 256]
 
-        # We read as many input images from the disk as we can and generate the rest artificially
-        read_input_image_count      = min(self.input_image_count, self.used_input_image_count)
-        generated_input_image_count = self.used_input_image_count - read_input_image_count
-
-        # Use the last of the given input images
-        input_images = image_parts[(self.input_image_count - read_input_image_count) : self.input_image_count] # [ni, 3, 256, 256]
-
-        # TODO: Generate remaining input images by rendering
-        if generated_input_image_count > 0:
-            raise Exception('Generating input images not yet supported. Requested to generate {:d} input images by rendering.'.format(generated_input_image_count))
-
-        # Transform to linear RGB
-        input_images = utils.gamma_decode(input_images)
-
+        # Read the SVBRDF
         normals   = image_parts[self.input_image_count + 0].unsqueeze(0)
         diffuse   = image_parts[self.input_image_count + 1].unsqueeze(0)
         roughness = image_parts[self.input_image_count + 2].unsqueeze(0)
@@ -56,5 +44,32 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         normals = utils.decode_from_unit_interval(normals)
 
         svbrdf = utils.pack_svbrdf(normals, diffuse, roughness, specular).squeeze(0) # [12, 256, 256]
+
+        # We read as many input images from the disk as we can and generate the rest artificially
+        read_input_image_count      = min(self.input_image_count, self.used_input_image_count)
+        generated_input_image_count = self.used_input_image_count - read_input_image_count
+
+        # Use the last of the given input images
+        input_images = image_parts[(self.input_image_count - read_input_image_count) : self.input_image_count] # [ni, 3, 256, 256]
+
+        # TODO: Generate remaining input images by rendering
+        # TODO: Choose a random number if we are training and we don't request it to be fix (see fixImageNb for reference)
+        if generated_input_image_count > 0:
+            renderer = renderers.LocalRenderer()
+            for i in range(generated_input_image_count):
+                # TODO: Create a (random) scene
+                scene = renderers.Scene(renderers.Camera([0.0, 0.0, 2.0]), renderers.Light([0.0, 0.0, 2.0], [30.0, 30.0, 30.0]))
+                
+                rendering = renderer.render(scene, svbrdf.unsqueeze(0))
+
+                # TODO: Add noise and clamp again
+
+                rendering = utils.gamma_encode(rendering)
+
+                input_images = torch.cat([input_images, rendering], dim=0)
+
+
+        # Transform to linear RGB
+        input_images = utils.gamma_decode(input_images)
 
         return {'inputs': input_images, 'svbrdf': svbrdf}
