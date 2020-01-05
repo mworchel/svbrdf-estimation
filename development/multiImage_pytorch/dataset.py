@@ -10,10 +10,11 @@ class SvbrdfDataset(torch.utils.data.Dataset):
     Class representing a collection of SVBRDF samples with corresponding input images (rendered or real views of the SVBRDF)
     """
 
-    def __init__(self, data_directory, input_image_count, used_input_image_count):
+    def __init__(self, data_directory, image_size, input_image_count, used_input_image_count):
         self.data_directory = data_directory
         self.file_paths = [os.path.join(data_directory, f) for f in os.listdir(data_directory) if os.path.isfile(os.path.join(data_directory, f))]
 
+        self.image_size             = 256
         self.input_image_count      = input_image_count
         self.used_input_image_count = used_input_image_count
         #if not self.generate_inputs:
@@ -34,6 +35,14 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         # Magick number 4 is the number of maps in the SVBRDF
         image_parts  = torch.cat(full_image.unsqueeze(0).chunk(self.input_image_count + 4, dim=-1), 0) # [n, 3, 256, 256]
 
+        # Query the height of the images, which represents the size of the read images
+        # (assuming square images)
+        actual_image_size = image_parts.shape[-2]
+
+        # Determine the top left point of the cropped image
+        # TODO: If we use jittering, this has to be determined by the random jitter of the rendered images
+        crop_anchor = torch.IntTensor([0, 0])
+
         # Read the SVBRDF
         normals   = image_parts[self.input_image_count + 0].unsqueeze(0)
         diffuse   = image_parts[self.input_image_count + 1].unsqueeze(0)
@@ -45,12 +54,18 @@ class SvbrdfDataset(torch.utils.data.Dataset):
 
         svbrdf = utils.pack_svbrdf(normals, diffuse, roughness, specular).squeeze(0) # [12, 256, 256]
 
+        # Crop the SVBRDF
+        svbrdf = utils.crop_square(svbrdf, crop_anchor, self.image_size)
+
         # We read as many input images from the disk as we can and generate the rest artificially
         read_input_image_count      = min(self.input_image_count, self.used_input_image_count)
         generated_input_image_count = self.used_input_image_count - read_input_image_count
 
         # Use the last of the given input images
         input_images = image_parts[(self.input_image_count - read_input_image_count) : self.input_image_count] # [ni, 3, 256, 256]
+
+        # Crop down the given input images
+        input_images = utils.crop_square(input_images, crop_anchor, self.image_size) 
 
         # TODO: Generate remaining input images by rendering
         # TODO: Choose a random number if we are training and we don't request it to be fix (see fixImageNb for reference)
@@ -68,6 +83,8 @@ class SvbrdfDataset(torch.utils.data.Dataset):
 
                 input_images = torch.cat([input_images, rendering], dim=0)
 
+        # TODO: For random jittering we need individual crop anchors here
+        # input_images = utils.crop_square(input_images, crop_anchor, self.image_size)
 
         # Transform to linear RGB
         input_images = utils.gamma_decode(input_images)
