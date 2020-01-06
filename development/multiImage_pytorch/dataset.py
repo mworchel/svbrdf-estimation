@@ -89,9 +89,10 @@ class SvbrdfDataset(torch.utils.data.Dataset):
             fixed_view_distance  = 2.75 
 
             # Generate scenes (camera and light configurations)
-            light_pos_guide      = torch.cat([torch.Tensor(2).uniform_(-0.75, 0.75), torch.ones(1) * fixed_light_distance], dim=-1).unsqueeze(0)
-            light_pos_hemisphere = generate_normalized_random_direction(generated_input_image_count - 1, min_eps=min_eps, max_eps=max_eps) * fixed_light_distance
-            light_poses          = torch.cat([light_pos_guide, light_pos_hemisphere], dim=0)
+            light_poses = torch.cat([torch.Tensor(2).uniform_(-0.75, 0.75), torch.ones(1) * fixed_light_distance], dim=-1).unsqueeze(0)
+            if generated_input_image_count > 1:
+                light_poses_hemisphere = generate_normalized_random_direction(generated_input_image_count - 1, min_eps=min_eps, max_eps=max_eps) * fixed_light_distance
+                light_poses            = torch.cat([light_poses, light_poses_hemisphere], dim=0)
 
             # TODO: Make "augmentation" optional. No augmentation means fixed view distance
             use_augmentation = True
@@ -100,9 +101,10 @@ class SvbrdfDataset(torch.utils.data.Dataset):
             else:
                 view_distance = torch.ones(generated_input_image_count) * fixed_view_distance
 
-            view_pos_guide      = torch.cat([torch.Tensor(2).uniform_(-0.25, 0.25), view_distance[:1]], dim=-1).unsqueeze(0)
-            view_pos_hemisphere = generate_normalized_random_direction(generated_input_image_count - 1, min_eps=min_eps, max_eps=max_eps) * view_distance[1:]
-            view_poses          = torch.cat([view_pos_guide, view_pos_hemisphere], dim=0)
+            view_poses = torch.cat([torch.Tensor(2).uniform_(-0.25, 0.25), view_distance[:1]], dim=-1).unsqueeze(0)
+            if generated_input_image_count > 1:
+                view_poses_hemisphere = generate_normalized_random_direction(generated_input_image_count - 1, min_eps=min_eps, max_eps=max_eps) * view_distance[1:]
+                view_poses            = torch.cat([view_poses, view_poses_hemisphere], dim=0)
 
             renderer = renderers.LocalRenderer()
             for i in range(generated_input_image_count):
