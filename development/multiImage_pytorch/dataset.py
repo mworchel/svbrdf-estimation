@@ -5,6 +5,19 @@ import torch
 import utils
 import renderers
 
+def generate_normalized_random_direction(count, min_eps = 0.001, max_eps = 0.05):
+    r1 = torch.Tensor(count, 1).uniform_(0.0 + min_eps, 1.0 - max_eps)
+    r2 = torch.Tensor(count, 1).uniform_(0.0, 1.0)
+
+    r   = torch.sqrt(r1)
+    phi = 2 * math.pi * r2
+    
+    x = r * torch.cos(phi)
+    y = r * torch.sin(phi)
+    z = torch.sqrt(1.0 - r**2)
+
+    return torch.cat([x, y, z], axis=-1)
+
 class SvbrdfDataset(torch.utils.data.Dataset):
     """
     Class representing a collection of SVBRDF samples with corresponding input images (rendered or real views of the SVBRDF)
@@ -67,13 +80,35 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         # Crop down the given input images
         input_images = utils.crop_square(input_images, crop_anchor, self.image_size) 
 
-        # TODO: Generate remaining input images by rendering
         # TODO: Choose a random number if we are training and we don't request it to be fix (see fixImageNb for reference)
         if generated_input_image_count > 0:
+            # Constants as defined in the reference code
+            min_eps              = 0.001
+            max_eps              = 0.02
+            fixed_light_distance = 2.197
+            fixed_view_distance  = 2.75 
+
+            # Generate scenes (camera and light configurations)
+            light_pos_guide      = torch.cat([torch.Tensor(2).uniform_(-0.75, 0.75), torch.ones(1) * fixed_light_distance], dim=-1).unsqueeze(0)
+            light_pos_hemisphere = generate_normalized_random_direction(generated_input_image_count - 1, min_eps=min_eps, max_eps=max_eps) * fixed_light_distance
+            light_poses          = torch.cat([light_pos_guide, light_pos_hemisphere], dim=0)
+
+            # TODO: Make "augmentation" optional. No augmentation means fixed view distance
+            use_augmentation = True
+            if use_augmentation:
+                view_distance = torch.Tensor(generated_input_image_count).uniform_(0.25, 2.75) # Ref: "Simulates a FOV between 30 degrees and 50 degrees centered around 40 degrees"
+            else:
+                view_distance = torch.ones(generated_input_image_count) * fixed_view_distance
+
+            view_pos_guide      = torch.cat([torch.Tensor(2).uniform_(-0.25, 0.25), view_distance[:1]], dim=-1).unsqueeze(0)
+            view_pos_hemisphere = generate_normalized_random_direction(generated_input_image_count - 1, min_eps=min_eps, max_eps=max_eps) * view_distance[1:]
+            view_poses          = torch.cat([view_pos_guide, view_pos_hemisphere], dim=0)
+
             renderer = renderers.LocalRenderer()
             for i in range(generated_input_image_count):
-                # TODO: Create a (random) scene
-                scene = renderers.Scene(renderers.Camera([0.0, 0.0, 2.0]), renderers.Light([0.0, 0.0, 2.0], [30.0, 30.0, 30.0]))
+                # TODO: Add random light characteristics
+                # FIXME: How to handle cone light target from the reference?
+                scene = renderers.Scene(renderers.Camera(view_poses[i]), renderers.Light(light_poses[i], [30.0, 30.0, 30.0]))
                 
                 rendering = renderer.render(scene, svbrdf.unsqueeze(0))
 
