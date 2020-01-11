@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import math
 import os
+import numpy as np
 import torch
 import utils
 import renderers
@@ -109,7 +110,11 @@ class SvbrdfDataset(torch.utils.data.Dataset):
                 scene = renderers.Scene(renderers.Camera(view_poses[i]), renderers.Light(light_poses[i], light_colors[i]))
                 
                 rendering = renderer.render(scene, svbrdf.unsqueeze(0))
-                # TODO: Add noise and clamp again
+
+                std_deviation_noise = torch.exp(torch.Tensor(1).normal_(mean = np.log(0.005), std=0.3)).numpy()[0]
+                noise = torch.zeros_like(rendering).normal_(mean=0.0, std=std_deviation_noise)
+                rendering = torch.clamp(rendering + noise, min=0.0, max=1.0)
+
                 rendering = utils.gamma_encode(rendering)
 
                 input_images = torch.cat([input_images, rendering], dim=0)
