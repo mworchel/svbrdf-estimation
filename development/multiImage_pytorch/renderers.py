@@ -187,7 +187,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import utils
 
-    data   = dataset.SvbrdfDataset(data_directory="./data/train", image_size=256, input_image_count=10, used_input_image_count=1)
+    data   = dataset.SvbrdfDataset(data_directory="./data/train", image_size=256, input_image_count=10, used_input_image_count=1, use_augmentation=True)
     loader = torch.utils.data.DataLoader(data, batch_size=1, pin_memory=False)
 
     renderer = LocalRenderer()
