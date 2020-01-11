@@ -1,5 +1,20 @@
 import torch
 
+def crop_square(tensor, anchor, size):
+    num_dimensions = len(tensor.shape)
+    if num_dimensions == 3:
+        return tensor[:, anchor[0] : anchor[0] + size, anchor[1] : anchor[1] + size]
+    elif num_dimensions == 4:
+        if len(anchor.shape) == 1: # Only one anchor for all images
+            return tensor[:, :, anchor[0] : anchor[0] + size, anchor[1] : anchor[1] + size]
+        elif len(anchor.shape) == 2: # One anchor for each image (handle cropping individually)
+            images = torch.split(tensor, 1, dim=0)
+            for i in range(len(images)):
+                images[i] = crop_square(images[i], anchor[i], size)
+            return torch.cat(images, dim=0)
+    else:
+        raise Exception("Cannot crop tensor of dimension {:d}".format(num_dimensions)) 
+
 def gamma_decode(images):
     return torch.pow(images, 2.2)
 

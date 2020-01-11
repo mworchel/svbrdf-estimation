@@ -19,10 +19,13 @@ torch.backends.cudnn.benchmark = False
 torch.manual_seed(seed)
 
 # Create the model
-model = models.SingleViewModel().cuda() 
+image_size = 256 # Fix image size (width and height) used by the model
+model      = models.SingleViewModel().cuda() 
 print(model)
 
-train_data       = dataset.SvbrdfDataset(data_directory="./data/train", input_image_count=10, used_input_image_count=1)
+# TODO: Choose a random number for the used input image count if we are training and we don't request it to be fix (see fixImageNb for reference)
+train_data       = dataset.SvbrdfDataset(data_directory="./data/train", image_size=image_size, input_image_count=10, used_input_image_count=1, use_augmentation=True)
+# TODO: Shuffle data when training (redo shuffling each epoch)
 train_dataloader = torch.utils.data.DataLoader(train_data, batch_size=2, pin_memory=True)
 
 # Load on demand
@@ -64,7 +67,7 @@ else:
     #writer.add_graph(model, last_batch_inputs)
     writer.close()
 
-test_data      = dataset.SvbrdfDataset(data_directory="./data/test", input_image_count=10, used_input_image_count=1)
+test_data      = dataset.SvbrdfDataset(data_directory="./data/test", image_size=image_size, input_image_count=10, used_input_image_count=1, use_augmentation=True)
 all_dataloader = torch.utils.data.DataLoader(torch.utils.data.ConcatDataset([train_data, test_data]), batch_size=1, pin_memory=True)
 
 fig=plt.figure(figsize=(8, 8))
