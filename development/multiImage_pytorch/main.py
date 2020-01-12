@@ -1,3 +1,4 @@
+import argparse
 import dataset
 import losses
 import matplotlib.pyplot as plt
@@ -9,32 +10,49 @@ from tensorboardX import SummaryWriter
 import torch
 import utils
 
+parser = argparse.ArgumentParser(description='SVBRDF Estimation from Images')
+parser.add_argument('--model-dir', '-m', dest='model_dir', action='store', required=True,
+                    help='Directory for the model and training metadata.')
+parser.add_argument('--retrain', dest='retrain', action='store_true',
+                    help='When training, ignore any data in the model directory.')
+args = parser.parse_args()
+
 # Make the result reproducible
 seed = 313
 random.seed(seed)
 np.random.seed(seed)
 torch.cuda.manual_seed(seed)
 torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
+torch.backends.cudnn.benchmark     = False
 torch.manual_seed(seed)
 
+# Fix image size (width and height) used by the model
+image_size = 256 
+
 # Create the model
-image_size = 256 # Fix image size (width and height) used by the model
-model      = models.SingleViewModel().cuda() 
+model = models.SingleViewModel().cuda() 
 print(model)
+
+# Load the model on demand
+model_dir = os.path.abspath(args.model_dir)
+if not os.path.exists(model_dir):
+    os.makedirs(model_dir)
+
+model_path = os.path.join(model_dir, "model.data") 
+if os.path.exists(model_path):
+    if not args.retrain:
+        model.load_state_dict(torch.load(model_path))
+else:
+    print("No model found in the model directory. Doing retraining.")
+    args.retrain = True
 
 # TODO: Choose a random number for the used input image count if we are training and we don't request it to be fix (see fixImageNb for reference)
 train_data       = dataset.SvbrdfDataset(data_directory="./data/train", image_size=image_size, input_image_count=10, used_input_image_count=1, use_augmentation=True)
 # TODO: Shuffle data when training (redo shuffling each epoch)
 train_dataloader = torch.utils.data.DataLoader(train_data, batch_size=2, pin_memory=True)
 
-# Load on demand
-load_model = False
-model_dir  = "./models"
-model_path = os.path.join(model_dir, "model.model")
-if load_model:
-    model.load_state_dict(torch.load(model_path))
-else:
+# FIXME: For now, we can only train the model, if we do a full retraining (no continuation yet)
+if args.retrain:
     model.train(True)
     writer = SummaryWriter("./logs")
     criterion = losses.MixedLoss()
@@ -61,8 +79,6 @@ else:
     model.train(False)
 
     # Save a snapshot of the model
-    if not os.path.exists(model_dir):
-        os.makedirs(model_dir)
     torch.save(model.state_dict(), model_path)
     #writer.add_graph(model, last_batch_inputs)
     writer.close()
