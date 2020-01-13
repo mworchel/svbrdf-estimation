@@ -11,6 +11,8 @@ import torch
 import utils
 
 parser = argparse.ArgumentParser(description='SVBRDF Estimation from Images')
+parser.add_argument('--input-dir', '-m', dest='input_dir', action='store', required=True,
+                    help='Directory containing the input data.')
 parser.add_argument('--model-dir', '-m', dest='model_dir', action='store', required=True,
                     help='Directory for the model and training metadata.')
 parser.add_argument('--retrain', dest='retrain', action='store_true',
@@ -47,7 +49,7 @@ else:
     args.retrain = True
 
 # TODO: Choose a random number for the used input image count if we are training and we don't request it to be fix (see fixImageNb for reference)
-train_data       = dataset.SvbrdfDataset(data_directory="./data/train", image_size=image_size, input_image_count=10, used_input_image_count=1, use_augmentation=True)
+train_data       = dataset.SvbrdfDataset(data_directory=args.input_dir, image_size=image_size, input_image_count=10, used_input_image_count=1, use_augmentation=True)
 # TODO: Shuffle data when training (redo shuffling each epoch)
 train_dataloader = torch.utils.data.DataLoader(train_data, batch_size=2, pin_memory=True)
 
