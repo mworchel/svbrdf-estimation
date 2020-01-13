@@ -168,11 +168,18 @@ def fullRandomLightsHemisphere(batchSize, nbRenderings):
 
 def randomLightsHemisphereOneSurface(batchSize, nbRenderings):
     currentLightPos = tf.random_uniform([batchSize, 1, 2], -0.75, 0.75, dtype=tf.float32)
+    # [batch, 1, 2]
+    # concat -> [batch, 1, 3]
+    # expand -> [batch, 1, 1, 3]
     currentLightPos = tf.expand_dims(tf.concat([currentLightPos, tf.ones([batchSize, 1, 1])* lightDistance], axis = -1), axis=-2)
 
     currentLightPos2 = tf.expand_dims(helpers.tf_generate_normalized_random_direction(batchSize, nbRenderings - 1, lowEps = minEps, highEps = maxEps) * lightDistance, axis = -2) #getting the pos and adding the multi light dim.
+
+    # Concat on the number of renderings
+    # concat -> [batch, renderings, 1, 3]
     currentLightPos = tf.concat([currentLightPos, currentLightPos2], axis = 1)
 
+    # expand -> [batch, renderings, 1, 1, 1, 3]
     currentLightPos = simulateFlash(currentLightPos)
     currentLightPos = tf.expand_dims(currentLightPos, axis=-2)
     currentLightPos = tf.expand_dims(currentLightPos, axis=-2)
