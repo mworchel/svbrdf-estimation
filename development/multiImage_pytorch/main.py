@@ -1,5 +1,6 @@
 import argparse
 import dataset
+import json
 import losses
 import matplotlib.pyplot as plt
 import models
@@ -15,6 +16,10 @@ parser.add_argument('--input-dir', '-i', dest='input_dir', action='store', requi
                     help='Directory containing the input data.')
 parser.add_argument('--model-dir', '-m', dest='model_dir', action='store', required=True,
                     help='Directory for the model and training metadata.')
+parser.add_argument('--save-frequency', dest='save_frequency', action='store', required=False,
+                    choices=range(10, 1000), default=50,
+                    metavar="[0-1000]",
+                    help='Number of consecutive training epochs after which a checkpoint of the model is saved. Default is %(default)s.')
 parser.add_argument('--retrain', dest='retrain', action='store_true',
                     help='When training, ignore any data in the model directory.')
 args = parser.parse_args()
@@ -29,10 +34,12 @@ torch.backends.cudnn.benchmark     = False
 torch.manual_seed(seed)
 
 # Fix image size (width and height) used by the model
-image_size = 256 
+image_size     = 256 
+num_max_epochs = 100
 
 # Create the model
-model = models.SingleViewModel().cuda() 
+model          = models.SingleViewModel().cuda()
+training_state = {'epoch' : 0}
 print(model)
 
 # Load the model on demand
@@ -40,13 +47,20 @@ model_dir = os.path.abspath(args.model_dir)
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 
-model_path = os.path.join(model_dir, "model.data") 
+training_state_path = os.path.join(model_dir, "state.json")
+model_path          = os.path.join(model_dir, "model.data")
 if os.path.exists(model_path):
     if not args.retrain:
         model.load_state_dict(torch.load(model_path))
 else:
     print("No model found in the model directory. Doing retraining.")
     args.retrain = True
+
+if os.path.exists(training_state_path):
+    if not args.retrain:
+        with open(training_state_path, 'r') as f:
+            training_state = json.load(f)
+        print("Loaded training state: {:s}.".format(str(training_state)))
 
 # TODO: Choose a random number for the used input image count if we are training and we don't request it to be fix (see fixImageNb for reference)
 train_data       = dataset.SvbrdfDataset(data_directory=args.input_dir, image_size=image_size, input_image_count=10, used_input_image_count=1, use_augmentation=True)
@@ -60,7 +74,7 @@ if args.retrain:
     criterion = losses.MixedLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     last_batch_inputs = None
-    for epoch in range(100):
+    for epoch in range(num_max_epochs):
         for batch in train_dataloader:
             # Construct inputs
             batch_inputs = batch["inputs"].cuda()
@@ -78,10 +92,22 @@ if args.retrain:
             print("Epoch {:d}, loss: {:f}".format(epoch + 1, loss.item()))
 
             last_batch_inputs = batch_inputs
+
+        if epoch % 50 == 0:
+            torch.save(model.state_dict(), model_path)
+
+            training_state['epoch'] = epoch
+            with open(training_state_path, 'w') as f:
+                json.dump(training_state, f)
+
     model.train(False)
 
-    # Save a snapshot of the model
+    # Save a final snapshot of the model
     torch.save(model.state_dict(), model_path)
+    training_state['epoch'] = num_max_epochs
+    with open(training_state_path, 'w') as f:
+        json.dump(training_state, f)
+
     #writer.add_graph(model, last_batch_inputs)
     writer.close()
 
