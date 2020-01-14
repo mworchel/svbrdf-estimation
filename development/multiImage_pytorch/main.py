@@ -11,7 +11,7 @@ import torch
 import utils
 
 parser = argparse.ArgumentParser(description='SVBRDF Estimation from Images')
-parser.add_argument('--input-dir', '-m', dest='input_dir', action='store', required=True,
+parser.add_argument('--input-dir', '-i', dest='input_dir', action='store', required=True,
                     help='Directory containing the input data.')
 parser.add_argument('--model-dir', '-m', dest='model_dir', action='store', required=True,
                     help='Directory for the model and training metadata.')
