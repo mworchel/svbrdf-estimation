@@ -24,6 +24,9 @@ parser.add_argument('--save-frequency', dest='save_frequency', action='store', r
                     choices=range(10, 1000), default=50,
                     metavar="[0-1000]",
                     help='Number of consecutive training epochs after which a checkpoint of the model is saved. Default is %(default)s.')
+parser.add_argument('--epochs', '-e', dest='epochs', action='store',
+                    type=int, default=100,
+                    help='Maximum number of epochs to run the training for.')
 parser.add_argument('--retrain', dest='retrain', action='store_true',
                     help='When training, ignore any data in the model directory.')
 args = parser.parse_args()
@@ -41,7 +44,6 @@ torch.manual_seed(seed)
 
 # Fix image size (width and height) used by the model
 image_size     = 256 
-num_max_epochs = 100
 
 # Create the model
 model          = models.SingleViewModel().cuda()
@@ -90,7 +92,7 @@ if is_training_mode:
 
     # Determine the epoch range
     epoch_start = training_state['epoch']
-    epoch_end   = num_max_epochs
+    epoch_end   = args.epochs
 
     # Set up the optimizer and loss
     optimizer     = torch.optim.Adam(model.parameters(), lr=1e-4)
