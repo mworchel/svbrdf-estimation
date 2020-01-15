@@ -18,6 +18,9 @@ parser.add_argument('--mode', '-M', dest='mode', action='store', required=True,
                     help='Mode in which the script is executed.')
 parser.add_argument('--input-dir', '-i', dest='input_dir', action='store', required=True,
                     help='Directory containing the input data.')
+parser.add_argument('--image-count', '-c', dest='image_count', action='store', required=True,
+                    type=int, 
+                    help='Number of input images (i.e., photographs of the material patch) in the input dataset.')
 parser.add_argument('--model-dir', '-m', dest='model_dir', action='store', required=True,
                     help='Directory for the model and training metadata.')
 parser.add_argument('--save-frequency', dest='save_frequency', action='store', required=False,
@@ -75,7 +78,7 @@ if os.path.exists(training_state_path):
         print("Loaded training state: {:s}.".format(str(training_state)))
 
 # TODO: Choose a random number for the used input image count if we are training and we don't request it to be fix (see fixImageNb for reference)
-data = dataset.SvbrdfDataset(data_directory=args.input_dir, image_size=image_size, input_image_count=10, used_input_image_count=1, use_augmentation=True)
+data = dataset.SvbrdfDataset(data_directory=args.input_dir, image_size=image_size, input_image_count=args.image_count, used_input_image_count=1, use_augmentation=True)
 
 if is_training_mode:
     validation_split = 0.1
