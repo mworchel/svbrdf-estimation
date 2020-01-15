@@ -94,6 +94,8 @@ if is_training_mode:
     epoch_start = training_state['epoch']
     epoch_end   = args.epochs
 
+    print("Training from epoch {:d} to {:d}".format(epoch_start, epoch_end))
+
     # Set up the optimizer and loss
     optimizer     = torch.optim.Adam(model.parameters(), lr=1e-4)
     loss_function = losses.MixedLoss()
@@ -137,7 +139,7 @@ if is_training_mode:
 
     # Save a final snapshot of the model
     torch.save(model.state_dict(), model_path)
-    training_state['epoch'] = num_max_epochs
+    training_state['epoch'] = epoch_end
     with open(training_state_path, 'w') as f:
         json.dump(training_state, f)
 
