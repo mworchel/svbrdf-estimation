@@ -1,6 +1,9 @@
+import argparse
 import dataset
+import json
 import losses
 import matplotlib.pyplot as plt
+import math
 import models
 import numpy as np
 import os
@@ -9,71 +12,150 @@ from tensorboardX import SummaryWriter
 import torch
 import utils
 
+parser = argparse.ArgumentParser(description='SVBRDF Estimation from Images')
+parser.add_argument('--mode', '-M', dest='mode', action='store', required=True,
+                    choices=['train', 'test'], default='train',
+                    help='Mode in which the script is executed.')
+parser.add_argument('--input-dir', '-i', dest='input_dir', action='store', required=True,
+                    help='Directory containing the input data.')
+parser.add_argument('--model-dir', '-m', dest='model_dir', action='store', required=True,
+                    help='Directory for the model and training metadata.')
+parser.add_argument('--save-frequency', dest='save_frequency', action='store', required=False,
+                    choices=range(10, 1000), default=50,
+                    metavar="[0-1000]",
+                    help='Number of consecutive training epochs after which a checkpoint of the model is saved. Default is %(default)s.')
+parser.add_argument('--epochs', '-e', dest='epochs', action='store',
+                    type=int, default=100,
+                    help='Maximum number of epochs to run the training for.')
+parser.add_argument('--retrain', dest='retrain', action='store_true',
+                    help='When training, ignore any data in the model directory.')
+args = parser.parse_args()
+
+is_training_mode = args.mode == 'train'
+
 # Make the result reproducible
 seed = 313
 random.seed(seed)
 np.random.seed(seed)
 torch.cuda.manual_seed(seed)
 torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
+torch.backends.cudnn.benchmark     = False
 torch.manual_seed(seed)
 
+# Fix image size (width and height) used by the model
+image_size     = 256 
+
 # Create the model
-image_size = 256 # Fix image size (width and height) used by the model
-model      = models.SingleViewModel().cuda() 
+model          = models.SingleViewModel().cuda()
+training_state = {'epoch' : 0}
 print(model)
 
-# TODO: Choose a random number for the used input image count if we are training and we don't request it to be fix (see fixImageNb for reference)
-train_data       = dataset.SvbrdfDataset(data_directory="./data/train", image_size=image_size, input_image_count=10, used_input_image_count=1, use_augmentation=True)
-# TODO: Shuffle data when training (redo shuffling each epoch)
-train_dataloader = torch.utils.data.DataLoader(train_data, batch_size=2, pin_memory=True)
+# Load the model and training state on demand
+model_dir = os.path.abspath(args.model_dir)
+if not os.path.exists(model_dir):
+    os.makedirs(model_dir)
 
-# Load on demand
-load_model = False
-model_dir  = "./models"
-model_path = os.path.join(model_dir, "model.model")
-if load_model:
-    model.load_state_dict(torch.load(model_path))
+training_state_path = os.path.join(model_dir, "state.json")
+model_path          = os.path.join(model_dir, "model.data")
+if os.path.exists(model_path):
+    if not args.retrain:
+        model.load_state_dict(torch.load(model_path))
 else:
-    model.train(True)
-    writer = SummaryWriter("./logs")
-    criterion = losses.MixedLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    if not is_training_mode:
+        print("No model found in the model directory but it is required for testing.")
+        exit(1)
+    else:
+        print("No model found in the model directory. Performing retraining.")
+        args.retrain = True
+
+if os.path.exists(training_state_path):
+    if not args.retrain:
+        with open(training_state_path, 'r') as f:
+            training_state = json.load(f)
+        print("Loaded training state: {:s}.".format(str(training_state)))
+
+# TODO: Choose a random number for the used input image count if we are training and we don't request it to be fix (see fixImageNb for reference)
+data = dataset.SvbrdfDataset(data_directory=args.input_dir, image_size=image_size, input_image_count=10, used_input_image_count=1, use_augmentation=True)
+
+if is_training_mode:
+    validation_split = 0.1
+    print("Using {:.2f} % of the data for validation".format(round(validation_split * 100.0, 2)))
+    training_data, validation_data = torch.utils.data.random_split(data, [int(math.ceil(len(data) * (1.0 - validation_split))), int(math.floor(len(data) * validation_split))])
+
+    if len(validation_data) == 0:
+        # Fixed fallback if the training set is too small
+        print("Training dataset too small for validation split. Using training data for validation.")
+        validation_data = training_data
+
+    # TODO: Shuffle data when training (redo shuffling each epoch)
+    training_dataloader = torch.utils.data.DataLoader(training_data, batch_size=2, pin_memory=True)
+
+    # Determine the epoch range
+    epoch_start = training_state['epoch']
+    epoch_end   = args.epochs
+
+    # Set up the optimizer and loss
+    optimizer     = torch.optim.Adam(model.parameters(), lr=1e-4)
+    loss_function = losses.MixedLoss()
+
+    # Setup statistics stuff
+    statistics_dir    = os.path.abspath("./logs")
+    if not os.path.exists(statistics_dir):
+        os.makedirs(statistics_dir)
+    writer            = SummaryWriter(statistics_dir)
     last_batch_inputs = None
-    for epoch in range(100):
-        for batch in train_dataloader:
+
+    model.train(True)
+
+    for epoch in range(epoch_start, epoch_end):
+        for batch in training_dataloader:
             # Construct inputs
             batch_inputs = batch["inputs"].cuda()
             batch_svbrdf = batch["svbrdf"].cuda()
 
-            # in your training loop:
-            optimizer.zero_grad()   # zero the gradient buffers
+            # Perform a step
+            optimizer.zero_grad() 
             outputs = model(batch_inputs)
-            loss = criterion(outputs, batch_svbrdf)
+            loss    = loss_function(outputs, batch_svbrdf)
             loss.backward()
-            optimizer.step()    # Does the update
-
-            writer.add_scalar("loss", loss.item(), epoch)
+            optimizer.step()
 
             print("Epoch {:d}, loss: {:f}".format(epoch + 1, loss.item()))
 
+            # Statistics
+            writer.add_scalar("loss", loss.item(), epoch)
             last_batch_inputs = batch_inputs
+
+        if epoch % 50 == 0:
+            torch.save(model.state_dict(), model_path)
+
+            training_state['epoch'] = epoch
+            with open(training_state_path, 'w') as f:
+                json.dump(training_state, f)
+
     model.train(False)
 
-    # Save a snapshot of the model
-    if not os.path.exists(model_dir):
-        os.makedirs(model_dir)
+    # Save a final snapshot of the model
     torch.save(model.state_dict(), model_path)
-    #writer.add_graph(model, last_batch_inputs)
+    training_state['epoch'] = num_max_epochs
+    with open(training_state_path, 'w') as f:
+        json.dump(training_state, f)
+
+    # FIXME: This does not work with the last conv layers on both the single-view and multi-view model
+    #writer.add_graph(model, last_batch_inputs) 
     writer.close()
 
-test_data      = dataset.SvbrdfDataset(data_directory="./data/test", image_size=image_size, input_image_count=10, used_input_image_count=1, use_augmentation=True)
-all_dataloader = torch.utils.data.DataLoader(torch.utils.data.ConcatDataset([train_data, test_data]), batch_size=1, pin_memory=True)
+    # Use the validation dataset as test data
+    test_data = validation_data 
+else:
+    test_data = data
+
+test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=1, pin_memory=True)
 
 fig=plt.figure(figsize=(8, 8))
-row_count = 2 * (len(train_data) + len(test_data))
+row_count = 2 * len(test_data)
 col_count = 5
-for i_row, batch in enumerate(all_dataloader):
+for i_row, batch in enumerate(test_dataloader):
     # Construct inputs
     batch_inputs = batch["inputs"].cuda()
     batch_svbrdf = batch["svbrdf"].cuda()
