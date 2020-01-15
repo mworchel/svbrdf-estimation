@@ -90,8 +90,7 @@ if is_training_mode:
         print("Training dataset too small for validation split. Using training data for validation.")
         validation_data = training_data
 
-    # TODO: Shuffle data when training (redo shuffling each epoch)
-    training_dataloader = torch.utils.data.DataLoader(training_data, batch_size=2, pin_memory=True)
+    training_dataloader = torch.utils.data.DataLoader(training_data, batch_size=8, pin_memory=True, shuffle=True)
 
     # Determine the epoch range
     epoch_start = training_state['epoch']
