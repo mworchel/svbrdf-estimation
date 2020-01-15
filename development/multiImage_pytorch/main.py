@@ -21,7 +21,7 @@ parser.add_argument('--input-dir', '-i', dest='input_dir', action='store', requi
 parser.add_argument('--model-dir', '-m', dest='model_dir', action='store', required=True,
                     help='Directory for the model and training metadata.')
 parser.add_argument('--save-frequency', dest='save_frequency', action='store', required=False,
-                    choices=range(10, 1000), default=50,
+                    type=int, choices=range(10, 1000), default=50,
                     metavar="[0-1000]",
                     help='Number of consecutive training epochs after which a checkpoint of the model is saved. Default is %(default)s.')
 parser.add_argument('--epochs', '-e', dest='epochs', action='store',
@@ -128,7 +128,7 @@ if is_training_mode:
             writer.add_scalar("loss", loss.item(), epoch)
             last_batch_inputs = batch_inputs
 
-        if epoch % 50 == 0:
+        if epoch % args.save_frequency == 0:
             torch.save(model.state_dict(), model_path)
 
             training_state['epoch'] = epoch
