@@ -110,7 +110,7 @@ if is_training_mode:
     model.train(True)
 
     for epoch in range(epoch_start, epoch_end):
-        for batch in training_dataloader:
+        for i, batch in enumerate(training_dataloader):
             # Construct inputs
             batch_inputs = batch["inputs"].cuda()
             batch_svbrdf = batch["svbrdf"].cuda()
@@ -122,7 +122,7 @@ if is_training_mode:
             loss.backward()
             optimizer.step()
 
-            print("Epoch {:d}, loss: {:f}".format(epoch + 1, loss.item()))
+            print("Epoch {:d}, Batch {:d}, loss: {:f}".format(epoch + 1, i + 1, loss.item()))
 
             # Statistics
             writer.add_scalar("loss", loss.item(), epoch)
