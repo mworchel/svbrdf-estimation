@@ -77,7 +77,7 @@ class SvbrdfDataset(torch.utils.data.Dataset):
             # For the other cases, both are randomly sampled from a hemisphere.
             light_poses = torch.cat([torch.Tensor(2).uniform_(-0.75, 0.75), torch.ones(1) * fixed_light_distance], dim=-1).unsqueeze(0)
             if generated_input_image_count > 1:
-                light_poses_hemisphere = self.generate_normalized_random_direction(generated_input_image_count - 1, min_eps=min_eps, max_eps=max_eps) * fixed_light_distance
+                light_poses_hemisphere = utils.generate_normalized_random_direction(generated_input_image_count - 1, min_eps=min_eps, max_eps=max_eps) * fixed_light_distance
                 light_poses            = torch.cat([light_poses, light_poses_hemisphere], dim=0)
 
             light_colors = torch.Tensor([30.0]).unsqueeze(-1)
@@ -101,7 +101,7 @@ class SvbrdfDataset(torch.utils.data.Dataset):
 
             view_poses = torch.cat([torch.Tensor(2).uniform_(-0.25, 0.25), view_distance[:1]], dim=-1).unsqueeze(0)
             if generated_input_image_count > 1:
-                view_poses_hemisphere = self.generate_normalized_random_direction(generated_input_image_count - 1, min_eps=min_eps, max_eps=max_eps) * view_distance[1:].unsqueeze(-1)
+                view_poses_hemisphere = utils.generate_normalized_random_direction(generated_input_image_count - 1, min_eps=min_eps, max_eps=max_eps) * view_distance[1:].unsqueeze(-1)
                 view_poses            = torch.cat([view_poses, view_poses_hemisphere], dim=0)
 
             renderer = renderers.LocalRenderer()
@@ -126,16 +126,3 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         input_images = utils.gamma_decode(input_images)
 
         return {'inputs': input_images, 'svbrdf': svbrdf}
-
-    def generate_normalized_random_direction(self, count, min_eps = 0.001, max_eps = 0.05):
-        r1 = torch.Tensor(count, 1).uniform_(0.0 + min_eps, 1.0 - max_eps)
-        r2 = torch.Tensor(count, 1).uniform_(0.0, 1.0)
-
-        r   = torch.sqrt(r1)
-        phi = 2 * math.pi * r2
-        
-        x = r * torch.cos(phi)
-        y = r * torch.sin(phi)
-        z = torch.sqrt(1.0 - r**2)
-
-        return torch.cat([x, y, z], axis=-1)

@@ -1,3 +1,4 @@
+import math
 import torch
 
 def crop_square(tensor, anchor, size):
@@ -82,6 +83,19 @@ def encode_as_unit_interval(tensor):
 # Corresponds to helpers.preprocess() in the reference code
 def decode_from_unit_interval(tensor):
     return tensor * 2 - 1
+
+def generate_normalized_random_direction(count, min_eps = 0.001, max_eps = 0.05):
+    r1 = torch.Tensor(count, 1).uniform_(0.0 + min_eps, 1.0 - max_eps)
+    r2 = torch.Tensor(count, 1).uniform_(0.0, 1.0)
+
+    r   = torch.sqrt(r1)
+    phi = 2 * math.pi * r2
+        
+    x = r * torch.cos(phi)
+    y = r * torch.sin(phi)
+    z = torch.sqrt(1.0 - r**2)
+
+    return torch.cat([x, y, z], axis=-1)
 
 if __name__ == '__main__':
     import math

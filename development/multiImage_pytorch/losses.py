@@ -17,29 +17,37 @@ class RenderingLoss(nn.Module):
         
         self.renderer = renderers.LocalRenderer()
 
-        # Create multiple (test) scenes
-        self.scenes   = [
-            renderers.Scene(
-                renderers.Camera([0.0, 0.0, 2.0]), 
-                renderers.Light([-1.0, -1.0, 2.0], [50.0, 50.0, 50.0])),
-            renderers.Scene(
-                renderers.Camera([1.0, 0.0, 2.0]), 
-                renderers.Light([ 1.0,  1.0, 2.0], [50.0, 50.0, 50.0])),
-            renderers.Scene(
-                renderers.Camera([1.0, 0.0, 2.0]), 
-                renderers.Light([ 0.0,  1.0, 2.0], [5.0, 5.0, 5.0]))                
-        ]
+
+    def generate_random_scenes(self, count):
+        view_positions  = utils.generate_normalized_random_direction(count, 0.001, 0.1)
+        light_positions = utils.generate_normalized_random_direction(count, 0.001, 0.1)
+
+        scenes = []
+        for i in range(count):
+            c = renderers.Camera(view_positions[i])
+            l = renderers.Light(light_positions[i], [50.0, 50.0, 50.0])
+            scenes.append(renderers.Scene(c, l))
+
+        return scenes
 
     def forward(self, input, target):
-        # Generate one input and one target rendering for each scene
-        input_renderings  = []
-        target_renderings = []
-        for scene in self.scenes:
-            input_renderings.append(self.renderer.render(scene, input).unsqueeze(0))
-            target_renderings.append(self.renderer.render(scene, target).unsqueeze(0))
+        batch_size = input.shape[0]
+        random_configuration_count   = 3
+        specular_configuration_count = 6
 
-        input_renderings  = torch.cat(input_renderings, dim=0)
-        target_renderings = torch.cat(target_renderings, dim=0)
+        batch_input_renderings = []
+        batch_target_renderings = []
+        for i in range(batch_size):
+            scenes = self.generate_random_scenes(random_configuration_count)
+        	# TODO: Generate specular configurations
+            input_svbrdf  = input[i]
+            target_svbrdf = target[i]
+            for scene in scenes:
+                batch_input_renderings.append(self.renderer.render(scene, input_svbrdf))
+                batch_target_renderings.append(self.renderer.render(scene, target_svbrdf))
+
+        input_renderings  = torch.stack(batch_input_renderings, dim=0)
+        target_renderings = torch.stack(batch_target_renderings, dim=0)
 
         loss = nn.functional.l1_loss(torch.log(input_renderings + 1), torch.log(target_renderings + 1))
 
