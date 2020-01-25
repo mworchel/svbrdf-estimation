@@ -51,7 +51,7 @@ image_size     = 256
 # Create the model
 model          = models.SingleViewModel().cuda()
 training_state = {'epoch' : 0}
-print(model)
+#print(model)
 
 # Load the model and training state on demand
 model_dir = os.path.abspath(args.model_dir)
