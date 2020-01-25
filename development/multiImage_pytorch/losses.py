@@ -38,8 +38,8 @@ class RenderingLoss(nn.Module):
         batch_input_renderings = []
         batch_target_renderings = []
         for i in range(batch_size):
-            scenes = self.generate_random_scenes(random_configuration_count)
         	# TODO: Generate specular configurations
+            scenes = self.generate_random_scenes(random_configuration_count) + self.generate_random_scenes(specular_configuration_count)
             input_svbrdf  = input[i]
             target_svbrdf = target[i]
             for scene in scenes:
