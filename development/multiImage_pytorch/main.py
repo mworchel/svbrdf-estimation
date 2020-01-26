@@ -51,7 +51,7 @@ image_size     = 256
 # Create the model
 model          = models.SingleViewModel().cuda()
 training_state = {'epoch' : 0}
-print(model)
+#print(model)
 
 # Load the model and training state on demand
 model_dir = os.path.abspath(args.model_dir)
@@ -99,7 +99,7 @@ if is_training_mode:
     print("Training from epoch {:d} to {:d}".format(epoch_start, epoch_end))
 
     # Set up the optimizer and loss
-    optimizer     = torch.optim.Adam(model.parameters(), lr=1e-4)
+    optimizer     = torch.optim.Adam(model.parameters(), lr=1e-5)
     loss_function = losses.MixedLoss()
 
     # Setup statistics stuff

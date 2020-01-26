@@ -102,20 +102,6 @@ class LocalRenderer:
 
         return torch.clamp(radiance, min=0.0, max=1.0)
 
-class Camera:
-    def __init__(self, pos):
-        self.pos = pos
-
-class Light:
-    def __init__(self, pos, color):
-        self.pos   = pos
-        self.color = color
-
-class Scene:
-    def __init__(self, camera, light):
-        self.camera = camera
-        self.light  = light
-
 class OrthoToPerspectiveMapping:
     def __init__(self, camera, sensor_size):
             self.sensor_size = sensor_size
@@ -184,6 +170,7 @@ class OrthoToPerspectiveMapping:
 if __name__ == '__main__':
     # Testing code for the renderer(s)
     import dataset
+    import environment as env
     import matplotlib.pyplot as plt
     import utils
 
@@ -191,7 +178,7 @@ if __name__ == '__main__':
     loader = torch.utils.data.DataLoader(data, batch_size=1, pin_memory=False)
 
     renderer = LocalRenderer()
-    scene    = Scene(Camera([0.0, 0.0, 2.0]), Light([-1.0, -1.0, 2.0], [50.0, 50.0, 50.0]))
+    scene    = env.Scene(env.Camera([0.0, 0.0, 2.0]), env.Light([-1.0, -1.0, 2.0], [50.0, 50.0, 50.0]))
 
     perspective_mapping = OrthoToPerspectiveMapping(scene.camera, (600, 600))
 
