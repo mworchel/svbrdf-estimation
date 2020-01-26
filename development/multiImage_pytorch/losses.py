@@ -1,3 +1,4 @@
+import environment as env
 import renderers
 import torch
 import torch.nn as nn
@@ -17,19 +18,6 @@ class RenderingLoss(nn.Module):
         
         self.renderer = renderers.LocalRenderer()
 
-
-    def generate_random_scenes(self, count):
-        view_positions  = utils.generate_normalized_random_direction(count, 0.001, 0.1)
-        light_positions = utils.generate_normalized_random_direction(count, 0.001, 0.1)
-
-        scenes = []
-        for i in range(count):
-            c = renderers.Camera(view_positions[i])
-            l = renderers.Light(light_positions[i], [50.0, 50.0, 50.0])
-            scenes.append(renderers.Scene(c, l))
-
-        return scenes
-
     def forward(self, input, target):
         batch_size = input.shape[0]
         random_configuration_count   = 3
@@ -39,7 +27,7 @@ class RenderingLoss(nn.Module):
         batch_target_renderings = []
         for i in range(batch_size):
         	# TODO: Generate specular configurations
-            scenes = self.generate_random_scenes(random_configuration_count) + self.generate_random_scenes(specular_configuration_count)
+            scenes = env.generate_random_scenes(random_configuration_count) + env.generate_random_scenes(specular_configuration_count)
             input_svbrdf  = input[i]
             target_svbrdf = target[i]
             for scene in scenes:

@@ -1,10 +1,11 @@
+import environment as env
 import matplotlib.pyplot as plt
 import math
 import os
 import numpy as np
+import renderers
 import torch
 import utils
-import renderers
 
 class SvbrdfDataset(torch.utils.data.Dataset):
     """
@@ -107,7 +108,7 @@ class SvbrdfDataset(torch.utils.data.Dataset):
             renderer = renderers.LocalRenderer()
             for i in range(generated_input_image_count):
                 # TODO: Add spotlight support to the renderer (currentConeTargetPos in the reference code)
-                scene = renderers.Scene(renderers.Camera(view_poses[i]), renderers.Light(light_poses[i], light_colors[i]))
+                scene = env.Scene(env.Camera(view_poses[i]), env.Light(light_poses[i], light_colors[i]))
                 
                 rendering = renderer.render(scene, svbrdf.unsqueeze(0))
 
