@@ -79,7 +79,7 @@ if __name__ == '__main__':
             # Define the perspective mapping
             perspective_mapping = renderers.OrthoToPerspectiveMapping(scene.camera, (600, 600))
 
-            output_dir = "./scene_tests/{:s}".format(tag)
+            output_dir = "./generate_scenes_test/{:s}".format(tag)
 
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
