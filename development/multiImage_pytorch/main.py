@@ -2,7 +2,6 @@ import argparse
 import dataset
 import json
 import losses
-import matplotlib.pyplot as plt
 import math
 import models
 import numpy as np
@@ -162,6 +161,9 @@ else:
     test_data = data
 
 test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=1, pin_memory=True)
+
+# Plotting
+import matplotlib.pyplot as plt
 
 fig=plt.figure(figsize=(8, 8))
 row_count = 2 * len(test_data)
