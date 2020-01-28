@@ -81,9 +81,11 @@ if os.path.exists(training_state_path):
 data = dataset.SvbrdfDataset(data_directory=args.input_dir, image_size=image_size, input_image_count=args.image_count, used_input_image_count=1, use_augmentation=True)
 
 if is_training_mode:
-    validation_split = 0.1
+    validation_split = 0.01
     print("Using {:.2f} % of the data for validation".format(round(validation_split * 100.0, 2)))
     training_data, validation_data = torch.utils.data.random_split(data, [int(math.ceil(len(data) * (1.0 - validation_split))), int(math.floor(len(data) * validation_split))])
+    print("Training samples: {:d}.".format(len(training_data)))
+    print("Validation samples: {:d}.".format(len(validation_data)))
 
     if len(validation_data) == 0:
         # Fixed fallback if the training set is too small
@@ -91,6 +93,7 @@ if is_training_mode:
         validation_data = training_data
 
     training_dataloader = torch.utils.data.DataLoader(training_data, batch_size=8, pin_memory=True, shuffle=True)
+    batch_count         = int(math.ceil(len(training_data) / training_dataloader.batch_size))
 
     # Determine the epoch range
     epoch_start = training_state['epoch']
@@ -100,6 +103,8 @@ if is_training_mode:
 
     # Set up the optimizer and loss
     optimizer     = torch.optim.Adam(model.parameters(), lr=1e-5)
+    # TODO: Use scheduler if necessary
+    #scheduler    = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min') 
     loss_function = losses.MixedLoss()
 
     # Setup statistics stuff
@@ -110,9 +115,11 @@ if is_training_mode:
     last_batch_inputs = None
 
     model.train(True)
-
     for epoch in range(epoch_start, epoch_end):
         for i, batch in enumerate(training_dataloader):
+            # Unique index of this batch
+            batch_index = epoch * batch_count + i
+
             # Construct inputs
             batch_inputs = batch["inputs"].cuda()
             batch_svbrdf = batch["svbrdf"].cuda()
@@ -127,7 +134,7 @@ if is_training_mode:
             print("Epoch {:d}, Batch {:d}, loss: {:f}".format(epoch + 1, i + 1, loss.item()))
 
             # Statistics
-            writer.add_scalar("loss", loss.item(), epoch)
+            writer.add_scalar("loss", loss.item(), batch_index)
             last_batch_inputs = batch_inputs
 
         if epoch % args.save_frequency == 0:
