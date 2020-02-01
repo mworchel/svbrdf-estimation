@@ -242,8 +242,6 @@ class RednerRenderer:
             full_scene = pyredner.Scene(camera = camera, objects = [material_patch, light])
             img = pyredner.render_pathtracing(full_scene, num_samples=(32,4))
 
-            img = torch.clamp(img, min=0.0, max=1.0)
-
             # Transform the rendered image back to something torch can interprete
             imgs.append(img.permute(2, 0, 1).to(svbrdf.device))
 
