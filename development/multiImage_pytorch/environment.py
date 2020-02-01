@@ -39,6 +39,8 @@ def generate_specular_scenes(count):
     distance_light = torch.exp(torch.Tensor(count, 1).normal_(mean=0.5, std=0.75))
 
     # Reference: "Shift position to have highlight elsewhere than in the center."
+    # NOTE: This code only creates guaranteed specular highlights in the orthographic rendering, not in the perspective one.
+    #       This is because the camera is -looking- at the center of the patch.
     shift = torch.cat([torch.Tensor(count, 2).uniform_(-1.0, 1.0), torch.zeros((count, 1)) + 0.0001], dim=-1)
 
     view_positions  = view_positions  * distance_view  + shift
@@ -64,7 +66,6 @@ if __name__ == '__main__':
     renderer = renderers.LocalRenderer()
 
     # Generate some random scenes
-    scenes   = generate_random_scenes(5) + generate_specular_scenes(5)
 
     def render_scenes(scenes, tag):
         for i, scene in enumerate(scenes):
