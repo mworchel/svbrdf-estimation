@@ -19,10 +19,10 @@ class SVBRDFL1Loss(nn.Module):
         return nn.functional.l1_loss(input_normals, target_normals) + nn.functional.l1_loss(input_diffuse, target_diffuse) + nn.functional.l1_loss(input_roughness, target_roughness) + nn.functional.l1_loss(input_specular, target_specular)
 
 class RenderingLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, renderer):
         super(RenderingLoss, self).__init__()
         
-        self.renderer = renderers.LocalRenderer()
+        self.renderer = renderer
         self.random_configuration_count   = 3
         self.specular_configuration_count = 6
 
@@ -52,12 +52,12 @@ class RenderingLoss(nn.Module):
         return loss
 
 class MixedLoss(nn.Module):
-    def __init__(self, l1_weight = 0.1):
+    def __init__(self, renderer, l1_weight = 0.1):
         super(MixedLoss, self).__init__()
 
         self.l1_weight      = l1_weight
         self.l1_loss        = SVBRDFL1Loss()
-        self.rendering_loss = RenderingLoss()
+        self.rendering_loss = RenderingLoss(renderer)
 
     def forward(self, input, target):
         return self.l1_weight * self.l1_loss(input, target) + self.rendering_loss(input, target)

@@ -6,6 +6,7 @@ import math
 import models
 import pathlib
 from persistence import Checkpoint
+import renderers
 from tensorboardX import SummaryWriter
 import torch
 import utils
@@ -63,13 +64,25 @@ if args.mode == 'train':
 
     print("Training from epoch {:d} to {:d}".format(epoch_start, epoch_end))
 
-    # Set up the optimizer and loss
+    # Set up the optimizer
     optimizer     = torch.optim.Adam(model.parameters(), lr=1e-5)
     if checkpoint.is_valid():
         optimizer = checkpoint.restore_optimizer_state(optimizer)
     # TODO: Use scheduler if necessary
     #scheduler    = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min') 
-    loss_function = losses.MixedLoss()
+
+    # Set up the loss
+    loss_renderer = None
+    if args.renderer == 'local':
+        loss_renderer = renderers.LocalRenderer()
+    elif args.renderer == 'pathtracing':
+        import platform
+        use_gpu = True
+        if platform.system() == 'Windows':
+            print("Pathtracing with Redner is only supported for CPU mode on Windows. Gradient computation will be buggy. See https://github.com/BachiLi/redner/issues/93.")
+            use_gpu = False
+        loss_renderer = renderers.RednerRenderer(use_gpu)
+    loss_function = losses.MixedLoss(loss_renderer)
 
     # Setup statistics stuff
     statistics_dir = pathlib.Path("./logs")
