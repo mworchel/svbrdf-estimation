@@ -1,56 +1,22 @@
-import argparse
+import cli
 import dataset
 import json
 import losses
 import math
 import models
-import numpy as np
 import os
-import random
 from tensorboardX import SummaryWriter
 import torch
 import utils
 
-parser = argparse.ArgumentParser(description='SVBRDF Estimation from Images')
-parser.add_argument('--mode', '-M', dest='mode', action='store', required=True,
-                    choices=['train', 'test'], default='train',
-                    help='Mode in which the script is executed.')
-parser.add_argument('--input-dir', '-i', dest='input_dir', action='store', required=True,
-                    help='Directory containing the input data.')
-parser.add_argument('--image-count', '-c', dest='image_count', action='store', required=True,
-                    type=int, 
-                    help='Number of input images (i.e., photographs of the material patch) in the input dataset.')
-parser.add_argument('--model-dir', '-m', dest='model_dir', action='store', required=True,
-                    help='Directory for the model and training metadata.')
-parser.add_argument('--save-frequency', dest='save_frequency', action='store', required=False,
-                    type=int, choices=range(1, 1000), default=50,
-                    metavar="[0-1000]",
-                    help='Number of consecutive training epochs after which a checkpoint of the model is saved. Default is %(default)s.')
-parser.add_argument('--epochs', '-e', dest='epochs', action='store',
-                    type=int, default=100,
-                    help='Maximum number of epochs to run the training for.')
-parser.add_argument('--retrain', dest='retrain', action='store_true',
-                    help='When training, ignore any data in the model directory.')
-args = parser.parse_args()
-
-is_training_mode = args.mode == 'train'
+args = cli.parse_args()
 
 # Make the result reproducible
-seed = 313
-random.seed(seed)
-np.random.seed(seed)
-torch.cuda.manual_seed(seed)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark     = False
-torch.manual_seed(seed)
-
-# Fix image size (width and height) used by the model
-image_size     = 256 
+utils.enable_deterministic_random_engine()
 
 # Create the model
 model          = models.SingleViewModel().cuda()
 training_state = {'epoch' : 0}
-#print(model)
 
 # Load the model and training state on demand
 model_dir = os.path.abspath(args.model_dir)
@@ -63,7 +29,7 @@ if os.path.exists(model_path):
     if not args.retrain:
         model.load_state_dict(torch.load(model_path))
 else:
-    if not is_training_mode:
+    if args.mode == 'test':
         print("No model found in the model directory but it is required for testing.")
         exit(1)
     else:
@@ -77,9 +43,9 @@ if os.path.exists(training_state_path):
         print("Loaded training state: {:s}.".format(str(training_state)))
 
 # TODO: Choose a random number for the used input image count if we are training and we don't request it to be fix (see fixImageNb for reference)
-data = dataset.SvbrdfDataset(data_directory=args.input_dir, image_size=image_size, input_image_count=args.image_count, used_input_image_count=1, use_augmentation=True)
+data = dataset.SvbrdfDataset(data_directory=args.input_dir, image_size=args.image_size, input_image_count=args.image_count, used_input_image_count=args.used_image_count, use_augmentation=True)
 
-if is_training_mode:
+if args.mode == 'train':
     validation_split = 0.01
     print("Using {:.2f} % of the data for validation".format(round(validation_split * 100.0, 2)))
     training_data, validation_data = torch.utils.data.random_split(data, [int(math.ceil(len(data) * (1.0 - validation_split))), int(math.floor(len(data) * validation_split))])

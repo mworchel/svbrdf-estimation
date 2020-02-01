@@ -1,5 +1,16 @@
 import math
+import numpy as np
+import random
 import torch
+
+def enable_deterministic_random_engine():
+    seed = 313
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark     = False
+    torch.manual_seed(seed)
 
 def crop_square(tensor, anchor, size):
     num_dimensions = len(tensor.shape)
