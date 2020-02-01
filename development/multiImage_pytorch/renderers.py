@@ -1,6 +1,7 @@
 import cv2
 import math
 import numpy as np
+import pyredner
 import utils
 import torch
 
@@ -165,6 +166,89 @@ class OrthoToPerspectiveMapping:
     def apply(self, image):
         return cv2.warpPerspective(image, self.H, dsize=self.sensor_size)
 
+class RednerRenderer:
+    def __init__(self, use_gpu):
+        pyredner.set_use_gpu(use_gpu)
+        self.redner_device = pyredner.get_device()
+        print("Using device '{}' for redner".format(self.redner_device))
+
+        # Define vertices, uv coordinates and faces for a
+        # material patch in the origin (essentially a quad).
+        self.patch_vertices = torch.FloatTensor([
+            [-1,  1, 0], # Top left
+            [-1, -1, 0], # Bottom left
+            [ 1, -1, 0], # Bottom right 
+            [ 1,  1, 0]  # Top right
+            ]).to(self.redner_device)
+        
+        self.patch_uvs = torch.FloatTensor([
+            [0.0, 0.0], 
+            [0.0, 1.0], 
+            [1.0, 1.0], 
+            [1.0, 0.0]
+            ]).to(self.redner_device)
+
+        self.patch_indices = torch.IntTensor([
+            [0, 1, 2],
+            [2, 3, 0],
+            ]).to(self.redner_device)
+
+    def render(self, scene, svbrdf):
+        imgs = []
+        for svbrdf_single in torch.split(svbrdf, 1, dim=0):
+            normals, diffuse, roughness, specular = utils.unpack_svbrdf(svbrdf_single.squeeze())
+            # Redner expects the normal map to be in range [0, 1]
+            normals   = utils.encode_as_unit_interval(normals) 
+            # Redner expects the roughness to have one channel only.
+            # We also need to convert from Cook-Torrance roughness to Blinn-Phong power.
+            # See: https://github.com/iondune/csc473/blob/master/lectures/07-cook-torrance.md
+            roughness = roughness[0:1,:,:] ** 4                
+
+            # Convert from [c,h,w] to [h,w,c] for redner
+            normals   = normals.permute(1, 2, 0)
+            diffuse   = diffuse.permute(1, 2, 0)
+            roughness = roughness.permute(1, 2, 0) 
+            specular  = specular.permute(1, 2, 0)
+
+            material = pyredner.Material(
+                diffuse_reflectance=pyredner.Texture(diffuse.to(self.redner_device)), 
+                specular_reflectance=pyredner.Texture(specular.to(self.redner_device)), 
+                roughness=pyredner.Texture(roughness.to(self.redner_device)), 
+                normal_map=pyredner.Texture(normals.to(self.redner_device)))
+
+            material_patch = pyredner.Object(vertices=self.patch_vertices, uvs=self.patch_uvs, indices=self.patch_indices, material=material)
+
+            # Define the camera parameters (focused at the middle of the patch) and make sure we always have a valid 'up' direction
+            position = np.array(scene.camera.pos)
+            lookat   = np.array([0.0, 0.0, 0.0])
+            cz       = lookat - position          # Principal axis
+            up       = np.array([0.0, 0.0, 1.0])
+            if np.linalg.norm(np.cross(cz, up)) == 0.0:     
+                up = np.array([0.0, 1.0, 0.0])
+
+            camera = pyredner.Camera(torch.FloatTensor(position), torch.FloatTensor(lookat), torch.FloatTensor(up), torch.FloatTensor([90]), resolution=(256,256))
+
+            # # The deferred rendering path. 
+            # # It does not have a specular model and therefore is of limited usability for us
+            # full_scene = pyredner.Scene(camera = camera, objects = [material_patch])
+            # light = pyredner.PointLight(position = torch.tensor(scene.light.pos).to(self.redner_device),
+            #                                    intensity = torch.tensor(scene.light.color).to(self.redner_device))
+            # img = pyredner.render_deferred(scene = full_scene, lights = [light])
+
+            light = pyredner.generate_quad_light(position  = torch.tensor(scene.light.pos),
+                                                 look_at   = torch.zeros(3),
+                                                 size      = torch.tensor([0.6, 0.6]),
+                                                 intensity = torch.tensor(scene.light.color))
+            full_scene = pyredner.Scene(camera = camera, objects = [material_patch, light])
+            img = pyredner.render_pathtracing(full_scene, num_samples=(32,4))
+
+            img = torch.clamp(img, min=0.0, max=1.0)
+
+            # Transform the rendered image back to something torch can interprete
+            imgs.append(img.permute(2, 0, 1).to(svbrdf.device))
+
+        return torch.stack(imgs)
+
 if __name__ == '__main__':
     # Testing code for the renderer(s)
     import dataset
@@ -175,8 +259,9 @@ if __name__ == '__main__':
     data   = dataset.SvbrdfDataset(data_directory="./data/train", image_size=256, input_image_count=10, used_input_image_count=1, use_augmentation=True)
     loader = torch.utils.data.DataLoader(data, batch_size=1, pin_memory=False)
 
-    renderer = LocalRenderer()
-    scene    = env.Scene(env.Camera([0.0, 0.0, 2.0]), env.Light([-1.0, -1.0, 2.0], [50.0, 50.0, 50.0]))
+    renderer        = LocalRenderer()
+    redner_renderer = RednerRenderer(use_gpu=False)
+    scene           = env.Scene(env.Camera([0.0, 0.0, 2.0]), env.Light([0.0, 0.0, 2.0], [50.0, 50.0, 50.0]))
 
     perspective_mapping = OrthoToPerspectiveMapping(scene.camera, (600, 600))
 
@@ -223,5 +308,10 @@ if __name__ == '__main__':
         perspective_rendering = perspective_mapping.apply(rendering.numpy())
         fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 7)
         plt.imshow(perspective_rendering)
+        plt.axis('off')
+
+        rendering    = utils.gamma_encode(redner_renderer.render(scene, utils.pack_svbrdf(normals, diffuse, roughness, specular))).squeeze(0).permute(1, 2, 0)
+        fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 8)
+        plt.imshow(rendering)
         plt.axis('off')
     plt.show()
