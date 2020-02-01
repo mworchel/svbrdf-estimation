@@ -195,8 +195,11 @@ class RednerRenderer:
 
     def render(self, scene, svbrdf):
         imgs = []
+
+        svbrdf = svbrdf.unsqueeze(0) if len(svbrdf.shape) == 3 else svbrdf
+
         for svbrdf_single in torch.split(svbrdf, 1, dim=0):
-            normals, diffuse, roughness, specular = utils.unpack_svbrdf(svbrdf_single.squeeze())
+            normals, diffuse, roughness, specular = utils.unpack_svbrdf(svbrdf_single.squeeze(0))
             # Redner expects the normal map to be in range [0, 1]
             normals   = utils.encode_as_unit_interval(normals) 
             # Redner expects the roughness to have one channel only.
