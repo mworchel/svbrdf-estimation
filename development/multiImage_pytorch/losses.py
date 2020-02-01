@@ -10,6 +10,12 @@ class SVBRDFL1Loss(nn.Module):
         input_normals,  input_diffuse,  input_roughness,  input_specular  = utils.unpack_svbrdf(input)
         target_normals, target_diffuse, target_roughness, target_specular = utils.unpack_svbrdf(target)
 
+        epsilon_l1      = 0.01
+        input_diffuse   = torch.log(input_diffuse   + epsilon_l1)
+        input_specular  = torch.log(input_specular  + epsilon_l1)
+        target_diffuse  = torch.log(target_diffuse  + epsilon_l1)
+        target_specular = torch.log(target_specular + epsilon_l1)
+
         return nn.functional.l1_loss(input_normals, target_normals) + nn.functional.l1_loss(input_diffuse, target_diffuse) + nn.functional.l1_loss(input_roughness, target_roughness) + nn.functional.l1_loss(input_specular, target_specular)
 
 class RenderingLoss(nn.Module):
@@ -33,10 +39,11 @@ class RenderingLoss(nn.Module):
                 batch_input_renderings.append(self.renderer.render(scene, input_svbrdf))
                 batch_target_renderings.append(self.renderer.render(scene, target_svbrdf))
 
-        input_renderings  = torch.stack(batch_input_renderings, dim=0)
-        target_renderings = torch.stack(batch_target_renderings, dim=0)
+        epsilon_render    = 0.1
+        input_renderings  = torch.log(torch.stack(batch_input_renderings, dim=0) + epsilon_render)
+        target_renderings = torch.log(torch.stack(batch_target_renderings, dim=0) + epsilon_render)
 
-        loss = nn.functional.l1_loss(torch.log(input_renderings + 1), torch.log(target_renderings + 1))
+        loss = nn.functional.l1_loss(input_renderings, target_renderings)
 
         return loss
 
