@@ -98,9 +98,7 @@ class LocalRenderer:
 
         # TODO: Add camera exposure
 
-        # TODO: Perform tone-mapping from HDR to SDR
-
-        return torch.clamp(radiance, min=0.0, max=1.0)
+        return radiance
 
 class OrthoToPerspectiveMapping:
     def __init__(self, camera, sensor_size):
