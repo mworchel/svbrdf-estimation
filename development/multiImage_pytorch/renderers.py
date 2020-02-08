@@ -168,6 +168,7 @@ class OrthoToPerspectiveMapping:
 
 class RednerRenderer:
     def __init__(self, use_gpu):
+        pyredner.set_print_timing(False)
         pyredner.set_use_gpu(use_gpu)
         self.redner_device = pyredner.get_device()
         print("Using device '{}' for redner".format(self.redner_device))
