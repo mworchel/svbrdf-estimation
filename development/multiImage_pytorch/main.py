@@ -76,12 +76,7 @@ if args.mode == 'train':
     if args.renderer == 'local':
         loss_renderer = renderers.LocalRenderer()
     elif args.renderer == 'pathtracing':
-        import platform
-        use_gpu = True
-        if platform.system() == 'Windows':
-            print("Pathtracing with Redner is only supported for CPU mode on Windows. Gradient computation will be buggy. See https://github.com/BachiLi/redner/issues/93")
-            use_gpu = False
-        loss_renderer = renderers.RednerRenderer(use_gpu)
+        loss_renderer = renderers.RednerRenderer()
     loss_function = losses.MixedLoss(loss_renderer)
 
     # Setup statistics stuff
