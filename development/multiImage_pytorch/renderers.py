@@ -167,7 +167,7 @@ class OrthoToPerspectiveMapping:
         return cv2.warpPerspective(image, self.H, dsize=self.sensor_size)
 
 class RednerRenderer:
-    def __init__(self, use_gpu):
+    def __init__(self, use_gpu=True):
         pyredner.set_print_timing(False)
         pyredner.set_use_gpu(use_gpu)
         self.redner_device = pyredner.get_device()
