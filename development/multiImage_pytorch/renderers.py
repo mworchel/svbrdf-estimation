@@ -206,7 +206,7 @@ class RednerRenderer:
             # Redner expects the roughness to have one channel only.
             # We also need to convert from Cook-Torrance roughness to Blinn-Phong power.
             # See: https://github.com/iondune/csc473/blob/master/lectures/07-cook-torrance.md
-            roughness = roughness[0:1,:,:] ** 4                
+            roughness = torch.mean(torch.clamp(roughness, min=0.001), dim=0, keepdim=True) ** 4                
 
             # Convert from [c,h,w] to [h,w,c] for redner
             normals   = normals.permute(1, 2, 0)
@@ -239,12 +239,12 @@ class RednerRenderer:
             #                                    intensity = torch.tensor(scene.light.color).to(self.redner_device))
             # img = pyredner.render_deferred(scene = full_scene, lights = [light])
 
-            light = pyredner.generate_quad_light(position  = torch.tensor(scene.light.pos),
+            light = pyredner.generate_quad_light(position  = torch.Tensor(scene.light.pos),
                                                  look_at   = torch.zeros(3),
-                                                 size      = torch.tensor([0.6, 0.6]),
-                                                 intensity = torch.tensor(scene.light.color))
+                                                 size      = torch.Tensor([0.6, 0.6]),
+                                                 intensity = torch.Tensor(scene.light.color))
             full_scene = pyredner.Scene(camera = camera, objects = [material_patch, light])
-            img = pyredner.render_pathtracing(full_scene, num_samples=(32,4))
+            img = pyredner.render_pathtracing(full_scene, num_samples=(4,4))
 
             # Transform the rendered image back to something torch can interprete
             imgs.append(img.permute(2, 0, 1).to(svbrdf.device))
@@ -263,7 +263,7 @@ if __name__ == '__main__':
 
     renderer        = LocalRenderer()
     redner_renderer = RednerRenderer(use_gpu=False)
-    scene           = env.Scene(env.Camera([0.0, 0.0, 2.0]), env.Light([0.0, 0.0, 2.0], [50.0, 50.0, 50.0]))
+    scene           = env.Scene(env.Camera([0.0, -1.0, 2.0]), env.Light([0.0, 0.0, 2.0], [50.0, 50.0, 50.0]))
 
     perspective_mapping = OrthoToPerspectiveMapping(scene.camera, (600, 600))
 
