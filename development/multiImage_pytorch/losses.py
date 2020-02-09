@@ -35,13 +35,17 @@ class RenderingLoss(nn.Module):
             scenes = env.generate_random_scenes(random_configuration_count) + env.generate_specular_scenes(specular_configuration_count)
             input_svbrdf  = input[i]
             target_svbrdf = target[i]
+            input_renderings  = []
+            target_renderings = []
             for scene in scenes:
-                batch_input_renderings.append(self.renderer.render(scene, input_svbrdf))
-                batch_target_renderings.append(self.renderer.render(scene, target_svbrdf))
+                input_renderings.append(self.renderer.render(scene, input_svbrdf))
+                target_renderings.append(self.renderer.render(scene, target_svbrdf))
+            batch_input_renderings.append(torch.cat(input_renderings, dim=0))
+            batch_target_renderings.append(torch.cat(target_renderings, dim=0))
 
         epsilon_render    = 0.1
-        input_renderings  = torch.log(torch.stack(batch_input_renderings, dim=0) + epsilon_render)
-        target_renderings = torch.log(torch.stack(batch_target_renderings, dim=0) + epsilon_render)
+        batch_input_renderings_logged  = torch.log(torch.stack(batch_input_renderings, dim=0)  + epsilon_render)
+        batch_target_renderings_logged = torch.log(torch.stack(batch_target_renderings, dim=0) + epsilon_render)
 
         loss = nn.functional.l1_loss(input_renderings, target_renderings)
 
