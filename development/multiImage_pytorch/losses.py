@@ -47,7 +47,7 @@ class RenderingLoss(nn.Module):
         batch_input_renderings_logged  = torch.log(torch.stack(batch_input_renderings, dim=0)  + epsilon_render)
         batch_target_renderings_logged = torch.log(torch.stack(batch_target_renderings, dim=0) + epsilon_render)
 
-        loss = nn.functional.l1_loss(input_renderings, target_renderings)
+        loss = nn.functional.l1_loss(batch_input_renderings_logged, batch_target_renderings_logged)
 
         return loss
 
