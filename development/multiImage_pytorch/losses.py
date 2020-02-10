@@ -23,16 +23,16 @@ class RenderingLoss(nn.Module):
         super(RenderingLoss, self).__init__()
         
         self.renderer = renderers.LocalRenderer()
+        self.random_configuration_count   = 3
+        self.specular_configuration_count = 6
 
     def forward(self, input, target):
         batch_size = input.shape[0]
-        random_configuration_count   = 3
-        specular_configuration_count = 6
 
         batch_input_renderings = []
         batch_target_renderings = []
         for i in range(batch_size):
-            scenes = env.generate_random_scenes(random_configuration_count) + env.generate_specular_scenes(specular_configuration_count)
+            scenes = env.generate_random_scenes(self.random_configuration_count) + env.generate_specular_scenes(self.specular_configuration_count)
             input_svbrdf  = input[i]
             target_svbrdf = target[i]
             input_renderings  = []
