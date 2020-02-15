@@ -28,7 +28,7 @@ cd ~/redner
 echo $PWD
 
 # conda create -y --name redner-build-env python=3.6.7 pytorch=1.3 pybind11 scikit-image
-conda activate redner-build-env
+source activate redner-build-env
 
 echo "Building redner"
 python -u -m pip wheel -w dist --verbose .

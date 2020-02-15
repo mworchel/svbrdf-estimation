@@ -28,7 +28,7 @@ echo $PWD
 
 # conda create -y --name svbrdf-env python=3.6.7 pytorch=1.3 matplotlib numpy
 # conda run -n svbrdf-env pip install tensorboardX
-conda activate svbrdf-env
+source activate svbrdf-env
 
 echo "Running training"
 # -u option is to use unbuffered stdout and stderr so we can directly tail -f to the outputs
