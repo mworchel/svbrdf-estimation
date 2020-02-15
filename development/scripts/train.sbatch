@@ -26,7 +26,7 @@ echo "Entering working directory"
 cd ~/svbrdf-estimation/development/multiImage_pytorch/
 echo $PWD
 
-# conda create -y --name svbrdf-env python=3.6.7 pytorch=1.3 matplotlib numpy
+# conda create -y --name svbrdf-env python=3.6.7 pytorch=1.3 scikit-image matplotlib numpy
 # conda run -n svbrdf-env pip install tensorboardX
 source activate svbrdf-env
 
