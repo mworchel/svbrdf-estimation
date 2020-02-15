@@ -230,7 +230,8 @@ class RednerRenderer:
             if np.linalg.norm(np.cross(cz, up)) == 0.0:     
                 up = np.array([0.0, 1.0, 0.0])
 
-            camera = pyredner.Camera(torch.FloatTensor(position), torch.FloatTensor(lookat), torch.FloatTensor(up), torch.FloatTensor([90]), resolution=(256,256))
+            camera = pyredner.Camera(torch.FloatTensor(position), torch.FloatTensor(lookat), torch.FloatTensor(up), torch.FloatTensor([90]), resolution=(256,256),
+                                     camera_type=pyredner.camera_type.fullpatchsample)
 
             # # The deferred rendering path. 
             # # It does not have a specular model and therefore is of limited usability for us
@@ -244,7 +245,7 @@ class RednerRenderer:
                                                  size      = torch.Tensor([0.6, 0.6]),
                                                  intensity = torch.Tensor(scene.light.color))
             full_scene = pyredner.Scene(camera = camera, objects = [material_patch, light])
-            img = pyredner.render_pathtracing(full_scene, num_samples=(4,4))
+            img = pyredner.render_pathtracing(full_scene, num_samples=(16,8))
 
             # Transform the rendered image back to something torch can interprete
             imgs.append(img.permute(2, 0, 1).to(svbrdf.device))
