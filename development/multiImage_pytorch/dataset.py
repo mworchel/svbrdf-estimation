@@ -12,7 +12,7 @@ class SvbrdfDataset(torch.utils.data.Dataset):
     Class representing a collection of SVBRDF samples with corresponding input images (rendered or real views of the SVBRDF)
     """
 
-    def __init__(self, data_directory, image_size, input_image_count, used_input_image_count, use_augmentation):
+    def __init__(self, data_directory, image_size, input_image_count, used_input_image_count, use_augmentation, mix_materials=False):
         self.data_directory = data_directory
         self.file_paths = [os.path.join(data_directory, f) for f in os.listdir(data_directory) if os.path.isfile(os.path.join(data_directory, f))]
 
@@ -22,6 +22,12 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         # No augmentation means fixed view distance, light intensity, neutral whitebalance and constant flash falloff
         self.use_augmentation       = use_augmentation
 
+        # Material mixing augments the dataset by mixing together two materials
+        self.mix_materials = mix_materials
+        if self.mix_materials and self.input_image_count > 0:
+            self.mix_materials = False
+            print("Warning: Material mixing is only supported for datasets without input images.")
+
     def __len__(self):
         return len(self.file_paths)
 
@@ -29,43 +35,24 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        # Read full image
-        file_path    = self.file_paths[idx]
-        full_image   = torch.Tensor(plt.imread(file_path)).permute(2, 0, 1)
+        input_images, svbrdf = self.read_sample(self.file_paths[idx])
 
-        # Split the full image apart along the horizontal direction 
-        # Magick number 4 is the number of maps in the SVBRDF
-        image_parts  = torch.cat(full_image.unsqueeze(0).chunk(self.input_image_count + 4, dim=-1), 0) # [n, 3, 256, 256]
-
-        # Query the height of the images, which represents the size of the read images
-        # (assuming square images)
-        actual_image_size = image_parts.shape[-2]
+        if self.mix_materials:
+            import random
+            other_index     = random.randrange(0, self.__len__())
+            _, other_svbrdf = self.read_sample(self.file_paths[other_index])
+            svbrdf          = self.mix(svbrdf, other_svbrdf)
 
         # Determine the top left point of the cropped image
         # TODO: If we use jittering, this has to be determined by the random jitter of the rendered images
         crop_anchor = torch.IntTensor([0, 0])
 
-        # Read and crop the SVBRDF
-        normals   = image_parts[self.input_image_count + 0].unsqueeze(0)
-        normals   = utils.decode_from_unit_interval(normals)
-        diffuse   = image_parts[self.input_image_count + 1].unsqueeze(0)
-        roughness = image_parts[self.input_image_count + 2].unsqueeze(0)
-        specular  = image_parts[self.input_image_count + 3].unsqueeze(0)
-
-        svbrdf = utils.pack_svbrdf(normals, diffuse, roughness, specular).squeeze(0) # [12, 256, 256]
-
-        svbrdf = utils.crop_square(svbrdf, crop_anchor, self.image_size)
-
-        # We read as many input images from the disk as we can and generate the rest artificially
-        read_input_image_count      = min(self.input_image_count, self.used_input_image_count)
-        generated_input_image_count = self.used_input_image_count - read_input_image_count
-
-        # Use the last of the given input images
-        input_images = image_parts[(self.input_image_count - read_input_image_count) : self.input_image_count] # [ni, 3, 256, 256]
-
-        # Crop down the given input images
+        # Crop down the svbrdf and the given input images
+        svbrdf       = utils.crop_square(svbrdf, crop_anchor, self.image_size)
         input_images = utils.crop_square(input_images, crop_anchor, self.image_size) 
 
+        # Images which cannot be read must be generated artificially
+        generated_input_image_count = self.used_input_image_count - input_images.shape[0]
         if generated_input_image_count > 0:
             # Constants as defined in the reference code
             min_eps              = 0.001 # Reference: "allows near 90     degrees angles"
@@ -127,3 +114,46 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         input_images = utils.gamma_decode(input_images)
 
         return {'inputs': input_images, 'svbrdf': svbrdf}
+
+    def read_sample(self, file_path):
+        # Read full image
+        full_image   = torch.Tensor(plt.imread(file_path)).permute(2, 0, 1)
+
+        # Split the full image apart along the horizontal direction 
+        # Magick number 4 is the number of maps in the SVBRDF
+        image_parts  = torch.cat(full_image.unsqueeze(0).chunk(self.input_image_count + 4, dim=-1), 0) # [n, 3, 256, 256]
+
+        # Read and crop the SVBRDF
+        normals   = image_parts[self.input_image_count + 0].unsqueeze(0)
+        normals   = utils.decode_from_unit_interval(normals)
+        diffuse   = image_parts[self.input_image_count + 1].unsqueeze(0)
+        roughness = image_parts[self.input_image_count + 2].unsqueeze(0)
+        specular  = image_parts[self.input_image_count + 3].unsqueeze(0)
+
+        svbrdf = utils.pack_svbrdf(normals, diffuse, roughness, specular).squeeze(0) # [12, 256, 256]
+
+        # We read as many input images from the disk as we can
+        # FIXME: This is a little bit counter-intuitive, as we are reading the last n images, not the first n
+        read_input_image_count = min(self.input_image_count, self.used_input_image_count)
+        input_images           = image_parts[(self.input_image_count - read_input_image_count) : self.input_image_count] # [ni, 3, 256, 256]
+
+        return input_images, svbrdf
+
+    def mix(self, svbrdf_0, svbrdf_1):
+        alpha = torch.Tensor(1).uniform_(0.1, 0.9)
+
+        normals_0, diffuse_0, roughness_0, specular_0 = utils.unpack_svbrdf(svbrdf_0)
+        normals_1, diffuse_1, roughness_1, specular_1 = utils.unpack_svbrdf(svbrdf_1)
+
+        # Reference "Project the normals to use the X and Y derivative"
+        normals_0_projected = normals_0 / torch.max(torch.Tensor([0.01]), normals_0[2:3,:,:])
+        normals_1_projected = normals_1 / torch.max(torch.Tensor([0.01]), normals_1[2:3,:,:])
+
+        normals_mixed = alpha * normals_0_projected + (1.0 - alpha) * normals_1_projected
+        normals_mixed = normals_mixed / torch.sqrt(torch.sum(normals_mixed**2, axis=0,keepdim=True)) # Normalization
+
+        diffuse_mixed   = alpha * diffuse_0 + (1.0 - alpha) * diffuse_1
+        roughness_mixed = alpha * roughness_0 + (1.0 - alpha) * roughness_1
+        specular_mixed  = alpha * specular_0 + (1.0 - alpha) * specular_1
+        
+        return utils.pack_svbrdf(normals_mixed, diffuse_mixed, roughness_mixed, specular_mixed)

@@ -43,7 +43,7 @@ if os.path.exists(training_state_path):
         print("Loaded training state: {:s}.".format(str(training_state)))
 
 # TODO: Choose a random number for the used input image count if we are training and we don't request it to be fix (see fixImageNb for reference)
-data = dataset.SvbrdfDataset(data_directory=args.input_dir, image_size=args.image_size, input_image_count=args.image_count, used_input_image_count=args.used_image_count, use_augmentation=True)
+data = dataset.SvbrdfDataset(data_directory=args.input_dir, image_size=args.image_size, input_image_count=args.image_count, used_input_image_count=args.used_image_count, use_augmentation=True, mix_materials=args.mode=='train')
 
 if args.mode == 'train':
     validation_split = 0.01
