@@ -17,19 +17,25 @@
 
 # Load required modules
 module purge
-
 module load comp/gcc/7.2.0
-module load python/3.6.7
+module load nvidia/cuda/10.0
 
+# Switch into correct working directory
 echo $PWD
 echo "Entering working directory"
-
 cd ~/svbrdf-estimation/development/multiImage_pytorch/
 echo $PWD
 
-echo "Run training"
-python3 -u main.py --mode train --input-dir "./../../../materialsData_multi_image/train/" --image-count 0 --model-dir "./models" --epochs 200 --save-frequency 1
+# conda create -y --name svbrdf-env python=3.6.7 pytorch=1.3 matplotlib numpy
+# conda run -n svbrdf-env pip install tensorboardX
+conda activate svbrdf-env
+
+echo "Running training"
+# -u option is to use unbuffered stdout and stderr so we can directly tail -f to the outputs
+python -u main.py --mode train --input-dir "./../../../materialsData_multi_image/train/" --image-count 0 --model-dir "./models" --epochs 200 --save-frequency 1
 exitCode=$?
 echo "Finished training (exit code $exitCode)"
+
+conda deactivate
 
 exit $exitCode
