@@ -203,7 +203,7 @@ class Generator(nn.Module):
         # initMultiplier = 0.01  (for linear)
         # encdec_bootstrap = LayerBootstrapping(use_convolution_bias=False, use_linear_bias=False, initialize_weights=True, convolution_init_scale=0.02, linear_init_scale=0.01)
         # FIXME: I personally have the feeling that not performing explicit initialization is better for convergence
-        encdec_bootstrap = LayerBootstrapping(use_convolution_bias=False, use_linear_bias=False, initialize_weights=False, convolution_init_scale=0.02, linear_init_scale=0.01)
+        encdec_bootstrap = LayerBootstrapping(use_convolution_bias=False, use_linear_bias=False, initialize_weights=True, convolution_init_scale=0.02, linear_init_scale=0.01)
 
         encoding_input_channel_count = self.input_channel_count + 2 if self.use_coords else self.input_channel_count
         self.enc1 = EncodingLayer(encdec_bootstrap, encoding_input_channel_count,   self.number_of_filters    , False, False) # encoder_1: [batch, 256, 256, 3      ] => [batch, 128, 128, ngf    ]
@@ -231,7 +231,7 @@ class Generator(nn.Module):
         # initMultiplier = 1.0   (for linear)
         # gt_boostrap = ConvLinBootstrap(use_linear_bias=True, initialize_weights=True, linear_init_scale=1.0)
         # FIXME: I personally have the feeling that not performing explicit initialization is better for convergence
-        gt_boostrap = LayerBootstrapping(use_linear_bias=True, initialize_weights=False, linear_init_scale=1.0)
+        gt_boostrap = LayerBootstrapping(use_linear_bias=True, initialize_weights=True, linear_init_scale=1.0)
 
         def bi_noop(x, y):
             return None
