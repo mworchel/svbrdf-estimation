@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from PIL import Image
 import random
 import torch
 
@@ -107,6 +108,30 @@ def generate_normalized_random_direction(count, min_eps = 0.001, max_eps = 0.05)
     z = torch.sqrt(1.0 - r**2)
 
     return torch.cat([x, y, z], axis=-1)
+
+def read_image(path): 
+    return np.float32(Image.open(path)) / 255.0
+
+def read_image_tensor(path):
+    return torch.Tensor(read_image(path)).permute(2, 0, 1)
+
+def write_image(path, image):
+    Image.fromarray(np.uint8(np.clip(image, 0.0, 1.0) * 255.0)).save(path)
+
+def write_image_tensor(path, tensor):
+    original_shape = tensor.shape
+    old_shape      = tensor.shape
+    while len(old_shape) > 3:
+        tensor    = tensor.squeeze(0)
+        new_shape = tensor.shape
+        if len(old_shape) == len(new_shape):
+            # We were not able to squeeze the tensor any further to 3 dimensions.
+            raise RuntimeError("Unable to squeeze tensor of shape {} into 3 dimensions.".format(original_shape))
+        old_shape = new_shape
+
+    tensor = tensor.cpu().detach().permute(1, 2, 0) # Shuffle from [c, h, w] to [h, w, c]
+
+    write_image(path, tensor.numpy())
 
 if __name__ == '__main__':
     import math
