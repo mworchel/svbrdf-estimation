@@ -1,4 +1,5 @@
 import environment as env
+from PIL import Image
 import matplotlib.pyplot as plt
 import math
 import os
@@ -6,6 +7,44 @@ import numpy as np
 import renderers
 import torch
 import utils
+
+class BaseDataset(torch.utils.data.Dataset):
+    def __init__(self, data_directory, input_image_count, input_material_map_count, used_input_image_count):
+        self.data_directory = data_directory
+        self.file_paths     = [os.path.join(data_directory, f) for f in os.listdir(data_directory) if os.path.isfile(os.path.join(data_directory, f))]
+
+        # Number of input images in each sample
+        self.input_image_count        = input_image_count
+        # Number of SVBRDF material maps in each sample
+        self.input_material_map_count = input_material_map_count
+        # Number of input images which are used
+        self.used_input_image_count   = used_input_image_count
+
+    def __len__(self):
+        return len(self.file_paths)
+
+    def read_sample_base(self, idx):
+        # This function does not do any sRGB to linear conversions and the like
+        # and also ready the SVBRDF material maps as is
+
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        
+        # Read full image
+        full_image = utils.read_image_tensor(self.file_paths[idx])
+
+        # Split the full image into input images and material maps along the horizontal direction 
+        image_parts = torch.stack(full_image.chunk(self.input_image_count + self.input_material_map_count, dim=-1)) # [n, 3, 256, 256]
+
+        # We read as many input images from the disk as we can
+        # FIXME: This is a little bit counter-intuitive, as we are reading the last n images, not the first n
+        read_input_image_count = min(self.input_image_count, self.used_input_image_count)
+        input_images           = image_parts[(self.input_image_count - read_input_image_count) : self.input_image_count] # [ni, 3, 256, 256]
+
+        # Get the svbrdf material maps from the image parts
+        svbrdf_maps = image_parts[-self.input_material_map_count:]
+
+        return input_images, svbrdf_maps
 
 class SvbrdfDataset(torch.utils.data.Dataset):
     """
@@ -116,6 +155,8 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         return {'inputs': input_images, 'svbrdf': svbrdf}
 
     def read_sample(self, file_path):
+        # TODO: Use BaseDataset.read_sample_base()
+
         # Read full image
         full_image   = torch.Tensor(plt.imread(file_path)).permute(2, 0, 1)
 
@@ -157,3 +198,33 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         specular_mixed  = alpha * specular_0 + (1.0 - alpha) * specular_1
         
         return utils.pack_svbrdf(normals_mixed, diffuse_mixed, roughness_mixed, specular_mixed)
+
+class ImageDataset(BaseDataset):
+    def __init__(self, data_directory, image_size, input_image_count, used_input_image_count, linear_input):
+        super(ImageDataset, self).__init__(data_directory, input_image_count, 0, used_input_image_count)
+        self.image_size   = image_size
+        self.linear_input = linear_input
+
+    def __getitem__(self, idx):
+        # We are only interested in the images
+        input_images, _ = self.read_sample_base(idx)
+
+        # Crop the image into squares
+        width  = input_images.shape[-1]
+        height = input_images.shape[-2]
+        if width > height:
+            # Landscape
+            input_images = utils.crop_square(input_images, torch.IntTensor([0, (width - height) // 2]), height)
+        elif width < height:
+            # Portrait
+            input_images = utils.crop_square(input_images, torch.IntTensor([(height - width) // 2, 0]), width)
+
+        # Scale the images down to the desired image size and make sure they don't clip
+        input_images = torch.nn.functional.interpolate(input_images, size=(self.image_size, self.image_size), mode='bicubic')
+        input_images = torch.clamp(input_images, min=0.0, max=1.0)
+
+        # Transform to linear RGB
+        if not self.linear_input:
+            input_images = utils.gamma_decode(input_images)
+
+        return {'inputs': input_images}
