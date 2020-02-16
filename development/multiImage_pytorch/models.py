@@ -185,7 +185,7 @@ class Generator(nn.Module):
     input_channel_count  = 3
     output_channel_count = 64 
     filters_count        = 64 # "ngf" in the original code
-    use_coords           = False
+    use_coords           = True
     use_global_track     = True
 
     def __init__(self, output_channel_count, number_of_filters = 64):
