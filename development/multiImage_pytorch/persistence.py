@@ -56,14 +56,18 @@ class Checkpoint:
 
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
-        torch.save({
+        checkpoint = {
             'image_size' : args.image_size,
             'model_type' : args.model_type,
             'use_coords' : True if args.use_coords else False,
             'epoch' : epoch,
             'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-        }, Checkpoint.get_checkpoint_path(checkpoint_dir))
+        }
+
+        if not args.omit_optimizer_state_save:
+            checkpoint['optimizer_state_dict'] = optimizer.state_dict()
+
+        torch.save(checkpoint, Checkpoint.get_checkpoint_path(checkpoint_dir))
 
     def purge(self):
         self.checkpoint = None

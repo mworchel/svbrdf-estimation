@@ -25,6 +25,9 @@ def parse_args():
     parser.add_argument('--use-coords', dest='use_coords', action='store_true',
                         help='Add spatial image coordinates as features.')
 
+    parser.add_argument('--omit-optimizer-state-save', dest='omit_optimizer_state_save', action='store_true',
+                        help='Do not store the optimizer state in the checkpoint. Setting this option reduces checkpoint size but can impact training continuation negatively.')
+
     parser.add_argument('--model-dir', '-m', dest='model_dir', action='store', required=True,
                         help='Directory for the model and training metadata.')
 
