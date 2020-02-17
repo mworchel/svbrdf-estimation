@@ -65,6 +65,7 @@ if args.mode == 'train':
     print("Training from epoch {:d} to {:d}".format(epoch_start, epoch_end))
 
     # Set up the optimizer
+    # TODO: Use betas=(0.5, 0.999)
     optimizer     = torch.optim.Adam(model.parameters(), lr=1e-5)
     if checkpoint.is_valid():
         optimizer = checkpoint.restore_optimizer_state(optimizer)
