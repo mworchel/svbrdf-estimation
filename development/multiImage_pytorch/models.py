@@ -335,12 +335,12 @@ class MultiViewModel(nn.Module):
         # Create the generator
         self.generator = Generator(self.generator_output_channel_count, use_coords)
 
-        gt_boostrap = LayerBootstrapping(use_linear_bias=True, initialize_weights=False, linear_init_scale=1.0)
+        gt_boostrap = LayerBootstrapping(use_linear_bias=True, initialize_weights=True, linear_init_scale=1.0)
         self.gt1 = GlobalTrackLayer(gt_boostrap, 2 * self.generator_output_channel_count, self.last_layers_channel_count[0])
         self.gt2 = GlobalTrackLayer(gt_boostrap, 2 * self.last_layers_channel_count[0],   self.last_layers_channel_count[1])
         self.gt3 = GlobalTrackLayer(gt_boostrap, 2 * self.last_layers_channel_count[1],   self.last_layers_channel_count[2])
 
-        conv_bootstrap = LayerBootstrapping(use_convolution_bias=False, use_linear_bias=False, initialize_weights=False, convolution_init_scale=0.02, linear_init_scale=0.01)
+        conv_bootstrap = LayerBootstrapping(use_convolution_bias=False, use_linear_bias=False, initialize_weights=True, convolution_init_scale=0.02, linear_init_scale=0.01)
         self.merge = MergeLayer(conv_bootstrap, self.generator_output_channel_count) 
         self.conv1 = ConvFeatureLayer(conv_bootstrap, self.generator_output_channel_count, self.last_layers_channel_count[0], True,  False)
         self.conv2 = ConvFeatureLayer(conv_bootstrap, self.last_layers_channel_count[0],   self.last_layers_channel_count[1],   True,  True)
