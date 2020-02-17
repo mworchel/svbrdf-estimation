@@ -303,7 +303,7 @@ class SingleViewModel(nn.Module):
     def __init__(self, use_coords=True):
         super(SingleViewModel, self).__init__()
 
-        self.generator  = Generator(9, use_coords)
+        self.generator  = Generator(9, use_coords=use_coords)
         self.activation = nn.Tanh()
 
     def forward(self, input):
@@ -333,7 +333,7 @@ class MultiViewModel(nn.Module):
         self.last_layers_channel_count      = [64, 32, 9]
 
         # Create the generator
-        self.generator = Generator(self.generator_output_channel_count, use_coords)
+        self.generator = Generator(self.generator_output_channel_count, use_coords=use_coords)
 
         gt_boostrap = LayerBootstrapping(use_linear_bias=True, initialize_weights=True, linear_init_scale=1.0)
         self.gt1 = GlobalTrackLayer(gt_boostrap, 2 * self.generator_output_channel_count, self.last_layers_channel_count[0])
