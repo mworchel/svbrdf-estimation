@@ -22,6 +22,9 @@ def parse_args():
                         type=int, default=256, 
                         help='Size (width and height) of the image inputs and svbrdf output maps in the model. If the samples in the dataset are larger, they are cropped down to this size.')
 
+    parser.add_argument('--use-coords', dest='use_cords', action='store_true',
+                        help='Add spatial image coordinates as features.')
+
     parser.add_argument('--model-dir', '-m', dest='model_dir', action='store', required=True,
                         help='Directory for the model and training metadata.')
 
@@ -40,6 +43,5 @@ def parse_args():
 
     parser.add_argument('--retrain', dest='retrain', action='store_true',
                         help='When training, ignore any data in the model directory.')
-
 
     return parser.parse_args()

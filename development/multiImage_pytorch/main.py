@@ -15,7 +15,7 @@ args = cli.parse_args()
 utils.enable_deterministic_random_engine()
 
 # Create the model
-model          = models.SingleViewModel().cuda()
+model          = models.SingleViewModel(use_coords=args.use_coords).cuda()
 training_state = {'epoch' : 0}
 
 # Load the model and training state on demand

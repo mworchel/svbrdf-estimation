@@ -188,12 +188,13 @@ class Generator(nn.Module):
     use_coords           = True
     use_global_track     = True
 
-    def __init__(self, output_channel_count, number_of_filters = 64):
+    def __init__(self, output_channel_count, number_of_filters = 64, use_coords=True):
         super(Generator, self).__init__()
         self.number_of_filters    = number_of_filters
         self.output_channel_count = output_channel_count
 
-        self.coord = CoordLayer() if self.use_coords else None   
+        self.use_coords = use_coords
+        self.coord      = CoordLayer() if self.use_coords else None   
 
         # Use a bootstrapper for sharing setup and initialization of convolutional and linear layers in the encoder/decoder
         # The reference implementation uses the following variables and values
@@ -299,10 +300,10 @@ class Generator(nn.Module):
         return up1, global_track
 
 class SingleViewModel(nn.Module):
-    def __init__(self):
+    def __init__(self, use_coords=True):
         super(SingleViewModel, self).__init__()
 
-        self.generator  = Generator(9)
+        self.generator  = Generator(9, use_coords)
         self.activation = nn.Tanh()
 
     def forward(self, input):
@@ -325,14 +326,14 @@ class SingleViewModel(nn.Module):
         return utils.pack_svbrdf(normals, diffuse, roughness, specular)
 
 class MultiViewModel(nn.Module):
-    def __init__(self):
+    def __init__(self, use_coords=True):
         super(MultiViewModel, self).__init__()
 
         self.generator_output_channel_count = 64
         self.last_layers_channel_count      = [64, 32, 9]
 
         # Create the generator
-        self.generator = Generator(self.generator_output_channel_count)
+        self.generator = Generator(self.generator_output_channel_count, use_coords)
 
         gt_boostrap = LayerBootstrapping(use_linear_bias=True, initialize_weights=False, linear_init_scale=1.0)
         self.gt1 = GlobalTrackLayer(gt_boostrap, 2 * self.generator_output_channel_count, self.last_layers_channel_count[0])
