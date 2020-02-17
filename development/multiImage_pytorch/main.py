@@ -4,7 +4,7 @@ import json
 import losses
 import math
 import models
-import os
+import pathlib
 from persistence import Checkpoint
 from tensorboardX import SummaryWriter
 import torch
@@ -12,15 +12,11 @@ import utils
 
 args = cli.parse_args()
 
-model_dir  = os.path.abspath(args.model_dir)
-if not os.path.exists(model_dir):
-    os.makedirs(model_dir)
-model_path = os.path.join(model_dir, "checkpoint.tar")
-
 # Load the checkpoint 
-checkpoint = Checkpoint()
-if os.path.exists(model_path) and not (args.mode == 'train' and args.retrain):
-    checkpoint = Checkpoint.load(model_path)
+checkpoint_dir  = pathlib.Path(args.model_dir)
+checkpoint      = Checkpoint()
+if not (args.mode == 'train' and args.retrain):
+    checkpoint = Checkpoint.load(checkpoint_dir)
 
 # Immediatly restore the arguments if we have a valid checkpoint
 if checkpoint.is_valid():
@@ -73,10 +69,9 @@ if args.mode == 'train':
     loss_function = losses.MixedLoss()
 
     # Setup statistics stuff
-    statistics_dir    = os.path.abspath("./logs")
-    if not os.path.exists(statistics_dir):
-        os.makedirs(statistics_dir)
-    writer            = SummaryWriter(statistics_dir)
+    statistics_dir = pathlib.Path("./logs")
+    statistics_dir.mkdir(parents=True, exist_ok=True)
+    writer            = SummaryWriter(str(statistics_dir.absolute()))
     last_batch_inputs = None
 
     # Clear checkpoint in order to free up some memory
@@ -106,10 +101,10 @@ if args.mode == 'train':
             last_batch_inputs = batch_inputs
 
         if epoch % args.save_frequency == 0:
-            Checkpoint.save(model_path, args, model, optimizer, epoch)
+            Checkpoint.save(checkpoint_dir, args, model, optimizer, epoch)
 
     # Save a final snapshot of the model
-    Checkpoint.save(model_path, args, model, optimizer, epoch)
+    Checkpoint.save(checkpoint_dir, args, model, optimizer, epoch)
 
     # FIXME: This does not work with the last conv layers on both the single-view and multi-view model
     #writer.add_graph(model, last_batch_inputs) 

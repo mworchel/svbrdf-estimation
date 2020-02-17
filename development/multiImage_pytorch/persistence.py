@@ -7,17 +7,55 @@ class Checkpoint:
     def __init__(self, checkpoint=None):
         self.checkpoint = checkpoint
 
-    @classmethod
-    def load(cls, path):
-        # # TODO: Handle legacy models
-        # checkpoint_path = pathlib.Path(path)
-        # checkpoint_dir  = checkpoint_path.parent()
-        # state_file_path = checkpoint_dir.joinpath("state.json")
-        # if state_file_path.exists():
-        return cls(torch.load(path))
+    @staticmethod
+    def get_checkpoint_path(checkpoint_dir):
+        return checkpoint_dir.joinpath("checkpoint.tar")
 
     @staticmethod
-    def save(path, args, model, optimizer, epoch):
+    def load_legacy(model_dir):
+        model_path = model_dir.joinpath("model.data")
+        state_path = model_dir.joinpath("state.json")
+        if not model_path.exists():
+            return None
+        
+        checkpoint = {
+            'model_state_dict' : torch.load(model_path),
+        }
+        print("Loaded legacy model state")
+
+        if state_path.exists():
+            with open(state_path, 'r') as f:
+                state = json.load(f)
+                checkpoint['epoch'] = state['epoch']
+            print("Loaded legacy training state")
+
+        return checkpoint 
+
+    @classmethod
+    def load(cls, checkpoint_dir):
+        if not isinstance(checkpoint_dir, pathlib.Path):
+            checkpoint_dir = pathlib.Path(checkpoint_dir)
+        
+        checkpoint_path = Checkpoint.get_checkpoint_path(checkpoint_dir)
+
+        if not checkpoint_path.exists():
+            # If there is no checkpoint file we try to perform a legacy load
+            checkpoint = Checkpoint.load_legacy(checkpoint_dir)
+
+            if checkpoint is None:
+                print("No checkpoint found in directory '{}'".format(checkpoint_dir))
+
+            return cls(checkpoint)
+
+        return cls(torch.load(checkpoint_path))
+
+    @staticmethod
+    def save(checkpoint_dir, args, model, optimizer, epoch):
+        if not isinstance(checkpoint_dir, pathlib.Path):
+            checkpoint_dir = pathlib.Path(checkpoint_dir)
+
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
         torch.save({
             'image_size' : args.image_size,
             'model_type' : args.model_type,
@@ -25,7 +63,7 @@ class Checkpoint:
             'epoch' : epoch,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
-        }, path)
+        }, Checkpoint.get_checkpoint_path(checkpoint_dir))
 
     def purge(self):
         self.checkpoint = None
@@ -36,20 +74,20 @@ class Checkpoint:
 
     def restore_args(self, args):
         # Restore checkpoint relevant arguments
-        if self.checkpoint['image_size'] is not None:
+        if 'image_size' in self.checkpoint:
             args.image_size = self.checkpoint['image_size']
             print("Restored image size '{}'".format(args.image_size))
         else: 
             print("Failed to restore image size")
 
-        if self.checkpoint['model_type'] is not None:
+        if 'model_type' in self.checkpoint:
             args.model_type = self.checkpoint['model_type']
             print("Restored model type '{}'".format(args.model_type))
         else:
             print("Failed to restore model type")
 
         
-        if self.checkpoint['use_coords'] is not None:
+        if 'use_coords' in self.checkpoint:
             args.use_coords = self.checkpoint['use_coords']
             print("Restored use coords flag '{}'".format(args.use_coords))
         else:
@@ -58,7 +96,7 @@ class Checkpoint:
         return args
 
     def restore_model_state(self, model):
-        if self.checkpoint['model_state_dict'] is not None:
+        if 'model_state_dict' in self.checkpoint:
             model.load_state_dict(self.checkpoint['model_state_dict'])
             print("Restored model state")
         else:
@@ -67,7 +105,7 @@ class Checkpoint:
         return model
 
     def restore_epoch(self, epoch):
-        if self.checkpoint['epoch'] is not None:
+        if 'epoch' in self.checkpoint:
             epoch = self.checkpoint['epoch']
             print("Restored epoch {}".format(epoch))
         else:
@@ -76,7 +114,7 @@ class Checkpoint:
         return epoch
 
     def restore_optimizer_state(self, optimizer):
-        if self.checkpoint['optimizer_state_dict'] is not None:
+        if 'optimizer_state_dict' in self.checkpoint:
             optimizer.load_state_dict(self.checkpoint['optimizer_state_dict'])
             print("Restored optimizer state")
         else:
