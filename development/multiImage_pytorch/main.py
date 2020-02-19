@@ -4,46 +4,41 @@ import json
 import losses
 import math
 import models
-import os
+import pathlib
+from persistence import Checkpoint
 from tensorboardX import SummaryWriter
 import torch
 import utils
 
 args = cli.parse_args()
 
+# Load the checkpoint 
+checkpoint_dir  = pathlib.Path(args.model_dir)
+checkpoint      = Checkpoint()
+if not (args.mode == 'train' and args.retrain):
+    checkpoint = Checkpoint.load(checkpoint_dir)
+
+# Immediatly restore the arguments if we have a valid checkpoint
+if checkpoint.is_valid():
+    args = checkpoint.restore_args(args)
+
 # Make the result reproducible
 utils.enable_deterministic_random_engine()
 
 # Create the model
-model          = models.SingleViewModel(use_coords=args.use_coords).cuda()
-training_state = {'epoch' : 0}
-
-# Load the model and training state on demand
-model_dir = os.path.abspath(args.model_dir)
-if not os.path.exists(model_dir):
-    os.makedirs(model_dir)
-
-training_state_path = os.path.join(model_dir, "state.json")
-model_path          = os.path.join(model_dir, "model.data")
-if os.path.exists(model_path):
-    if not args.retrain:
-        model.load_state_dict(torch.load(model_path))
-else:
-    if args.mode == 'test':
-        print("No model found in the model directory but it is required for testing.")
-        exit(1)
-    else:
-        print("No model found in the model directory. Performing retraining.")
-        args.retrain = True
-
-if os.path.exists(training_state_path):
-    if not args.retrain:
-        with open(training_state_path, 'r') as f:
-            training_state = json.load(f)
-        print("Loaded training state: {:s}.".format(str(training_state)))
+model = models.SingleViewModel(use_coords=args.use_coords).cuda()
+if checkpoint.is_valid():
+    model = checkpoint.restore_model_state(model)
+elif args.mode == 'test':
+    print("No model found in the model directory but it is required for testing.")
+    exit(1)
 
 # TODO: Choose a random number for the used input image count if we are training and we don't request it to be fix (see fixImageNb for reference)
 data = dataset.SvbrdfDataset(data_directory=args.input_dir, image_size=args.image_size, input_image_count=args.image_count, used_input_image_count=args.used_image_count, use_augmentation=True, mix_materials=args.mode=='train')
+
+epoch_start = 0
+if checkpoint.is_valid():
+    epoch_start = checkpoint.restore_epoch(epoch_start)
 
 if args.mode == 'train':
     validation_split = 0.01
@@ -60,26 +55,29 @@ if args.mode == 'train':
     training_dataloader = torch.utils.data.DataLoader(training_data, batch_size=8, pin_memory=True, shuffle=True)
     batch_count         = int(math.ceil(len(training_data) / training_dataloader.batch_size))
 
-    # Determine the epoch range
-    epoch_start = training_state['epoch']
-    epoch_end   = args.epochs
+    # Train as many epochs as specified
+    epoch_end = args.epochs
 
     print("Training from epoch {:d} to {:d}".format(epoch_start, epoch_end))
 
     # Set up the optimizer and loss
     optimizer     = torch.optim.Adam(model.parameters(), lr=1e-5)
+    if checkpoint.is_valid():
+        optimizer = checkpoint.restore_optimizer_state(optimizer)
     # TODO: Use scheduler if necessary
     #scheduler    = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min') 
     loss_function = losses.MixedLoss()
 
     # Setup statistics stuff
-    statistics_dir    = os.path.abspath("./logs")
-    if not os.path.exists(statistics_dir):
-        os.makedirs(statistics_dir)
-    writer            = SummaryWriter(statistics_dir)
+    statistics_dir = pathlib.Path("./logs")
+    statistics_dir.mkdir(parents=True, exist_ok=True)
+    writer            = SummaryWriter(str(statistics_dir.absolute()))
     last_batch_inputs = None
 
-    model.train(True)
+    # Clear checkpoint in order to free up some memory
+    checkpoint.purge()
+
+    model.train()
     for epoch in range(epoch_start, epoch_end):
         for i, batch in enumerate(training_dataloader):
             # Unique index of this batch
@@ -96,26 +94,17 @@ if args.mode == 'train':
             loss.backward()
             optimizer.step()
 
-            print("Epoch {:d}, Batch {:d}, loss: {:f}".format(epoch + 1, i + 1, loss.item()))
+            print("Epoch {:d}, Batch {:d}, loss: {:f}".format(epoch, i + 1, loss.item()))
 
             # Statistics
             writer.add_scalar("loss", loss.item(), batch_index)
             last_batch_inputs = batch_inputs
 
         if epoch % args.save_frequency == 0:
-            torch.save(model.state_dict(), model_path)
-
-            training_state['epoch'] = epoch
-            with open(training_state_path, 'w') as f:
-                json.dump(training_state, f)
-
-    model.train(False)
+            Checkpoint.save(checkpoint_dir, args, model, optimizer, epoch)
 
     # Save a final snapshot of the model
-    torch.save(model.state_dict(), model_path)
-    training_state['epoch'] = epoch_end
-    with open(training_state_path, 'w') as f:
-        json.dump(training_state, f)
+    Checkpoint.save(checkpoint_dir, args, model, optimizer, epoch)
 
     # FIXME: This does not work with the last conv layers on both the single-view and multi-view model
     #writer.add_graph(model, last_batch_inputs) 
@@ -125,6 +114,8 @@ if args.mode == 'train':
     test_data = validation_data 
 else:
     test_data = data
+
+model.eval()
 
 test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=1, pin_memory=True)
 

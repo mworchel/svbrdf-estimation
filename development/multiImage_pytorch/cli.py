@@ -22,8 +22,13 @@ def parse_args():
                         type=int, default=256, 
                         help='Size (width and height) of the image inputs and svbrdf output maps in the model. If the samples in the dataset are larger, they are cropped down to this size.')
 
-    parser.add_argument('--use-coords', dest='use_coords', action='store_true',
-                        help='Add spatial image coordinates as features.')
+    parser.add_argument('--no-coords', dest='use_coords', action='store_false',
+                        default=True,
+                        help='Do not add spatial image coordinates as features.')
+
+    parser.add_argument('--omit-optimizer-state-save', dest='omit_optimizer_state_save', action='store_true',
+                        default=False,
+                        help='Do not store the optimizer state in the checkpoint. Setting this option reduces checkpoint size but can impact training continuation negatively.')
 
     parser.add_argument('--model-dir', '-m', dest='model_dir', action='store', required=True,
                         help='Directory for the model and training metadata.')
@@ -42,6 +47,7 @@ def parse_args():
                         help='Maximum number of epochs to run the training for.')
 
     parser.add_argument('--retrain', dest='retrain', action='store_true',
+                        default=False,
                         help='When training, ignore any data in the model directory.')
 
     return parser.parse_args()
