@@ -14,6 +14,14 @@ def parse_args():
                         type=int,
                         help='Number of input images (i.e., photographs of the material patch) in the input dataset.')
 
+    parser.add_argument('--linear-input', dest='linear_input', action='store_true',
+                        default=False,
+                        help='Flag to indicate that the input images are already in linear RGB.')
+
+    parser.add_argument('--no-svbrdf-input', dest='no_svbrdf_input', action='store_true',
+                        default=False,
+                        help='Flag to indicate that the input samples do not contain any SVBRDF maps.')
+
     parser.add_argument('--used-image-count', '-u', dest='used_image_count', action='store',
                         type=int, default=1,
                         help='Number of input images to use. For the single-view model, values greater than 1 are ignored. When it is greater than image count, the remaining images are artificially generated.')
@@ -50,4 +58,14 @@ def parse_args():
                         default=False,
                         help='When training, ignore any data in the model directory.')
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    # Validate some arguments
+    if args.no_svbrdf_input:
+        if args.mode=='train':
+            raise RuntimeError("Cannot train the model on a samples without SVBRDF maps.")
+
+        if args.image_count == 0:
+            raise RuntimeError("No SVBRDF and no image input. What are we supposed to do?")
+
+    return args
