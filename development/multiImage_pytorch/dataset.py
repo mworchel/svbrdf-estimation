@@ -51,11 +51,12 @@ class SvbrdfDataset(torch.utils.data.Dataset):
     Class representing a collection of SVBRDF samples with corresponding input images (rendered or real views of the SVBRDF)
     """
 
-    def __init__(self, data_directory, image_size, input_image_count, used_input_image_count, use_augmentation, mix_materials=False, no_svbrdf=False, is_linear=False):
+    def __init__(self, data_directory, image_size, scale_mode, input_image_count, used_input_image_count, use_augmentation, mix_materials=False, no_svbrdf=False, is_linear=False):
         self.data_directory = data_directory
         self.file_paths = [os.path.join(data_directory, f) for f in os.listdir(data_directory) if os.path.isfile(os.path.join(data_directory, f))]
 
         self.image_size             = image_size
+        self.scale_mode             = scale_mode
         self.input_image_count      = input_image_count
         self.used_input_image_count = used_input_image_count
         # No augmentation means fixed view distance, light intensity, neutral whitebalance and constant flash falloff
@@ -88,14 +89,35 @@ class SvbrdfDataset(torch.utils.data.Dataset):
             _, other_svbrdf = self.read_sample(self.file_paths[other_index])
             svbrdf          = self.mix(svbrdf, other_svbrdf)
 
-        # Determine the top left point of the cropped image
-        # TODO: If we use jittering, this has to be determined by the random jitter of the rendered images
-        crop_anchor = torch.IntTensor([0, 0])
 
-        # Crop down the svbrdf and the given input images
-        # TODO: Allow to scale as alternative to cropping
-        svbrdf       = utils.crop_square(svbrdf, crop_anchor, self.image_size)
-        input_images = utils.crop_square(input_images, crop_anchor, self.image_size) 
+        if self.scale_mode == 'resize':
+            width  = input_images.shape[-1]
+            height = input_images.shape[-2]
+
+            # Crop out the center of the sample
+            is_landscape = width > height
+            crop_anchor  = torch.IntTensor([0, (width - height) // 2]) if is_landscape else torch.IntTensor([(height - width) // 2, 0])
+            crop_size    = height if is_landscape else width
+
+            input_images = utils.crop_square(input_images, crop_anchor, crop_size)
+            svbrdf       = utils.crop_square(svbrdf, crop_anchor, crop_size)
+
+            # Scale the images down to the desired image size and make sure they don't clip
+            input_images = torch.nn.functional.interpolate(input_images,        size=(self.image_size, self.image_size), mode='bilinear')
+            svbrdf       = torch.nn.functional.interpolate(svbrdf.unsqueeze(0), size=(self.image_size, self.image_size), mode='bilinear').squeeze(0)
+            # TODO: This should only be required for bicubic interpolation:
+            #input_images = torch.clamp(input_images, min=0.0, max=1.0)
+        elif self.scale_mode == 'crop':
+            # Determine the top left point of the cropped image
+            # TODO: If we use jittering, this has to be determined by the random jitter of the rendered images
+            crop_anchor = torch.IntTensor([0, 0])
+
+            # Crop down the svbrdf and the given input images
+            # TODO: Allow to scale as alternative to cropping
+            svbrdf       = utils.crop_square(svbrdf, crop_anchor, self.image_size)
+            input_images = utils.crop_square(input_images, crop_anchor, self.image_size) 
+        else:
+            raise ValueError("Unknown scale mode {}".format(self.scale_mode))
 
         # Transform to linear RGB
         if not self.is_linear:
@@ -171,13 +193,15 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         svbrdf_map_count = 0 if self.no_svbrdf else 4 
         image_parts      = torch.cat(full_image.unsqueeze(0).chunk(self.input_image_count + svbrdf_map_count, dim=-1), 0) # [n, 3, 256, 256]
 
-        # Height of the full image determines the actual image size (width and height)
-        actual_image_size = full_image.shape[1]
 
         # Read the SVBRDF (dummy if there is none in the dataset)
         svbrdf = None
         if self.no_svbrdf:
-            normals   = torch.cat([torch.zeros((2, actual_image_size, actual_image_size)), torch.ones((1, actual_image_size, actual_image_size))], dim=0)
+            # If there are no SVBRDFs in the data, there must be images which we can use as size guide.
+            width  = image_parts[0].shape[-1]
+            height = image_parts[0].shape[-2]
+
+            normals   = torch.cat([torch.zeros((2, height, width)), torch.ones((1, height, width))], dim=0)
             diffuse   = torch.zeros_like(normals)
             roughness = torch.zeros_like(normals)
             specular  = torch.zeros_like(normals)

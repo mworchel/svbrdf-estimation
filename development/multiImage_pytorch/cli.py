@@ -30,6 +30,10 @@ def parse_args():
                         type=int, default=256, 
                         help='Size (width and height) of the image inputs and svbrdf output maps in the model. If the samples in the dataset are larger, they are cropped down to this size.')
 
+    parser.add_argument('--scale-mode', dest='scale_mode', action='store',
+                        choices=['crop', 'resize'], default='crop',
+                        help='Method which is used to make the input samples fit the given image size.')
+
     parser.add_argument('--use-coords', dest='use_coords', action='store_true',
                         default=False,
                         help='Add spatial image coordinates as features.')

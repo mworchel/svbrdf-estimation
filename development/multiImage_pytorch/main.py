@@ -35,7 +35,7 @@ elif args.mode == 'test':
 
 # TODO: Choose a random number for the used input image count if we are training and we don't request it to be fix (see fixImageNb for reference)
 data = dataset.SvbrdfDataset(data_directory=args.input_dir, 
-                             image_size=args.image_size, input_image_count=args.image_count, used_input_image_count=args.used_image_count, 
+                             image_size=args.image_size, scale_mode=args.scale_mode, input_image_count=args.image_count, used_input_image_count=args.used_image_count, 
                              use_augmentation=True, mix_materials=args.mode=='train',
                              no_svbrdf=args.no_svbrdf_input, is_linear=args.linear_input)
 
