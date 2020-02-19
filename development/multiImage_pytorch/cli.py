@@ -22,9 +22,9 @@ def parse_args():
                         type=int, default=256, 
                         help='Size (width and height) of the image inputs and svbrdf output maps in the model. If the samples in the dataset are larger, they are cropped down to this size.')
 
-    parser.add_argument('--no-coords', dest='use_coords', action='store_false',
-                        default=True,
-                        help='Do not add spatial image coordinates as features.')
+    parser.add_argument('--use-coords', dest='use_coords', action='store_true',
+                        default=False,
+                        help='Add spatial image coordinates as features.')
 
     parser.add_argument('--omit-optimizer-state-save', dest='omit_optimizer_state_save', action='store_true',
                         default=False,
