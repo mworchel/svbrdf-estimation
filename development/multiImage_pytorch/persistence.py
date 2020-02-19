@@ -57,7 +57,6 @@ class Checkpoint:
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
         checkpoint = {
-            'image_size' : args.image_size,
             'model_type' : args.model_type,
             'use_coords' : True if args.use_coords else False,
             'epoch' : epoch,
@@ -78,11 +77,6 @@ class Checkpoint:
 
     def restore_args(self, args):
         # Restore checkpoint relevant arguments
-        if 'image_size' in self.checkpoint:
-            args.image_size = self.checkpoint['image_size']
-            print("Restored image size '{}'".format(args.image_size))
-        else: 
-            print("Failed to restore image size")
 
         if 'model_type' in self.checkpoint:
             args.model_type = self.checkpoint['model_type']
