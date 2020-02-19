@@ -51,7 +51,7 @@ class SvbrdfDataset(torch.utils.data.Dataset):
     Class representing a collection of SVBRDF samples with corresponding input images (rendered or real views of the SVBRDF)
     """
 
-    def __init__(self, data_directory, image_size, input_image_count, used_input_image_count, use_augmentation, mix_materials=False):
+    def __init__(self, data_directory, image_size, input_image_count, used_input_image_count, use_augmentation, mix_materials=False, no_svbrdf=False, is_linear=False):
         self.data_directory = data_directory
         self.file_paths = [os.path.join(data_directory, f) for f in os.listdir(data_directory) if os.path.isfile(os.path.join(data_directory, f))]
 
@@ -66,6 +66,12 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         if self.mix_materials and self.input_image_count > 0:
             self.mix_materials = False
             print("Warning: Material mixing is only supported for datasets without input images.")
+
+        # The dataset does not contain any svbrdf maps
+        self.no_svbrdf = no_svbrdf
+
+        # The images in the dataset are already linear RGB
+        self.is_linear = is_linear
 
     def __len__(self):
         return len(self.file_paths)
@@ -87,8 +93,13 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         crop_anchor = torch.IntTensor([0, 0])
 
         # Crop down the svbrdf and the given input images
+        # TODO: Allow to scale as alternative to cropping
         svbrdf       = utils.crop_square(svbrdf, crop_anchor, self.image_size)
         input_images = utils.crop_square(input_images, crop_anchor, self.image_size) 
+
+        # Transform to linear RGB
+        if not self.is_linear:
+            input_images = utils.gamma_decode(input_images)
 
         # Images which cannot be read must be generated artificially
         generated_input_image_count = self.used_input_image_count - input_images.shape[0]
@@ -142,15 +153,10 @@ class SvbrdfDataset(torch.utils.data.Dataset):
                 noise = torch.zeros_like(rendering).normal_(mean=0.0, std=std_deviation_noise)
                 rendering = torch.clamp(rendering + noise, min=0.0, max=1.0)
 
-                rendering = utils.gamma_encode(rendering)
-
                 input_images = torch.cat([input_images, rendering], dim=0)
 
         # TODO: For random jittering we need individual crop anchors here
         # input_images = utils.crop_square(input_images, crop_anchor, self.image_size)
-
-        # Transform to linear RGB
-        input_images = utils.gamma_decode(input_images)
 
         return {'inputs': input_images, 'svbrdf': svbrdf}
 
@@ -162,14 +168,25 @@ class SvbrdfDataset(torch.utils.data.Dataset):
 
         # Split the full image apart along the horizontal direction 
         # Magick number 4 is the number of maps in the SVBRDF
-        image_parts  = torch.cat(full_image.unsqueeze(0).chunk(self.input_image_count + 4, dim=-1), 0) # [n, 3, 256, 256]
+        svbrdf_map_count = 0 if self.no_svbrdf else 4 
+        image_parts      = torch.cat(full_image.unsqueeze(0).chunk(self.input_image_count + svbrdf_map_count, dim=-1), 0) # [n, 3, 256, 256]
 
-        # Read and crop the SVBRDF
-        normals   = image_parts[self.input_image_count + 0].unsqueeze(0)
-        normals   = utils.decode_from_unit_interval(normals)
-        diffuse   = image_parts[self.input_image_count + 1].unsqueeze(0)
-        roughness = image_parts[self.input_image_count + 2].unsqueeze(0)
-        specular  = image_parts[self.input_image_count + 3].unsqueeze(0)
+        # Height of the full image determines the actual image size (width and height)
+        actual_image_size = full_image.shape[1]
+
+        # Read the SVBRDF (dummy if there is none in the dataset)
+        svbrdf = None
+        if self.no_svbrdf:
+            normals   = torch.cat([torch.zeros((2, actual_image_size, actual_image_size)), torch.ones((1, actual_image_size, actual_image_size))], dim=0)
+            diffuse   = torch.zeros_like(normals)
+            roughness = torch.zeros_like(normals)
+            specular  = torch.zeros_like(normals)
+        else:
+            normals   = image_parts[self.input_image_count + 0].unsqueeze(0)
+            normals   = utils.decode_from_unit_interval(normals)
+            diffuse   = image_parts[self.input_image_count + 1].unsqueeze(0)
+            roughness = image_parts[self.input_image_count + 2].unsqueeze(0)
+            specular  = image_parts[self.input_image_count + 3].unsqueeze(0)
 
         svbrdf = utils.pack_svbrdf(normals, diffuse, roughness, specular).squeeze(0) # [12, 256, 256]
 
