@@ -56,7 +56,7 @@ if args.mode == 'train':
     batch_count         = int(math.ceil(len(training_data) / training_dataloader.batch_size))
 
     # Train as many epochs as specified
-    epoch_end   = args.epochs
+    epoch_end = args.epochs
 
     print("Training from epoch {:d} to {:d}".format(epoch_start, epoch_end))
 
