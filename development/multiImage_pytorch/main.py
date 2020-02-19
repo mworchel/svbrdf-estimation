@@ -47,13 +47,9 @@ if args.mode == 'train':
     print("Training samples: {:d}.".format(len(training_data)))
     print("Validation samples: {:d}.".format(len(validation_data)))
 
-    if len(validation_data) == 0:
-        # Fixed fallback if the training set is too small
-        print("Training dataset too small for validation split. Using training data for validation.")
-        validation_data = training_data
-
-    training_dataloader = torch.utils.data.DataLoader(training_data, batch_size=8, pin_memory=True, shuffle=True)
-    batch_count         = int(math.ceil(len(training_data) / training_dataloader.batch_size))
+    training_dataloader   = torch.utils.data.DataLoader(training_data,   batch_size=8, pin_memory=True, shuffle=True)
+    validation_dataloader = torch.utils.data.DataLoader(validation_data, batch_size=8, pin_memory=True, shuffle=False)
+    batch_count           = int(math.ceil(len(training_data) / training_dataloader.batch_size))
 
     # Train as many epochs as specified
     epoch_end = args.epochs
@@ -100,6 +96,26 @@ if args.mode == 'train':
             writer.add_scalar("loss", loss.item(), batch_index)
             last_batch_inputs = batch_inputs
 
+        # Evaluate validation data
+        if len(validation_data) > 0:
+            model.eval()
+            
+            val_loss = 0.0
+            for i, batch in enumerate(validation_dataloader):
+                # Construct inputs
+                batch_inputs = batch["inputs"].cuda()
+                batch_svbrdf = batch["svbrdf"].cuda()
+
+                outputs  = model(batch_inputs)
+                val_loss = val_loss + loss_function(outputs, batch_svbrdf).item()
+
+            val_loss = val_loss / len(validation_data)
+
+            print("Epoch {:d}, validation loss: {:f}".format(epoch, val_loss))
+            writer.add_scalar("val_loss", val_loss, epoch * batch_count)
+        
+            model.train()
+
         if epoch % args.save_frequency == 0:
             Checkpoint.save(checkpoint_dir, args, model, optimizer, epoch)
 
@@ -111,6 +127,11 @@ if args.mode == 'train':
     writer.close()
 
     # Use the validation dataset as test data
+    if len(validation_data) == 0:
+        # Fixed fallback if the training set is too small
+        print("Training dataset too small for validation split. Using training data for validation.")
+        validation_data = training_data
+
     test_data = validation_data 
 else:
     test_data = data
