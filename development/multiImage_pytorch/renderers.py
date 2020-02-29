@@ -230,7 +230,8 @@ class RednerRenderer:
             if np.linalg.norm(np.cross(cz, up)) == 0.0:     
                 up = np.array([0.0, 1.0, 0.0])
 
-            camera = pyredner.Camera(torch.FloatTensor(position), torch.FloatTensor(lookat), torch.FloatTensor(up), torch.FloatTensor([90]), resolution=(256,256),
+            camera = pyredner.Camera(torch.FloatTensor(position).to(self.redner_device), torch.FloatTensor(lookat).to(self.redner_device), 
+                                     torch.FloatTensor(up).to(self.redner_device), torch.FloatTensor([90]).to(self.redner_device), resolution=(256,256),
                                      camera_type=pyredner.camera_type.fullpatchsample)
 
             # # The deferred rendering path. 
@@ -240,10 +241,10 @@ class RednerRenderer:
             #                                    intensity = torch.tensor(scene.light.color).to(self.redner_device))
             # img = pyredner.render_deferred(scene = full_scene, lights = [light])
 
-            light = pyredner.generate_quad_light(position  = torch.Tensor(scene.light.pos),
-                                                 look_at   = torch.zeros(3),
-                                                 size      = torch.Tensor([0.6, 0.6]),
-                                                 intensity = torch.Tensor(scene.light.color))
+            light = pyredner.generate_quad_light(position  = torch.Tensor(scene.light.pos).to(self.redner_device),
+                                                 look_at   = torch.zeros(3).to(self.redner_device),
+                                                 size      = torch.Tensor([0.6, 0.6]).to(self.redner_device),
+                                                 intensity = torch.Tensor(scene.light.color).to(self.redner_device))
             full_scene = pyredner.Scene(camera = camera, objects = [material_patch, light])
             img = pyredner.render_pathtracing(full_scene, num_samples=(16,8))
 
