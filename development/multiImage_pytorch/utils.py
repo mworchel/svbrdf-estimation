@@ -61,6 +61,8 @@ def unpack_svbrdf(svbrdf, is_encoded = False):
 # We don't really need the encoding...maybe only for testing
 # Assumes SVBRDF channels are in range [-1, 1]
 def encode_svbrdf(svbrdf):
+    raise NotImplementedError("This function does not currently work. The normal encoding is bugged (normal vector is not converted to [x, y, 1] before slicing)")
+
     normals, diffuse, roughness, specular = unpack_svbrdf(svbrdf, False)
 
     roughness = roughness.split(1, dim=-3)[0]           # Only retain one channel (roughness if grayscale anyway)

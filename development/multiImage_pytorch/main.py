@@ -6,6 +6,7 @@ import math
 import models
 import pathlib
 from persistence import Checkpoint
+import renderers
 from tensorboardX import SummaryWriter
 import torch
 import utils
@@ -63,13 +64,21 @@ if args.mode == 'train':
 
     print("Training from epoch {:d} to {:d}".format(epoch_start, epoch_end))
 
-    # Set up the optimizer and loss
+    # Set up the optimizer
+    # TODO: Use betas=(0.5, 0.999)
     optimizer     = torch.optim.Adam(model.parameters(), lr=1e-5)
     if checkpoint.is_valid():
         optimizer = checkpoint.restore_optimizer_state(optimizer)
     # TODO: Use scheduler if necessary
     #scheduler    = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min') 
-    loss_function = losses.MixedLoss()
+
+    # Set up the loss
+    loss_renderer = None
+    if args.renderer == 'local':
+        loss_renderer = renderers.LocalRenderer()
+    elif args.renderer == 'pathtracing':
+        loss_renderer = renderers.RednerRenderer()
+    loss_function = losses.MixedLoss(loss_renderer)
 
     # Setup statistics stuff
     statistics_dir = pathlib.Path("./logs")
@@ -138,11 +147,6 @@ for i_row, batch in enumerate(test_dataloader):
     input       = utils.gamma_encode(batch_inputs.squeeze(0)[0]).cpu().permute(1, 2, 0)
     target_maps = torch.cat(batch_svbrdf.split(3, dim=1), dim=0).clone().cpu().detach().permute(0, 2, 3, 1)
     output_maps = torch.cat(outputs.split(3, dim=1), dim=0).clone().cpu().detach().permute(0, 2, 3, 1)
-
-    svbrdf  = outputs[0].cpu().clone().detach()
-    n,d,r,s = utils.unpack_svbrdf(svbrdf)
-    n = utils.encode_as_unit_interval(n)
-    utils.write_image_tensor("svbrdf_{:d}.png".format(i_row), torch.cat([n,d,r,s], dim=-1))
 
     fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 1)
     plt.imshow(input)

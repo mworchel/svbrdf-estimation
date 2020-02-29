@@ -7,6 +7,10 @@ def parse_args():
                         choices=['train', 'test'], default='train',
                         help='Mode in which the script is executed.')
 
+    parser.add_argument('--renderer', '-R', dest='renderer', action='store',
+                        choices=['local', 'pathtracing'], default='local',
+                        help='Renderer to use for evaluating the rendering loss.')
+
     parser.add_argument('--input-dir', '-i', dest='input_dir', action='store', required=True,
                         help='Directory containing the input data.')
 
