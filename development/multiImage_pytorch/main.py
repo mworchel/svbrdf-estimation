@@ -148,11 +148,6 @@ for i_row, batch in enumerate(test_dataloader):
     target_maps = torch.cat(batch_svbrdf.split(3, dim=1), dim=0).clone().cpu().detach().permute(0, 2, 3, 1)
     output_maps = torch.cat(outputs.split(3, dim=1), dim=0).clone().cpu().detach().permute(0, 2, 3, 1)
 
-    svbrdf  = outputs[0].cpu().clone().detach()
-    n,d,r,s = utils.unpack_svbrdf(svbrdf)
-    n = utils.encode_as_unit_interval(n)
-    utils.write_image_tensor("svbrdf_{:d}.png".format(i_row), torch.cat([n,d,r,s], dim=-1))
-
     fig.add_subplot(row_count, col_count, 2 * i_row * col_count + 1)
     plt.imshow(input)
     plt.axis('off')
