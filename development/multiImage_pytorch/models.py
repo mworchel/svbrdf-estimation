@@ -214,7 +214,7 @@ class Generator(nn.Module):
         self.enc5 = EncodingLayer(encdec_bootstrap, self.enc4.output_channel_count, self.number_of_filters * 8,  True)        # encoder_5: [batch,  16,  16, ngf * 8] => [batch,   8,   8, ngf * 8]
         self.enc6 = EncodingLayer(encdec_bootstrap, self.enc5.output_channel_count, self.number_of_filters * 8,  True)        # encoder_6: [batch,   8,   8, ngf * 8] => [batch,   4,   4, ngf * 8]
         self.enc7 = EncodingLayer(encdec_bootstrap, self.enc6.output_channel_count, self.number_of_filters * 8,  True)        # encoder_7: [batch,   4,   4, ngf * 8] => [batch,   2,   2, ngf * 8]
-        self.enc8 = EncodingLayer(encdec_bootstrap, self.enc6.output_channel_count, self.number_of_filters * 8, False)        # encoder_8: [batch,   2,   2, ngf * 8] => [batch,   1,   1, ngf * 8]                  
+        self.enc8 = EncodingLayer(encdec_bootstrap, self.enc7.output_channel_count, self.number_of_filters * 8, False)        # encoder_8: [batch,   2,   2, ngf * 8] => [batch,   1,   1, ngf * 8]                  
 
         self.dec8 = DecodingLayer(encdec_bootstrap, self.number_of_filters * 8,         self.number_of_filters * 8,  True,  True) # decoder_8: [batch,  1,  1,       ngf * 8] => [batch,   2,   2, ngf * 8]
         self.dec7 = DecodingLayer(encdec_bootstrap, 2 * self.dec8.output_channel_count, self.number_of_filters * 8,  True,  True) # decoder_7: [batch,  2,  2,   2 * ngf * 8 ] => [batch,   4,   4, ngf * 8]
