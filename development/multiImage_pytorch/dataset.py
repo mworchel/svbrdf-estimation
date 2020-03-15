@@ -51,7 +51,7 @@ class SvbrdfDataset(torch.utils.data.Dataset):
     Class representing a collection of SVBRDF samples with corresponding input images (rendered or real views of the SVBRDF)
     """
 
-    def __init__(self, data_directory, image_size, scale_mode, input_image_count, used_input_image_count, use_augmentation, mix_materials=False, no_svbrdf=False, is_linear=False):
+    def __init__(self, data_directory, image_size, scale_mode, input_image_count, used_input_image_count, use_augmentation, mix_materials=False, no_svbrdf=False, is_linear=False, random_crop=False):
         self.data_directory = data_directory
         self.file_paths = [os.path.join(data_directory, f) for f in os.listdir(data_directory) if os.path.isfile(os.path.join(data_directory, f))]
 
@@ -74,6 +74,9 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         # The images in the dataset are already linear RGB
         self.is_linear = is_linear
 
+        # If scale mode is 'crop', crop out a randomly placed window from the image
+        self.random_crop = random_crop
+
     def __len__(self):
         return len(self.file_paths)
 
@@ -89,7 +92,6 @@ class SvbrdfDataset(torch.utils.data.Dataset):
             _, other_svbrdf = self.read_sample(self.file_paths[other_index])
             svbrdf          = self.mix(svbrdf, other_svbrdf)
 
-
         if self.scale_mode == 'resize':
             width  = input_images.shape[-1]
             height = input_images.shape[-2]
@@ -102,18 +104,22 @@ class SvbrdfDataset(torch.utils.data.Dataset):
             input_images = utils.crop_square(input_images, crop_anchor, crop_size)
             svbrdf       = utils.crop_square(svbrdf, crop_anchor, crop_size)
 
-            # Scale the images down to the desired image size and make sure they don't clip
+            # Scale the images and the SVBRDF down to the desired size
+            # Note: Do not use bicubic interpolation, as it might produce negative values or values > 1 which requires clamping
             input_images = torch.nn.functional.interpolate(input_images,        size=(self.image_size, self.image_size), mode='bilinear')
             svbrdf       = torch.nn.functional.interpolate(svbrdf.unsqueeze(0), size=(self.image_size, self.image_size), mode='bilinear').squeeze(0)
-            # TODO: This should only be required for bicubic interpolation:
-            #input_images = torch.clamp(input_images, min=0.0, max=1.0)
         elif self.scale_mode == 'crop':
+            width  = input_images.shape[-1]
+            height = input_images.shape[-2]
+
             # Determine the top left point of the cropped image
-            # TODO: If we use jittering, this has to be determined by the random jitter of the rendered images
+            # TODO: For random jittering, the crop size would need to be a little bit larger than the final size 
+            #       and a final cropping stage would be needed after image generation, which produces slightly unaligned images.
             crop_anchor = torch.IntTensor([0, 0])
+            if self.random_crop:
+                crop_anchor = torch.IntTensor([np.random.randint(0, height - self.image_size + 1), np.random.randint(0, width - self.image_size + 1)])
 
             # Crop down the svbrdf and the given input images
-            # TODO: Allow to scale as alternative to cropping
             svbrdf       = utils.crop_square(svbrdf, crop_anchor, self.image_size)
             input_images = utils.crop_square(input_images, crop_anchor, self.image_size) 
         else:
@@ -133,8 +139,8 @@ class SvbrdfDataset(torch.utils.data.Dataset):
             fixed_view_distance  = 2.75  # Reference: "39.98 degrees FOV"
 
             # Generate scenes (camera and light configurations)
-            # The in the first configuration, the light and view are guaranteed to be both over the material sample.
-            # For the other cases, both are randomly sampled from a hemisphere.
+            # The in the first configuration, the light and view direction are guaranteed to be perpendicular to the material sample.
+            # For the remaining cases, both are randomly sampled from a hemisphere.
             light_poses = torch.cat([torch.Tensor(2).uniform_(-0.75, 0.75), torch.ones(1) * fixed_light_distance], dim=-1).unsqueeze(0)
             if generated_input_image_count > 1:
                 light_poses_hemisphere = utils.generate_normalized_random_direction(generated_input_image_count - 1, min_eps=min_eps, max_eps=max_eps) * fixed_light_distance
@@ -143,18 +149,23 @@ class SvbrdfDataset(torch.utils.data.Dataset):
             light_colors = torch.Tensor([30.0]).unsqueeze(-1)
             if self.use_augmentation:
                 # Reference: "add a normal distribution to the stddev so that sometimes in a minibatch all the images are consistant and sometimes crazy".
-                # Note: For us, this effect will not be batch-wide but only for this individual sample.
+                # NOTE: For us, this effect will not be batch-wide but only for this individual sample.
+                # FIXME: Since our renderer is differently implemented, the color variations with the given standard deviations
+                #        merely have an effect.
                 std_deviation = torch.exp(torch.Tensor(1).normal_(mean = -2.0, std = 0.5)).numpy()[0]
                 light_colors  = torch.abs(torch.Tensor(generated_input_image_count).normal_(mean = 20.0, std = std_deviation)).unsqueeze(-1)
             light_colors = light_colors.expand(generated_input_image_count, 3)
 
-            # Handle light balance by varying the light color not the camera properties
+            # Handle white balance by varying the light color not the camera properties
             if self.use_augmentation:
                 white_balance = torch.abs(torch.Tensor(generated_input_image_count, 3).normal_(mean = 1.0, std = 0.03))
                 light_colors  = light_colors * white_balance
 
             if self.use_augmentation:
                 # Reference: "Simulates a FOV between 30 degrees and 50 degrees centered around 40 degrees"
+                # NOTE: This probably does not do what the reference code expects it to do.
+                #       The uniform distribution generates view distances in [0.25, 2.75] which
+                #       correspond to FOVs between roughly 150 degrees and 40 degrees.
                 view_distance = torch.Tensor(generated_input_image_count).uniform_(0.25, 2.75) 
             else:
                 view_distance = torch.ones(generated_input_image_count) * fixed_view_distance
@@ -171,14 +182,15 @@ class SvbrdfDataset(torch.utils.data.Dataset):
                 
                 rendering = renderer.render(scene, svbrdf.unsqueeze(0))
 
+                # Simulate noise
                 std_deviation_noise = torch.exp(torch.Tensor(1).normal_(mean = np.log(0.005), std=0.3)).numpy()[0]
-                noise = torch.zeros_like(rendering).normal_(mean=0.0, std=std_deviation_noise)
-                rendering = torch.clamp(rendering + noise, min=0.0, max=1.0)
+                noise               = torch.zeros_like(rendering).normal_(mean=0.0, std=std_deviation_noise)
+                rendering           = torch.clamp(rendering + noise, min=0.0, max=1.0)
 
                 input_images = torch.cat([input_images, rendering], dim=0)
 
-        # TODO: For random jittering we need individual crop anchors here
-        # input_images = utils.crop_square(input_images, crop_anchor, self.image_size)
+        # TODO: For random jittering we would need to re-crop to the final size at this point 
+        #       with individual crop anchors for all the images.
 
         return {'inputs': input_images, 'svbrdf': svbrdf}
 
