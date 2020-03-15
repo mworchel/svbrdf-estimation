@@ -112,7 +112,19 @@ def generate_normalized_random_direction(count, min_eps = 0.001, max_eps = 0.05)
     return torch.cat([x, y, z], axis=-1)
 
 def read_image(path): 
-    return np.float32(Image.open(path)) / 255.0
+    image = Image.open(path)
+    mode  = image.mode
+
+    if mode != 'RGB' and mode != 'RGBA':
+        raise ValueError("Path '{:s}' does not point to a valid RGB or RGBA image file.".format(path))
+
+    image = np.float32(image) / 255.0
+
+    # Convert RGBA to RGB
+    if mode == 'RGBA':
+        image = image[:,:,:3]
+
+    return image
 
 def read_image_tensor(path):
     return torch.Tensor(read_image(path)).permute(2, 0, 1)
