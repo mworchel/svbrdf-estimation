@@ -202,8 +202,6 @@ class Generator(nn.Module):
         # init           = True                        [default:False]
         # initScale      = 0.02  (for conv) 
         # initMultiplier = 0.01  (for linear)
-        # encdec_bootstrap = LayerBootstrapping(use_convolution_bias=False, use_linear_bias=False, initialize_weights=True, convolution_init_scale=0.02, linear_init_scale=0.01)
-        # FIXME: I personally have the feeling that not performing explicit initialization is better for convergence
         encdec_bootstrap = LayerBootstrapping(use_convolution_bias=False, use_linear_bias=False, initialize_weights=True, convolution_init_scale=0.02, linear_init_scale=0.01)
 
         encoding_input_channel_count = self.input_channel_count + 2 if self.use_coords else self.input_channel_count
@@ -230,8 +228,6 @@ class Generator(nn.Module):
         # useBias        = True  (for linear) [default:True ]
         # init           = True               [default:False]
         # initMultiplier = 1.0   (for linear)
-        # gt_boostrap = ConvLinBootstrap(use_linear_bias=True, initialize_weights=True, linear_init_scale=1.0)
-        # FIXME: I personally have the feeling that not performing explicit initialization is better for convergence
         gt_boostrap = LayerBootstrapping(use_linear_bias=True, initialize_weights=True, linear_init_scale=1.0)
 
         def bi_noop(x, y):
