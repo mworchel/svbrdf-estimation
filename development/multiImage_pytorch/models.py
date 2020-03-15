@@ -3,6 +3,10 @@ import torch.nn as nn
 import utils
 
 class LayerBootstrapping:
+    """
+    Class which represents an initialization configuration for fully connected and convolutional layers.
+    """
+
     def __init__(self, use_convolution_bias=False, use_linear_bias=False, initialize_weights=True, convolution_init_scale=0.02, linear_init_scale=0.01):
         self.use_convolution_bias   = use_convolution_bias
         self.use_linear_bias        = use_linear_bias
@@ -25,7 +29,7 @@ class LayerBootstrapping:
 
 class MergeLayer(nn.Module):
     """
-    Merges the global track with the convolutional track
+    Layer that merges information from the global track back to the convolutional track.
     """
 
     def __init__(self, bootstrapping, channel_count):
@@ -43,7 +47,7 @@ class MergeLayer(nn.Module):
 
 class InterconnectedConvLayer(nn.Module):
     """
-    A convolutional layer interconnected with the global track
+    (De)Convolutional layer that is interconnected with the global track.
     """
 
     def __init__(self, bootstrapping, conv, conv_output_channel_count, use_instance_norm, use_activation=True):
@@ -76,6 +80,10 @@ class InterconnectedConvLayer(nn.Module):
         return x, mean
 
 class EncodingLayer(nn.Module):
+    """
+    Layer that performs a strided convolution to downsample the input and is connected to the global track. 
+    """
+
     def __init__(self, bootstrapping, input_channel_count, output_channel_count, use_instance_norm, use_activation=True):
         super(EncodingLayer, self).__init__()
         
@@ -94,6 +102,10 @@ class EncodingLayer(nn.Module):
         return self.conv(x, global_track)
 
 class DecodingLayer(nn.Module):
+    """
+    Layer that performs a deconvolution to upsample the input and is connected to the global track as well as to the encoding path through a skip connection.
+    """
+
     def __init__(self, bootstrapping, input_channel_count, output_channel_count, use_instance_norm, use_dropout, use_activation=True):
         super(DecodingLayer, self).__init__()
         
@@ -128,6 +140,10 @@ class DecodingLayer(nn.Module):
         return x, mean
 
 class ConvFeatureLayer(nn.Module):
+    """
+    Layer that performs feature extraction using a dense convolution and is connected to the global track.
+    """
+
     def __init__(self, bootstrapping, input_channel_count, output_channel_count, use_instance_norm, use_activation=True):
         super(ConvFeatureLayer, self).__init__()
 
@@ -145,6 +161,10 @@ class ConvFeatureLayer(nn.Module):
         return self.conv(x, global_track)
 
 class CoordLayer(nn.Module):
+    """
+    Layer that extracts spatial image coordinates from a given input and propagates them as additional features.
+    """
+
     def __init__(self):
         super(CoordLayer, self).__init__()
 
@@ -162,6 +182,10 @@ class CoordLayer(nn.Module):
         return torch.cat((x, batch_coords), dim=1) # Concatenation in feature dimension
 
 class GlobalTrackLayer(nn.Module):
+    """
+    
+    """
+
     def __init__(self, bootstrapping, input_channel_count, output_channel_count):
         super(GlobalTrackLayer, self).__init__()
 
