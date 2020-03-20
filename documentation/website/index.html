@@ -65,25 +65,54 @@
         <div class="row">
 <!--            <div class="one column category" style="text-align: center;">-->
                 <h5 class="docs-header">Teaser Image</h5>
-                <img class="u-max-full-width" src="images/teaser.jpg">
+                <img class="u-max-full-width" src="images/teaser_full.jpg">
                     <p>Estimating scene parameters like geometry and material solely from images has been a widely researched topic, especially in the domain of computer vision. While there are well established methods for geometric reconstruction that are often able to leverage implicit knowledge about the camera setup, material reconstruction is a more ill-conditioned inverse problem. Recent advances in machine learning and computer graphics enable data driven approaches that use sophisticated light transport simulations for both, data generation as well as novel training objectives. So-called differentiable renderers allow using appearance-based objective functions for the training of neural networks by making the rendering operation differentiable with respect to arbitrary scene parameters. - Appearance-based losses more natural. - Many methods use handcrafted renderers for the specific use case. - Scope of project: Integrate general renderer (pathtracer) into a material estimation pipeline.</p>
         </div>
     </section>
 
     <div class="docs-section" id="introduction">
         <h3 class="section-heading">Introduction</h3>
+        Motivation:<br/>
+        - Photorealistic assets<br/>
+        - Multimaterial 3d printing
+
     </div>
 
     <div class="docs-section" id="theory">
         <h3 class="section-heading">Theory</h3>
+
+        Since we are interested in re-rendering objects or surfaces with the estimated reflection properties, we will be dealing with established material models from computer graphics.
+        Reflectance properties are typically given as a bi-directional reflectance distribution function (BRDF) \( f_r(\mathbf{\omega}_i, \mathbf{\omega}_o) \) which defines the fraction of irradiance from from direction \(\mathbf{\omega}_i\) that is reflected towards the direction \(\mathbf{\omega}_o\) [NEEDCITATION].
+        For small scale material variations on an object's surface, one can define the spatially varying BRDF (SVBRDF) as \(f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o)\) where \(\mathbf{x}\) is a point on the surface. <br/>
+        - Cook-Torrence microfacet model<br/>
+        -- Surface consists of small differently oriented microfacets<br/>
+        -- Isotropic specular reflection -> only relative difference between \(\mathbf{\omega}_i\) and \(\mathbf{\omega}_o\) matter<br/>
+        - Four maps -> normal (in tangent space as variation from the macroscopic surface normal), diffuse albedo, roughness, specular albedo<br/>
+        (- Flat surface)<br/>
+
+        - Local shading vs pathtracing(?)
     </div>
 
     <div class="docs-section" id="method">
         <h3 class="section-heading">Method</h3>
+        - General idea -> image to image translation
+        - Architecture
+        - Rendering loss
+
+        - Implementation
+
+        - Interfacing with the pathtracer
     </div>
 
     <div class="docs-section" id="evaluation">
         <h3 class="section-heading">Evaluation</h3>
+
+        - Comparison with my local renderer to reference renderer (reimplementation)
+
+        - Comparison between my local renderer and pathtracer
+        -- Training time
+        -- Qualitative comparisons
+        -- Quantitative comparisons (SSIM)
     </div>
 
     <div class="docs-section" id="conclusion">
