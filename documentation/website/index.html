@@ -24,7 +24,7 @@
                     <a class="navbar-link" href="#introduction">Introduction</a>
                 </li>
                 <li class="navbar-item">
-                    <a class="navbar-link" href="#theory">Theory</a>
+                    <a class="navbar-link" href="#fundamentals">Fundamentals</a>
                 </li>
                 <li class="navbar-item">
                     <a class="navbar-link" href="#method">Method</a>
@@ -78,23 +78,47 @@
 
     </div>
 
-    <div class="docs-section" id="theory">
-        <h3 class="section-heading">Theory</h3>
+    <div class="docs-section" id="fundamentals">
+        <h3 class="section-heading">Fundamentals</h3>
 
-        Since we are interested in re-rendering objects or surfaces with the estimated reflection properties, we will be dealing with established material models from computer graphics.
-        Reflectance properties are typically given as a bi-directional reflectance distribution function (BRDF) \( f_r(\mathbf{\omega}_i, \mathbf{\omega}_o) \) which defines the fraction of irradiance coming from direction \(\mathbf{\omega}_i\) that is reflected towards the direction \(\mathbf{\omega}_o\) [NEEDCITATION].
-        For small scale material variations on an object's surface, one can define the spatially varying BRDF (SVBRDF) as \(f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o)\) where \(\mathbf{x}\) is a point on the surface. <br/>
-        - Cook-Torrence microfacet model<br/>
-        -- Surface consists of small differently oriented microfacets<br/>
-        -- Isotropic specular reflection -> only relative difference between \(\mathbf{\omega}_i\) and \(\mathbf{\omega}_o\) matter<br/>
-        - Four maps -> normal (in tangent space as variation from the macroscopic surface normal), diffuse albedo, roughness, specular albedo<br/>
-        (- Flat surface)<br/>
+        <h5>Material Model</h5>
 
+        <div class="u-pull-right" style="text-align: center; width:300px; margin-left:20px">
+            <h5 id="fig:svbrdf" class="docs-header">Figure 2</h5>
+            <img class="u-max-full-width" src="images/fundamentals_svbrdf.png">
+            <p>
+                Visualization of the parameters of a SVBRDF. \(\mathbf{x}\) is a spatial position on the surface, 
+                \(\mathbf{\omega}_i\) the direction of irradiance and \(\mathbf{\omega}_o\) the direction
+                of reflected radiance. \(\mathbf{n}\) is the local normal.
+            </p> 
+        </div>
+
+        <p>
+        Since we are interested in re-rendering objects or surfaces with the estimated reflection properties, 
+        we will be dealing with established material models from computer graphics.
+        Reflectance properties are typically given as a bi-directional reflectance distribution function (BRDF) 
+        \( f_r(\mathbf{\omega}_i, \mathbf{\omega}_o) \) which defines the fraction of irradiance coming from 
+        direction \(\mathbf{\omega}_i\) that is reflected towards the direction \(\mathbf{\omega}_o\) [NEEDCITATION].
+        For small scale material variations on an object's surface, one can define the spatially varying BRDF (SVBRDF) 
+        as \(f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o)\) where \(\mathbf{x}\) is a point on the surface.
+        <a href="#fig:svbrdf">Figure 2</a> shows a visualization of the SVBRDF parameters. SVBRDFs are a useful
+        concept for objects that do not have a fully homogeneous surface...
+        </p>
+
+        <p>
+            - Cook-Torrence microfacet model<br/>
+            -- Surface consists of small differently oriented microfacets<br/>
+            -- Isotropic specular reflection -> only relative difference between \(\mathbf{\omega}_i\) and \(\mathbf{\omega}_o\) matter<br/>
+            - Four maps -> normal (in tangent space as variation from the macroscopic surface normal), diffuse albedo, roughness, specular albedo<br/>
+            (- Flat surface)
+        </p>
+
+        <h5>Local and Global Shading</h5>
         - Local shading vs pathtracing(?)
     </div>
 
     <div class="docs-section" id="method">
-        <h3 class="section-heading">Method</h3>
+        <h3 class="section-heading">SVBRDF Estimation from Images</h3>
 
         <p>
             In this project we are concerned with recapturing reflectance properties of a surface only given 
@@ -108,6 +132,8 @@
             channel represents the roughness and the last three represent the specular albedo.
         </p>
 
+        <h5>Architecture</h5>
+
         <p>
             To solve this problem, they use a learning-based approach which relies on a classical encoder-decoder network
             structure and an appearance-based loss function.
@@ -115,9 +141,31 @@
             - Rendering loss
         </p>
 
-        - Implementation
+        <h5>Training Objective</h5>
 
-        - Interfacing with the pathtracer
+        <h5>Implementation</h5>
+
+        <div class="row">
+            <div class="one-half column category" style="text-align: center;">
+                <h5 class="docs-header">Video Title</h5>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_local_fixed.mp4" type="video/ogg">
+                    Your browser does not support the video tag.
+                </video>
+                <p>Video description</p>
+            </div>
+            <div class="one-half column category" style="text-align: center;">
+                <h5 class="docs-header">Video Title</h5>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_local_flex.mp4" type="video/ogg">
+                    Your browser does not support the video tag.
+                </video>
+                <p>Video description</p>
+            </div>
+        </div>
+
+        <h5>Pathtracer Integration</h5>
+
     </div>
 
     <div class="docs-section" id="evaluation">
