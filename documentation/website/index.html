@@ -18,10 +18,10 @@
         <div class="container">
             <ul class="navbar-list">
                 <li class="navbar-item">
-                    <a class="navbar-link" href="#abstract">Abstract</a>
+                    <a class="navbar-link" href="#introduction">Introduction</a>
                 </li>
                 <li class="navbar-item">
-                    <a class="navbar-link" href="#introduction">Introduction</a>
+                    <a class="navbar-link" href="#motivation">Motivation</a>
                 </li>
                 <li class="navbar-item">
                     <a class="navbar-link" href="#fundamentals">Fundamentals</a>
@@ -66,15 +66,44 @@
 <!--            <div class="one column category" style="text-align: center;">-->
                 <h5 class="docs-header">Teaser Image</h5>
                 <img class="u-max-full-width" src="images/teaser_full.jpg">
-                    <p>Estimating scene parameters like geometry and material solely from images has been a widely researched topic, especially in the domain of computer vision. While there are well established methods for geometric reconstruction that are often able to leverage implicit knowledge about the camera setup, material reconstruction is a more ill-conditioned inverse problem. Recent advances in machine learning and computer graphics enable data driven approaches that use sophisticated light transport simulations for both, data generation as well as novel training objectives. So-called differentiable renderers allow using appearance-based objective functions for the training of neural networks by making the rendering operation differentiable with respect to arbitrary scene parameters. - Appearance-based losses more natural. - Many methods use handcrafted renderers for the specific use case. - Scope of project: Integrate general renderer (pathtracer) into a material estimation pipeline.</p>
+                    <p>
+                        Estimating scene parameters like geometry and material solely from images 
+                        has been a widely researched topic, especially in the domain of computer vision. 
+                        While there are well established methods for geometric reconstruction that are often 
+                        able to leverage implicit knowledge about the camera setup, material reconstruction 
+                        is a more ill-conditioned inverse problem. Recent advances in machine learning and 
+                        computer graphics enable data driven approaches that use sophisticated light transport 
+                        simulations for both, data generation as well as novel training objectives. 
+                        So-called differentiable renderers allow using appearance-based objective functions for 
+                        the training of neural networks by making the rendering operation differentiable with 
+                        respect to arbitrary scene parameters.  
+                        - Many methods use handcrafted renderers for the specific use case. 
+                        - Scope of project: Integrate general renderer (pathtracer) into a pipeline for material reflectance estimation .
+                    </p>
         </div>
     </section>
 
-    <div class="docs-section" id="introduction">
-        <h3 class="section-heading">Introduction</h3>
-        Motivation:<br/>
-        - Photorealistic assets<br/>
-        - Multimaterial 3d printing
+    <div class="docs-section" id="motivation">
+        <h3 class="section-heading">Motivation</h3>
+
+        <p>
+            Recent advances in computer graphics allow virtual environments that can be 
+            presented with photo realistic quality. This requires not only physically correct light transport
+            simulations but also high quality assets that faithfully capture objects of the real world.
+            Several industries like for example that of game development rely more and more on photogrammetry,
+            a method to reconstruct geometry and color information of objects only based on images <a href="#brown_2016">[4]</a><a href="#bishop_2017">[5]</a>.
+            While geometry reconstruction can be automated for the most parts due to the availability of robust algorithms,
+            specific material properties of the surfaces like reflectance behavior often have to be manually defined by artists.
+            Methods that allow for automatic deduction of these material properties from images could enable even more
+            efficient workflows to reach the required asset quality. Besides the game development industry others
+            like the movie industry or projects in the area of cultural heritage would benefit from such methods.
+        </p>
+
+        <p>
+            - Name some related work<br/>
+            - Name the specific paper and problem<br/>
+            - Name the goal
+        </p>
 
     </div>
 
@@ -94,19 +123,21 @@
         </div>
 
         <p>
-        Since we are interested in re-rendering objects or surfaces with the estimated reflection properties, 
-        we will be dealing with established material models from computer graphics.
-        Reflectance properties are typically given as a bi-directional reflectance distribution function (BRDF) 
-        \( f_r(\mathbf{\omega}_i, \mathbf{\omega}_o) \) which defines the fraction of irradiance coming from 
-        direction \(\mathbf{\omega}_i\) that is reflected towards the direction \(\mathbf{\omega}_o\) [NEEDCITATION].
-        For small scale material variations on an object's surface, one can define the spatially varying BRDF (SVBRDF) 
-        as \(f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o)\) where \(\mathbf{x}\) is a point on the surface.
-        <a href="#fig:svbrdf">Figure 2</a> shows a visualization of the SVBRDF parameters. SVBRDFs are a useful
-        concept for objects that do not have a fully homogeneous surface...
+        In computer graphics, material reflectance properties are typically modeled as a 
+        bi-directional reflectance distribution function (BRDF) \( f_r(\mathbf{\omega}_i, \mathbf{\omega}_o) \) 
+        which defines the fraction of irradiance coming from 
+        direction \(\mathbf{\omega}_i\) that is reflected towards the direction \(\mathbf{\omega}_o\) [NEEDCITATION]. 
+        These directions are relative to the local coordinate system defined by the surface normal \(\mathbf{n}\).
+        If the surface of an object is not fully homogeneous, the concept is usually extended by introducing a dependence
+        on the specific surface point under investigation. Using a spatially varying BRDF (SVBRDF) 
+        \(f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o)\) where \(\mathbf{x}\) is a point on the surface
+        it is possible to capture such small scale variations. In this case, the specific surface normal 
+        usually also becomes position dependent as \(\mathbf{n}(\mathbf{x})\). 
+        <a href="#fig:svbrdf">Figure 2</a> shows a visualization of the SVBRDF parameters.        
         </p>
 
         <p>
-            - Cook-Torrence microfacet model<br/>
+            - Cook-Torrance microfacet model<br/>
             -- Surface consists of small differently oriented microfacets<br/>
             -- Isotropic specular reflection -> only relative difference between \(\mathbf{\omega}_i\) and \(\mathbf{\omega}_o\) matter<br/>
             - Four maps -> normal (in tangent space as variation from the macroscopic surface normal), diffuse albedo, roughness, specular albedo<br/>
@@ -409,8 +440,15 @@
             </li>
             
             <li class="popover-item" id="3">
-                <!--A link to this may look like: <a href="#1">[1]</a>-->
-                [1] Deschaintre, V., Aittala, M., Durand, F., Drettakis, G., Bousseau, A., 2018, Single-Image SVBRDF Capture with a Rendering-Aware Deep Network.
+                [3] Deschaintre, V., Aittala, M., Durand, F., Drettakis, G., Bousseau, A., 2018, Single-Image SVBRDF Capture with a Rendering-Aware Deep Network.
+            </li>
+
+            <li class="popover-item" id="brown_2016">
+                [4] Brown, K., Hamilton, A., 2016, Photogrammetry and 'Star Wars Battlefront', GDC 2016, <a href="https://www.gdcvault.com/play/1022981/Photogrammetry-and-Star-Wars-Battlefront">https://www.gdcvault.com/play/1022981/Photogrammetry-and-Star-Wars-Battlefront</a>, last retrieved March 2020
+            </li>
+
+            <li class="popover-item" id="bishop_2017">
+                [5] Bishop, L., Cowan, C., Jancosek, M., 2017,  	Photogrammetry for Games: Art, Technology and Pipeline Integration for Amazing Worlds, GDC 2017, <a href="https://www.gdcvault.com/play/1024340/Photogrammetry-for-Games-Art-Technology">https://www.gdcvault.com/play/1024340/Photogrammetry-for-Games-Art-Technology</a>, last retrieved March 2020
             </li>
         </ul>
     </div>
