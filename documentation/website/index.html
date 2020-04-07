@@ -127,18 +127,18 @@
         </div>
 
         <p>
-            In computer graphics, material reflectance properties are typically given as 
-            bidirectional reflectance distribution function (BRDF) \( f_r(\mathbf{\omega}_i, \mathbf{\omega}_o) \) 
-            which defines the fraction of irradiance coming from 
-            direction \(\mathbf{\omega}_i\) that is reflected towards the direction \(\mathbf{\omega}_o\) [NEEDCITATION]. 
-            The given directions are relative to the local coordinate system defined by the surface normal \(\mathbf{n}\).
-            If the surface of an object is not fully homogeneous, the concept is usually extended by introducing a dependence
-            on the specific surface point under investigation. With \(\mathbf{x}\) being a point on the surface,
-            the spatially varying BRDF (SVBRDF) is then \(f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o)\).
-            <a href="#fig:svbrdf">Figure 2</a> shows a visualization of the SVBRDF parameters.        
+            In computer graphics, surface reflectance properties are typically captured by the 
+            bidirectional reflectance distribution function (BRDF) \( f_r(\mathbf{\omega}_i, \mathbf{\omega}_o) \).
+            It represents the fraction of (differential) irradiance coming from a direction \(\mathbf{\omega}_i\) 
+            that is reflected towards a direction \(\mathbf{\omega}_o\) <a href="#pharr_2016">[6]</a>. As most
+            surfaces are not fully homogeneous, the BRDF is usually given as a function of surface position 
+            \(f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o)\), which is then also called spatially varying BRDF (SVBRDF).
+            The directional quantities in this function are typically relative to the local coordinate system that is
+            defined by the surface normal \(\mathbf{n}\).
+            <a href="#fig:svbrdf">Figure 2</a> shows a visualization of the SVBRDF parameters.         
         </p>
 
-        <p>
+        <p> 
             - Cook-Torrance microfacet model<br/>
             -- Surface consists of small differently oriented microfacets<br/>
             -- Isotropic specular reflection -> only relative difference between \(\mathbf{\omega}_i\) and \(\mathbf{\omega}_o\) matter<br/>
@@ -457,6 +457,10 @@
 
             <li class="popover-item" id="bishop_2017">
                 [5] Bishop, L., Cowan, C., Jancosek, M., 2017,  	Photogrammetry for Games: Art, Technology and Pipeline Integration for Amazing Worlds, GDC 2017, <a href="https://www.gdcvault.com/play/1024340/Photogrammetry-for-Games-Art-Technology">https://www.gdcvault.com/play/1024340/Photogrammetry-for-Games-Art-Technology</a>, last retrieved March 2020
+            </li>
+
+            <li class="popover-item" id="pharr_2016">
+                [6] Pharr, M., Jakob, W., Humphreys, G., 2016, Physically Based Rendering: From Theory to Implementation
             </li>
         </ul>
     </div>
