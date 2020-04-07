@@ -133,7 +133,16 @@
             \(f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o)\), which is then also called spatially varying BRDF (SVBRDF).
             The directional quantities in this function are relative to the local coordinate system that is
             defined by the surface normal \(\mathbf{n}\).
-            <a href="#fig:svbrdf">Figure 2</a> shows a visualization of the SVBRDF parameters.         
+            <a href="#fig:svbrdf">Figure 2</a> shows a visualization of the SVBRDF parameters.
+            For a BRDF to be physically correct, it has to fulfill two properties <a href="#pharr_2016">[6]</a>:
+            <ol>
+                <li>Helmholtz reciprocity: \(f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o) = f_r(\mathbf{x}, \mathbf{\omega}_o, \mathbf{\omega}_i)\) for all \(\mathbf{\omega}_i, \mathbf{\omega}_o\)</li>
+                <li>Energy Conservation: \(\int\limits_{\Omega} \, f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o) \, \cos \theta_i \, d\mathbf{\omega}_i \leq 1, \) 
+                    where \(\Omega\) is the hemisphere above \(\mathbf{x}\) and \(\theta_i\) the angle between \(\mathbf{\omega}_i\) and the surface normal \(\mathbf{n}\). 
+                </li>
+            </ol>
+            Intuitively, the reciprocity states, that the reflectance properties are the same
+            independent of the specific flow direction of light from one direction to the other.
         </p>
 
         <p>
