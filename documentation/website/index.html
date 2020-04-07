@@ -114,8 +114,6 @@
     <div class="docs-section" id="fundamentals">
         <h3 class="section-heading">Fundamentals</h3>
 
-        <h5>Material Model</h5>
-
         <div class="u-pull-right" style="text-align: center; width:300px; margin-left:20px">
             <h5 id="fig:svbrdf" class="docs-header">Figure 2</h5>
             <img class="u-max-full-width" src="images/fundamentals_svbrdf.png">
@@ -133,23 +131,23 @@
             that is reflected towards a direction \(\mathbf{\omega}_o\) <a href="#pharr_2016">[6]</a>. As most
             surfaces are not fully homogeneous, the BRDF is usually given as a function of surface position 
             \(f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o)\), which is then also called spatially varying BRDF (SVBRDF).
-            The directional quantities in this function are typically relative to the local coordinate system that is
+            The directional quantities in this function are relative to the local coordinate system that is
             defined by the surface normal \(\mathbf{n}\).
             <a href="#fig:svbrdf">Figure 2</a> shows a visualization of the SVBRDF parameters.         
         </p>
 
-        <p> 
-            - Cook-Torrance microfacet model<br/>
+        <p>
+            While it is possible to represent a BRDF as a set of samples over the full parameter space,
+            it is common to use simple and more intuitive models. The Cook-Torrance microfacet model <a href="#torrance_1982">[7]</a>
+            is of particular interest for this project and will be the BRDF representation of choice.
+            In this model, the BRDF consists of two terms
+            \[ f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o) = k_d f_d(\mathbf{x}) + k_s f_s(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o), \quad k_d + k_s = 1. \]
+            The diffuse component \(f_d\) is isotropic (independent of the directions) and captures effects such as internal scattering or surface interreflections while 
+            the specular component \(f_s\) is view dependent and captures effects without explicit surface penetration.
             -- Surface consists of small differently oriented microfacets<br/>
             -- Isotropic specular reflection -> only relative difference between \(\mathbf{\omega}_i\) and \(\mathbf{\omega}_o\) matter<br/>
             - Four maps -> normal (in tangent space as variation from the macroscopic surface normal), diffuse albedo, roughness, specular albedo<br/>
             (- Flat surface)
-        </p>
-
-        <h5>Local and Global Shading</h5>
-
-        <p>
-            - Local shading vs pathtracing(?)
         </p>
     </div>
 
@@ -461,6 +459,10 @@
 
             <li class="popover-item" id="pharr_2016">
                 [6] Pharr, M., Jakob, W., Humphreys, G., 2016, Physically Based Rendering: From Theory to Implementation
+            </li>
+
+            <li class="popover-item" id="torrance_1982">
+                [7] Torrance, K. E., Cook, R. L., 1982, A Reflectance Model for Computer Graphics
             </li>
         </ul>
     </div>
