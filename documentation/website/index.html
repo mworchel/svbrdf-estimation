@@ -167,13 +167,11 @@
         <h3 class="section-heading">SVBRDF Estimation from Images</h3>
 
         <p>
-            In this project, the focus lies on light-weight image-based methods for capturing SVBRDFs of real world surfaces.
-            One of these methods is that of Deschaintre et al. <a href="#3">[3]</a>. Given a single flash lit image of a
-            flat surface, they are able to reconstruct its Cook Torrance SVBRDF maps using a deep convolutional network.
-            Therefore, they cast material reflectance estimation as image to image translation problem. The input to the network is a 
-            conventional three channel RGB image and the output is a nine channel image, where two channels represent
-            the per-pixel normal (the z coordinate is inferred from the x and y coordinates), three channels represent
-            the diffuse albedo, one channel represents the roughtness and the last three channels represent the specular albedo.
+            In this project, the focus lies on the work of Deschaintre et al. <a href="#3">[3]</a>, 
+            which is a light-weight image-based method for capturing SVBRDFs of real world surfaces.
+            Given a single flash lit image of a flat surface, they are able to reconstruct its 
+            Cook Torrance SVBRDF maps using a deep convolutional network. Thus, they cast material
+            reflectance estimation as an image-to-image translation problem.
             Their follow-up work <a href="#deschaintre_2019">[4]</a> extends the idea by using multiple uncalibrated
             but aligned images of the same surface. While we initially planned to base the whole project on the multi-view approach,
             time constraints and lower overall complexity lead us to focus only on the single-view case. However, some ideas
@@ -183,9 +181,36 @@
         <h5>Architecture</h5>
 
         <p>
-            To solve this problem, they use a learning-based approach which relies on a classical encoder-decoder network
-            structure and an appearance-based loss function. 
-            - Architecture
+            At the heart of the presented approach is a deep convolutional network that adopts the U-Net architecture [NEEDCITATION]
+            which has proven to be suitable for other image-to-image translation tasks. The input to the network is a conventional 
+            three channel RGB image of the surface and the output is a nine channel image, where two channels represent
+            the per-pixel normal (the z coordinate is inferred from the x and y coordinates), three channels represent
+            the diffuse albedo, one channel represents the roughtness and the last three channels represent the specular albedo.
+            As the reflectance representation is conformant to the Cook Torrance model (see section <a href="#fundamentals">Fundamentals</a>),
+            the approach intrinsically assumes that the surface can be represented by this model.
+        </p>
+
+        <p>
+            The used U-Net architecture implements an encoder-decoder structure resembling the well-known hourglass shape.
+            The encoder part of the network consists of eight convolutional layers with feature counts 64, 128, 256, 512, 512, 512, 512, 512
+            that gradually reduce the spatial size of the image (using a stride of two) while increasing the number of features. 
+            The bottleneck is followed by a decoder part which again consists of eight layers that perform spatial upsampling
+            followed by two convolutions. The decoding layers have similar feature counts as the encoding layers, only in reversed order 
+            with the last decoding layer having a feature count of nine to match the output format. In order to better reconstruct fine details
+            that possibly have been lost in the bottleneck, each decoding layer is connected to the output of the same sized encoding layer
+            through skip connections.<br/>
+            - Figure for visualization
+        </p>
+
+        <p>
+            - Instance Normalization and Global Track
+        </p>
+
+        <p>
+            Note that specific details about the architecture of the single-view network are mainly extracted from the multi-view 
+            approach as only this code was publicly available and the single-view model (or at least a variation of it called 'Generator')
+            is part of the multi-view model. Therefore, there might be subtle differences between the model used
+            in the single-view work and the single-view model presented here.
         </p>
 
         <h5>Training Objective</h5>
