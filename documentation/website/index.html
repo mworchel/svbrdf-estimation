@@ -125,16 +125,16 @@
         </div>
 
         <p>
-            In computer graphics, surface reflectance properties are typically captured by the 
+            In computer graphics, surface reflectance properties are typically represented by a 
             bidirectional reflectance distribution function (BRDF) \( f_r(\mathbf{\omega}_i, \mathbf{\omega}_o) \).
-            It represents the fraction of (differential) irradiance coming from a direction \(\mathbf{\omega}_i\) 
+            It defines the fraction of (differential) irradiance coming from a direction \(\mathbf{\omega}_i\) 
             that is reflected towards a direction \(\mathbf{\omega}_o\) <a href="#pharr_2016">[6]</a>. As most
             surfaces are not fully homogeneous, the BRDF is usually given as a function of surface position 
             \(f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o)\), which is then also called spatially varying BRDF (SVBRDF).
-            The directional quantities in this function are relative to the local coordinate system that is
-            defined by the surface normal \(\mathbf{n}\).
-            <a href="#fig:svbrdf">Figure 2</a> shows a visualization of the SVBRDF parameters.
-            For a BRDF to be physically correct, it has to fulfill two properties <a href="#pharr_2016">[6]</a>:
+            <a href="#fig:svbrdf">Figure 2</a> shows a visualization of the SVBRDF parameters. 
+            Note that the directional quantities in this function are relative to the local coordinate system that is
+            defined by the surface normal \(\mathbf{n}\). 
+            Additionally, a physically correct BRDF fulfills two properties <a href="#pharr_2016">[6]</a>:
             <ol>
                 <li>Helmholtz reciprocity: \(f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o) = f_r(\mathbf{x}, \mathbf{\omega}_o, \mathbf{\omega}_i)\) for all \(\mathbf{\omega}_i, \mathbf{\omega}_o\)</li>
                 <li>Energy Conservation: \(\int\limits_{\Omega} \, f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o) \, \cos \theta_i \, d\mathbf{\omega}_i \leq 1, \) 
@@ -153,8 +153,9 @@
             is of particular interest for this project and will be the BRDF representation of choice.
             In this model, the BRDF consists of two terms
             \[ f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o) = k_d f_d(\mathbf{x}) + k_s f_s(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o), \quad k_d + k_s = 1. \]
-            The diffuse component \(f_d\) is isotropic (independent of the directions) and captures effects such as internal scattering or surface interreflections while 
-            the specular component \(f_s\) is view dependent and captures effects without explicit surface penetration.
+            The diffuse component \(f_d\) is independent of the directions and captures effects 
+            such as internal scattering or surface interreflections while 
+            the specular component \(f_s\) captures explicit reflectance effects without surface penetration.
             -- Surface consists of small differently oriented microfacets<br/>
             -- Isotropic specular reflection -> only relative difference between \(\mathbf{\omega}_i\) and \(\mathbf{\omega}_o\) matter<br/>
             - Four maps -> normal (in tangent space as variation from the macroscopic surface normal), diffuse albedo, roughness, specular albedo<br/>
@@ -166,15 +167,17 @@
         <h3 class="section-heading">SVBRDF Estimation from Images</h3>
 
         <p>
-            The approach of Deschaintre et al. <a href="#3">[3]</a> is used as base of this project.
-            They present a method for estimating spatially varying material reflectance properties from flash-lit images of
-            a surface. One of their main assumptions is that of a flat surface, i.e., the geometric normal is constant
-            and small scale variations can be captured by a normal map. They also assume, that the reflectance properties
-            can be sufficiently represented by the Cook-Torrance model, which is for example not possible for anisotropic materials
-            like brushed metals. With these assumptions, they cast material estimation as an image to image transformation problem.
-            A three channel RGB image is transformed into a nine channel SVBRDF image, where two channels represent the normal 
-            (the z coordinate can be inferred from the x and y coordinates), three channels represent the diffuse albedo, one
-            channel represents the roughness and the last three represent the specular albedo.
+            In this project, the focus lies on light-weight image-based methods for capturing SVBRDFs of real world surfaces.
+            One of these methods is that of Deschaintre et al. <a href="#3">[3]</a>. Given a single flash lit image of a
+            flat surface, they are able to reconstruct its Cook Torrance SVBRDF maps using a deep convolutional network.
+            Therefore, they cast material reflectance estimation as image to image translation problem. The input to the network is a 
+            conventional three channel RGB image and the output is a nine channel image, where two channels represent
+            the per-pixel normal (the z coordinate is inferred from the x and y coordinates), three channels represent
+            the diffuse albedo, one channel represents the roughtness and the last three channels represent the specular albedo.
+            Their follow-up work <a href="#deschaintre_2019">[4]</a> extends the idea by using multiple uncalibrated
+            but aligned images of the same surface. While we initially planned to base the whole project on the multi-view approach,
+            time constraints and lower overall complexity lead us to focus only on the single-view case. However, some ideas
+            and the implementation reference are mainly borrowed from the multi-view approach.
         </p>
 
         <h5>Architecture</h5>
@@ -458,6 +461,10 @@
             
             <li class="popover-item" id="3">
                 [3] Deschaintre, V., Aittala, M., Durand, F., Drettakis, G., Bousseau, A., 2018, Single-Image SVBRDF Capture with a Rendering-Aware Deep Network.
+            </li>
+
+            <li class="popover-item" id="deschaintre_2019">
+                [4] Deschaintre, V., Aittala, M., Durand, F., Drettakis, G., Bousseau, A., 2019, Flexible SVBRDF Capture with a Multi-Image Deep Network.
             </li>
 
             <li class="popover-item" id="brown_2016">
