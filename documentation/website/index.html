@@ -157,7 +157,7 @@
         <p>
             The main focus of this project is the work of Deschaintre et al. <a href="#3">[3]</a>, 
             a light-weight image-based method for capturing SVBRDFs of real world surfaces.
-            Given a single flash lit image of a flat surface, they are able to reconstruct its 
+            Given a single flash-lit image of a flat surface, they are able to reconstruct its 
             Cook Torrance SVBRDF maps using a deep convolutional network. Thus, they cast material
             reflectance estimation as an image-to-image translation problem.
             Their follow-up work <a href="#deschaintre_2019">[4]</a> extends the idea by using multiple uncalibrated
@@ -183,7 +183,7 @@
                 <h5 id="fig:architecture_overview" class="docs-header">Figure 3</h5>
                 <img class="u-max-full-width" src="images/architecture_overview.svg">
                 <p>
-                    TODO: Description
+                    TODO: Description (size of the blocks is not to scale).
                 </p>
             </div>
         </div>
@@ -201,14 +201,51 @@
         </p>
 
         <p>
-            - Instance Normalization and Global Track
+            In order to stabilize training, the network performs instance normalization between each convolutional layer
+            and its preceeding activation function. However, the authors found that using this normalization
+            reduces the network's ability to maintain non-local information effectively. They showed that even
+            a simple task such as predicting a constant colored diffuse albedo can impose a significant challenge
+            on such an architecture. Their proposed solution is a second network parallel to the main encoder-decoder
+            track that explicitely propagates global information.
+            <a href="#fig:architecture_exchange">Figure 4</a> shows a detailed visualization of the 
+            information exchange between the main track (in the encoding part) and the global track.
+            The per-channel means that are subtracted by the instance normalization flow into
+            the global track. They are concatenated with the previous feature vector,
+            transformed by a fully connected layer and then pass through a SELU activation function.
+            In the other direction, the previous feature vector is transformed by 
+            another fully connected layer and then added
+            to the output feature maps of the instance normalization.
+            Using this second track, the network is able to propagate non-local information
+            as part of the global feature vector.
         </p>
+
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <h5 id="fig:architecture_exchange" class="docs-header">Figure 4</h5>
+                <img class="u-max-full-width" src="images/architecture_exchange.svg">
+                <p>
+                    TODO: Description.
+                </p>
+            </div>
+        </div>
 
         <p>
             Note that specific details about the architecture of the single-view network are mainly extracted from the multi-view 
-            approach as only this code was publicly available and the single-view model (or at least a variation of it called 'Generator')
-            is part of the multi-view model. Therefore, there might be subtle differences between the model used
+            approach as only this code was publicly available. The single-view model (or at least a variation of it called 'Generator')
+            is a subset of the multi-view model. There might be subtle differences between the model used
             in the single-view work and the single-view model presented here.
+        </p>
+
+        <h5>Data</h5>
+
+        <p>
+            - SDR image of the flash-lit surface<br/>
+            - SVBRDF maps (normals, diffuse albedo, roughness, specular albedo)<br/>
+            - Training data is artificially generated<br/>
+            - Materials selected by an artist<br/>
+            - Material mixing (from multi-view)<br/>
+            - Generation of input images by rendering (randomized placement of camera and light above the virtual patch)<br/>
+            - Artificial degradation using gaussian noise<br/>
         </p>
 
         <h5>Training Objective</h5>
@@ -218,6 +255,11 @@
         </p>
 
         <h5>Implementation</h5>
+
+        <p>
+            - PyTorch implementation<br/>
+            - Validation of the architecture with TensorboardX (multi-view 'Generator' as reference)<br/>
+        </p>
 
         <div class="row">
             <div class="one-half column category" style="text-align: center;">

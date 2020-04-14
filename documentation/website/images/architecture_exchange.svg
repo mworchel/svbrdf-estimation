@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generiert durch Microsoft Visio, SVG Export architecture_exchange.svg Zeichenblatt-1 -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events"
+		xmlns:v="http://schemas.microsoft.com/visio/2003/SVGExtensions/" width="8.88315in" height="1.95959in"
+		viewBox="0 0 639.587 141.091" xml:space="preserve" color-interpolation-filters="sRGB" class="st14">
+	<v:documentProperties v:langID="1031" v:metric="true" v:viewMarkup="false"/>
+
+	<style type="text/css">
+	<![CDATA[
+		.st1 {fill:#b5c6e7;stroke:#c7c8c8;stroke-width:0.25}
+		.st2 {fill:#feffff;font-family:Microsoft Sans Serif;font-size:0.833336em}
+		.st3 {marker-end:url(#mrkr4-9);stroke:#4672c4;stroke-linecap:round;stroke-linejoin:round;stroke-width:1}
+		.st4 {fill:#4672c4;fill-opacity:1;stroke:#4672c4;stroke-opacity:1;stroke-width:0.28409090909091}
+		.st5 {fill:#a8d08d;stroke:#c7c8c8;stroke-width:0.25}
+		.st6 {font-size:1em}
+		.st7 {fill:#ffffff;stroke:none;stroke-linecap:butt;stroke-width:7.2}
+		.st8 {fill:#3c63ac;font-family:Microsoft Sans Serif;font-size:0.666664em}
+		.st9 {marker-end:url(#mrkr4-53);stroke:#538135;stroke-linecap:round;stroke-linejoin:round;stroke-width:1}
+		.st10 {fill:#538135;fill-opacity:1;stroke:#538135;stroke-opacity:1;stroke-width:0.28409090909091}
+		.st11 {fill:none;stroke:none;stroke-width:0.25}
+		.st12 {fill:#538135;font-family:Calibri;font-size:1.00001em}
+		.st13 {fill:#4672c4;font-family:Calibri;font-size:1.00001em}
+		.st14 {fill:none;fill-rule:evenodd;font-size:12px;overflow:visible;stroke-linecap:square;stroke-miterlimit:3}
+	]]>
+	</style>
+
+	<defs id="Markers">
+		<g id="lend4">
+			<path d="M 2 1 L 0 0 L 2 -1 L 2 1 " style="stroke:none"/>
+		</g>
+		<marker id="mrkr4-9" class="st4" v:arrowType="4" v:arrowSize="2" v:setback="7.04" refX="-7.04" orient="auto"
+				markerUnits="strokeWidth" overflow="visible">
+			<use xlink:href="#lend4" transform="scale(-3.52,-3.52) "/>
+		</marker>
+		<marker id="mrkr4-53" class="st10" v:arrowType="4" v:arrowSize="2" v:setback="7.04" refX="-7.04" orient="auto"
+				markerUnits="strokeWidth" overflow="visible">
+			<use xlink:href="#lend4" transform="scale(-3.52,-3.52) "/>
+		</marker>
+	</defs>
+	<g v:mID="0" v:index="1" v:groupContext="foregroundPage">
+		<title>Zeichenblatt-1</title>
+		<v:pageProperties v:drawingScale="0.0393701" v:pageScale="0.0393701" v:drawingUnits="24" v:shadowOffsetX="8.50394"
+				v:shadowOffsetY="-8.50394"/>
+		<v:layer v:name="Verbinder" v:index="0"/>
+		<g id="shape8-1" v:mID="8" v:groupContext="shape" transform="translate(46.7382,-107.533)">
+			<title>Rechteck.8</title>
+			<desc>Leaky ReLU</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="36.8504" cy="124.437" width="73.71" height="33.3071"/>
+			<rect x="0" y="107.783" width="73.7008" height="33.3071" class="st1"/>
+			<text x="9.4" y="127.44" class="st2" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Leaky ReLU</text>		</g>
+		<g id="shape29-4" v:mID="29" v:groupContext="shape" v:layerMember="0" transform="translate(215.4,-117.1)">
+			<title>Dynamischer Verbinder.29</title>
+			<path d="M0 134 L14.22 134" class="st3"/>
+		</g>
+		<g id="shape51-10" v:mID="51" v:groupContext="shape" transform="translate(141.699,-107.533)">
+			<title>Rechteck.51</title>
+			<desc>Convolution</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="36.8504" cy="124.437" width="73.71" height="33.3071"/>
+			<rect x="0" y="107.783" width="73.7008" height="33.3071" class="st1"/>
+			<text x="10.39" y="127.44" class="st2" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Convolution</text>		</g>
+		<g id="shape52-13" v:mID="52" v:groupContext="shape" transform="translate(236.659,-107.533)">
+			<title>Rechteck.52</title>
+			<desc>Instance Norm</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="36.8504" cy="124.437" width="73.71" height="33.3071"/>
+			<rect x="0" y="107.783" width="73.7008" height="33.3071" class="st1"/>
+			<text x="4.4" y="127.44" class="st2" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Instance Norm</text>		</g>
+		<g id="shape53-16" v:mID="53" v:groupContext="shape" transform="translate(419.494,-107.533)">
+			<title>Rechteck.53</title>
+			<desc>Leaky ReLU</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="36.8504" cy="124.437" width="73.71" height="33.3071"/>
+			<rect x="0" y="107.783" width="73.7008" height="33.3071" class="st1"/>
+			<text x="9.4" y="127.44" class="st2" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Leaky ReLU</text>		</g>
+		<g id="shape54-19" v:mID="54" v:groupContext="shape" v:layerMember="0" transform="translate(120.439,-117.1)">
+			<title>Dynamischer Verbinder.54</title>
+			<path d="M0 134 L14.22 134" class="st3"/>
+		</g>
+		<g id="shape55-24" v:mID="55" v:groupContext="shape" transform="translate(338.707,-0.25)">
+			<title>Rechteck.55</title>
+			<desc>Concatenate</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="36.8504" cy="124.437" width="73.71" height="33.3071"/>
+			<rect x="0" y="107.783" width="73.7008" height="33.3071" class="st5"/>
+			<text x="8.5" y="127.44" class="st2" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Concatenate</text>		</g>
+		<g id="shape56-27" v:mID="56" v:groupContext="shape" transform="translate(432.25,-0.25)">
+			<title>Rechteck.56</title>
+			<desc>Fully Connected</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="36.8504" cy="124.437" width="73.71" height="33.3071"/>
+			<rect x="0" y="107.783" width="73.7008" height="33.3071" class="st5"/>
+			<text x="26.24" y="121.44" class="st2" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Fully <tspan
+						x="12.67" dy="1.2em" class="st6">Connected</tspan></text>		</g>
+		<g id="shape57-31" v:mID="57" v:groupContext="shape" transform="translate(196.974,-0.25)">
+			<title>Rechteck.57</title>
+			<desc>SELU</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="36.8504" cy="124.437" width="73.71" height="33.3071"/>
+			<rect x="0" y="107.783" width="73.7008" height="33.3071" class="st5"/>
+			<text x="23.79" y="127.44" class="st2" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>SELU</text>		</g>
+		<g id="shape58-34" v:mID="58" v:groupContext="shape" transform="translate(358.549,-114.187)">
+			<title>Rechteck.58</title>
+			<desc>Add</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="17.0079" cy="131.091" width="34.02" height="20"/>
+			<rect x="0" y="121.091" width="34.0157" height="20" class="st5"/>
+			<text x="8.11" y="134.09" class="st2" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Add</text>		</g>
+		<g id="shape59-37" v:mID="59" v:groupContext="shape" transform="translate(338.707,-57.2185)">
+			<title>Rechteck.59</title>
+			<desc>Fully Connected</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="36.8504" cy="124.437" width="73.71" height="33.3071"/>
+			<rect x="0" y="107.783" width="73.7008" height="33.3071" class="st5"/>
+			<text x="26.24" y="121.44" class="st2" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Fully <tspan
+						x="12.67" dy="1.2em" class="st6">Connected</tspan></text>		</g>
+		<g id="shape60-41" v:mID="60" v:groupContext="shape" v:layerMember="0" transform="translate(310.36,-114.904)">
+			<title>Dynamischer Verbinder.60</title>
+			<desc>Mean</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="14.1732" cy="159.799" width="40" height="17.6036"/>
+			<path d="M0 141.09 L12.67 141.09 L12.67 227.83 L21.31 227.83" class="st3"/>
+			<rect v:rectContext="textBkgnd" x="4.1675" y="154.999" width="20.0116" height="9.59985" class="st7"/>
+			<text x="4.17" y="162.2" class="st8" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Mean</text>		</g>
+		<g id="shape61-48" v:mID="61" v:groupContext="shape" v:layerMember="0" transform="translate(270.675,-16.9035)">
+			<title>Dynamischer Verbinder.61</title>
+			<path d="M0 141.09 L12.67 141.09 L12.67 84.12 L49.99 84.12 A2.3622 2.3622 0 1 1 54.72 84.12 L60.99 84.12" class="st9"/>
+		</g>
+		<g id="shape62-54" v:mID="62" v:groupContext="shape" v:layerMember="0" transform="translate(270.675,-9.81693)">
+			<title>Dynamischer Verbinder.62</title>
+			<path d="M0 134 L60.99 134" class="st9"/>
+		</g>
+		<g id="shape63-59" v:mID="63" v:groupContext="shape" v:layerMember="0" transform="translate(310.36,-117.1)">
+			<title>Dynamischer Verbinder.63</title>
+			<path d="M0 134 L41.15 134" class="st3"/>
+		</g>
+		<g id="shape64-64" v:mID="64" v:groupContext="shape" v:layerMember="0" transform="translate(392.565,-117.1)">
+			<title>Dynamischer Verbinder.64</title>
+			<path d="M0 134 L19.89 134" class="st3"/>
+		</g>
+		<g id="shape65-69" v:mID="65" v:groupContext="shape" v:layerMember="0" transform="translate(368.47,-90.5256)">
+			<title>Dynamischer Verbinder.65</title>
+			<path d="M7.09 141.09 L7.09 124.47" class="st9"/>
+		</g>
+		<g id="shape66-74" v:mID="66" v:groupContext="shape" v:layerMember="0" transform="translate(412.407,-9.81693)">
+			<title>Dynamischer Verbinder.66</title>
+			<path d="M0 134 L12.8 134" class="st9"/>
+		</g>
+		<g id="shape67-79" v:mID="67" v:groupContext="shape" v:layerMember="0" transform="translate(493.195,-117.1)">
+			<title>Dynamischer Verbinder.67</title>
+			<path d="M0 134 L19.89 134" class="st3"/>
+		</g>
+		<g id="shape68-84" v:mID="68" v:groupContext="shape" v:layerMember="0" transform="translate(19.8091,-117.1)">
+			<title>Dynamischer Verbinder.68</title>
+			<path d="M0 134 L19.89 134" class="st3"/>
+		</g>
+		<g id="shape69-89" v:mID="69" v:groupContext="shape" v:layerMember="0" transform="translate(177.132,-9.81693)">
+			<title>Dynamischer Verbinder.69</title>
+			<path d="M0 134 L12.8 134" class="st9"/>
+		</g>
+		<g id="shape70-94" v:mID="70" v:groupContext="shape" transform="translate(525.793,-0.25)">
+			<title>Rechteck.70</title>
+			<desc>SELU</desc>
+			<v:userDefs>
+				<v:ud v:nameU="visVersion" v:val="VT0(15):26"/>
+			</v:userDefs>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="36.8504" cy="124.437" width="73.71" height="33.3071"/>
+			<rect x="0" y="107.783" width="73.7008" height="33.3071" class="st5"/>
+			<text x="23.79" y="127.44" class="st2" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>SELU</text>		</g>
+		<g id="shape71-97" v:mID="71" v:groupContext="shape" v:layerMember="0" transform="translate(505.951,-9.81693)">
+			<title>Dynamischer Verbinder.71</title>
+			<path d="M0 134 L12.8 134" class="st9"/>
+		</g>
+		<g id="shape72-102" v:mID="72" v:groupContext="shape" v:layerMember="0" transform="translate(599.494,-9.81693)">
+			<title>Dynamischer Verbinder.72</title>
+			<path d="M0 134 L12.8 134" class="st9"/>
+		</g>
+		<g id="shape73-107" v:mID="73" v:groupContext="shape" transform="translate(154.455,-6.90354)">
+			<title>Tabelle.73</title>
+			<desc>...</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="10" cy="131.091" width="20" height="20"/>
+			<rect x="0" y="121.091" width="20" height="20" class="st11"/>
+			<text x="5.46" y="134.69" class="st12" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>...</text>		</g>
+		<g id="shape75-110" v:mID="75" v:groupContext="shape" transform="translate(619.337,-6.90354)">
+			<title>Tabelle.75</title>
+			<desc>...</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="10" cy="131.091" width="20" height="20"/>
+			<rect x="0" y="121.091" width="20" height="20" class="st11"/>
+			<text x="5.46" y="134.69" class="st12" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>...</text>		</g>
+		<g id="shape76-113" v:mID="76" v:groupContext="shape" transform="translate(520.124,-114.187)">
+			<title>Tabelle.76</title>
+			<desc>...</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="10" cy="131.091" width="20" height="20"/>
+			<rect x="0" y="121.091" width="20" height="20" class="st11"/>
+			<text x="5.46" y="134.69" class="st13" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>...</text>		</g>
+		<g id="shape77-116" v:mID="77" v:groupContext="shape" transform="translate(0.25,-114.187)">
+			<title>Tabelle.77</title>
+			<desc>...</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)" v:tabSpace="42.5197"/>
+			<v:textRect cx="10" cy="131.091" width="20" height="20"/>
+			<rect x="0" y="121.091" width="20" height="20" class="st11"/>
+			<text x="5.46" y="134.69" class="st13" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>...</text>		</g>
+	</g>
+</svg>
