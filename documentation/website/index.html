@@ -112,7 +112,7 @@
     </div>
 
     <div class="docs-section" id="fundamentals">
-        <h3 class="section-heading">Fundamentals</h3>
+        <h3 class="section-heading">Material Model</h3>
 
         <div class="u-pull-right" style="text-align: center; width:300px; margin-left:20px">
             <h5 id="fig:svbrdf" class="docs-header">Figure 2</h5>
@@ -167,8 +167,8 @@
         <h3 class="section-heading">SVBRDF Estimation from Images</h3>
 
         <p>
-            In this project, the focus lies on the work of Deschaintre et al. <a href="#3">[3]</a>, 
-            which is a light-weight image-based method for capturing SVBRDFs of real world surfaces.
+            The main focus of this project is the work of Deschaintre et al. <a href="#3">[3]</a>, 
+            a light-weight image-based method for capturing SVBRDFs of real world surfaces.
             Given a single flash lit image of a flat surface, they are able to reconstruct its 
             Cook Torrance SVBRDF maps using a deep convolutional network. Thus, they cast material
             reflectance estimation as an image-to-image translation problem.
@@ -182,12 +182,12 @@
 
         <p>
             At the heart of the presented approach is a deep convolutional network that adopts the U-Net architecture [NEEDCITATION]
-            which has proven to be suitable for other image-to-image translation tasks. The input to the network is a conventional 
+            which has shown to be suitable for other image-to-image translation problems. The input to the network is a conventional 
             three channel RGB image of the surface and the output is a nine channel image, where two channels represent
             the per-pixel normal (the z coordinate is inferred from the x and y coordinates), three channels represent
             the diffuse albedo, one channel represents the roughtness and the last three channels represent the specular albedo.
-            As the reflectance representation is conformant to the Cook Torrance model (see section <a href="#fundamentals">Fundamentals</a>),
-            the approach intrinsically assumes that the surface can be represented by this model.
+            As this reflectance representation is conformant to the Cook Torrance model (see section <a href="#fundamentals">Fundamentals</a>),
+            the approach intrinsically assumes that the surface can be represented by it.
         </p>
 
         <p>
