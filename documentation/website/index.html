@@ -18,7 +18,7 @@
         <div class="container">
             <ul class="navbar-list">
                 <li class="navbar-item">
-                    <a class="navbar-link" href="#introduction">Introduction</a>
+                    <a class="navbar-link" href="#introduction">Intro</a>
                 </li>
                 <li class="navbar-item">
                     <a class="navbar-link" href="#motivation">Motivation</a>
@@ -34,18 +34,6 @@
                 </li>
                 <li class="navbar-item">
                     <a class="navbar-link" href="#conclusion">Conclusion</a>
-                </li>
-                <li class="navbar-item">
-                    <a class="navbar-link" href="#images">Images</a>
-                </li>
-                <li class="navbar-item">
-                    <a class="navbar-link" href="#tables">Tables</a>
-                </li>
-                <li class="navbar-item">
-                    <a class="navbar-link" href="#code">Code</a>
-                </li>
-                <li class="navbar-item">
-                    <a class="navbar-link" href="#math">Math</a>
                 </li>
                 <li class="navbar-item">
                     <a class="navbar-link" href="#downloads">Downloads</a>
@@ -64,7 +52,6 @@
 
         <div class="row">
 <!--            <div class="one column category" style="text-align: center;">-->
-                <h5 class="docs-header">Teaser Image</h5>
                 <img class="u-max-full-width" src="images/teaser_full.jpg">
                     <p>
                         Estimating scene parameters like geometry and material solely from images 
@@ -79,6 +66,7 @@
                         respect to arbitrary scene parameters.  
                         - Many methods use handcrafted renderers for the specific use case. 
                         - Scope of project: Integrate general renderer (pathtracer) into a pipeline for material reflectance estimation .
+                        - Teaser image from the follow-up work <a href="#deschaintre_2019">[4]</a>.
                     </p>
         </div>
     </section>
@@ -185,21 +173,31 @@
             which has shown to be suitable for other image-to-image translation problems. The input to the network is a conventional 
             three channel RGB image of the surface and the output is a nine channel image, where two channels represent
             the per-pixel normal (the z coordinate is inferred from the x and y coordinates), three channels represent
-            the diffuse albedo, one channel represents the roughtness and the last three channels represent the specular albedo.
-            As this reflectance representation is conformant to the Cook Torrance model (see section <a href="#fundamentals">Fundamentals</a>),
+            the diffuse albedo, one channel represents the roughness and the last three channels represent the specular albedo.
+            As this reflectance representation is conformant to the Cook Torrance model (see section <a href="#fundamentals">Material Model</a>),
             the approach intrinsically assumes that the surface can be represented by it.
         </p>
 
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <h5 id="fig:architecture_overview" class="docs-header">Figure 3</h5>
+                <img class="u-max-full-width" src="images/architecture_overview.svg">
+                <p>
+                    TODO: Description
+                </p>
+            </div>
+        </div>
+
         <p>
             The used U-Net architecture implements an encoder-decoder structure resembling the well-known hourglass shape.
-            The encoder part of the network consists of eight convolutional layers with feature counts 64, 128, 256, 512, 512, 512, 512, 512
+            A coarse overview of the network is shown in <a href="#fig:architecture_overview">Figure 3</a>.
+            The encoder part consists of eight convolutional layers with feature counts 64, 128, 256, 512, 512, 512, 512, 512
             that gradually reduce the spatial size of the image (using a stride of two) while increasing the number of features. 
             The bottleneck is followed by a decoder part which again consists of eight layers that perform spatial upsampling
             followed by two convolutions. The decoding layers have similar feature counts as the encoding layers, only in reversed order 
             with the last decoding layer having a feature count of nine to match the output format. In order to better reconstruct fine details
             that possibly have been lost in the bottleneck, each decoding layer is connected to the output of the same sized encoding layer
-            through skip connections.<br/>
-            - Figure for visualization
+            through a skip connection. Leaky ReLUs with a negative slope of 0.2 serve as activation functions in these layers.
         </p>
 
         <p>
@@ -257,200 +255,6 @@
 
     <div class="docs-section" id="conclusion">
         <h3 class="section-heading">Conclusion</h3>
-    </div>
-
-    <div class="docs-section" id="images">
-        <h3 class="section-heading">Images</h3>
-        <p class="section-description">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</p>
-
-        <h5>Images in columns</h5>
-
-        <div class="row">
-            <div class="one-half column category" style="text-align: center;">
-                <h5 class="docs-header">Image 1</h5>
-                <img class="u-max-full-width" src="images/empty.jpg">
-                    <p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.</p>
-            </div>
-            <div class="one-half column category" style="text-align: center;">
-                <h5 class="docs-header">Image 2</h5>
-                <img class="u-max-full-width" src="images/empty.jpg">
-                    <p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.</p>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="one-third column category" style="text-align: center;">
-                <h5 class="docs-header">Bunny</h5>
-                <img class="u-max-full-width" src="images/empty.jpg">
-                <p>An empty image.</p>
-                </div>
-
-                <div class="one-third column category" style="text-align: center;">
-                <h5 class="docs-header">Superbunny</h5>
-                <img class="u-max-full-width" src="images/empty.jpg">
-                <p>An second empty image.</p>
-                </div>
-
-                <div class="one-third column category" style="text-align: center;">
-                <h5 class="docs-header">Megabunny</h5>
-                <img class="u-max-full-width" src="images/empty.jpg">
-                <p>A super empty image.</p>
-            </div>
-        </div>
-
-        <h5>Text and Images</h5>
-
-        <div class="u-pull-right" style="text-align: center; width:300px; margin-left:20px">
-            <h5 id="figure2" class="docs-header">Figure 2</h5>
-            <img class="u-max-full-width" src="images/empty.jpg">
-            <p>I shall not write fancy figure descriptions. I shall not write fancy image descriptions. I shall not write fancy graph descriptions.</p>
-        </div>
-
-        <p>
-            This text can float around <a href="#figure2">figure 2</a>.
-            It can also contain linebreaks and new paragraphs.<br>
-            This is how a linebreak looks.
-        </p>
-        <p>
-           Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-        </p>
-
-        <p>
-           Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diamneses voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata ita sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diamneses voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata ita sanctus est Lorem ipsum dolor sit amet.
-        </p>
-
-        <h5>Moving Images aka Videos</h5>
-
-        <div class="row">
-            <div class="one-half column category" style="text-align: center;">
-                <h5 class="docs-header">Voronoi Generation</h5>
-                <video class="u-max-full-width" controls>
-                    <source src="videos/voronoi.ogg" type="video/ogg">
-                    Your browser does not support the video tag.
-                </video>
-                <p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diamneses voluptua.</p>
-            </div>
-            <div class="one-half column category" style="text-align: center;">
-                <h5 class="docs-header">Voronoi Generation</h5>
-                <video class="u-max-full-width" controls>
-                    <source src="videos/voronoi.ogg" type="video/ogg">
-                    Your browser does not support the video tag.
-                </video>
-                <p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diamneses voluptua.</p>
-            </div>
-        </div>
-
-    </div>
-
-
-    <div class="docs-section" id="Tables">
-        <h3 class="section-heading">Tables</h3>
-        <p class="section-description">At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata ita sanctus est Lorem ipsum dolor sit amet.</p>
-        <div class="row">
-            <div class="one-half column category" style="text-align: center;">
-                <h5 class="docs-header">Table 1</h5>
-                <table class="u-full-width">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Value</th>
-                            <th>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Laplace</td>
-                            <td>26</td>
-                            <td>---</td>
-                        </tr>
-                        <tr>
-                            <td>Beltrami</td>
-                            <td>42</td>
-                            <td>n/a</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="one-half column category" style="text-align: center;">
-                <h5 class="docs-header">Table 2</h5>
-                <table class="u-full-width">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Value</th>
-                            <th>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Laplace</td>
-                            <td>26</td>
-                            <td>---</td>
-                        </tr>
-                        <tr>
-                            <td>Beltrami</td>
-                            <td>42</td>
-                            <td>n/a</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="one-half column category">
-                <h5 class="docs-header">Unordered Lists</h5>
-                <ul>
-                    <li>Unordered lists have basic styles</li>
-                    <li>
-                      They use the circle list style
-                      <ul>
-                        <li>Nested lists styled to feel right</li>
-                        <li>Can nest either type of list into the other</li>
-                      </ul>
-                    </li>
-                </ul>
-            </div>
-            <div class="one-half column category">
-                <h5 class="docs-header">Ordered Lists</h5>
-                <ol>
-                    <li>Ordered lists also have basic styles</li>
-                    <li>
-                      They use the decimal list style
-                      <ul>
-                        <li>Ordered and unordered can be nested</li>
-                      </ul>
-                    </li>
-                    <li>Last list item just for the fun</li>
-                </ol>
-            </div>
-        </div>
-    </div>
-
-    <div class="docs-section" id="code">
-        <h3 class="section-heading">Code</h3>
-        <p class="section-description">At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata ita sanctus est Lorem ipsum dolor sit amet.</p>
-        <pre>
-            <code>def load_image(nr, flat=True):
-    img = io.imread(get_path(nr), as_grey=True)
-    if flat:
-        # print(img.shape)
-        img = img.reshape(-1)
-        # print(np.amin(img), np.amax(img))
-    print("Loaded img " + str(nr))
-    return img
-</code>
-        </pre>
-        <p>
-            Inline code snippets <code>are also possible</code> as this beautiful <code>super code i++; 0x34</code> shows.
-        </p>
-    </div>
-
-    <div class="docs-section" id="math">
-        <h3 class="section-heading">Math</h3>
-        <p class="section-description">Mathematic formulations such as \(f(x) = 3 \cdot x + \epsilon \cdot y\) are powered by MathJax <a href="#2">[2]</a>. They can be written (amongst other possibilities) in \(\LaTeX\) notation. Besides in-line mathematics, displayed equations are possible:
-\[\nabla \times H = J_c + \frac{\partial D}{\partial t}\]
-        </p>
     </div>
 
     <div class="docs-section" id="downloads">
