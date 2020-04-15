@@ -183,7 +183,7 @@
                 <h5 id="fig:architecture_overview" class="docs-header">Figure 3</h5>
                 <img class="u-max-full-width" src="images/architecture_overview.svg">
                 <p>
-                    TODO: Description (size of the blocks is not to scale)., TODO: Dimension of bottleneck, dimensions of global track layers below blocks
+                    TODO: Description (size of the blocks is not to scale).
                 </p>
             </div>
         </div>
@@ -198,6 +198,9 @@
             with the last decoding layer having a feature count of nine to match the output format. In order to better reconstruct fine details
             that possibly have been lost in the bottleneck, each decoding layer is connected to the output of the same sized encoding layer
             through a skip connection. Leaky ReLUs with a negative slope of 0.2 serve as activation functions in these layers.
+            The full-sized 9 channel decoder output is passed through a final tanh activation. The result is transformed into
+            a valid SVBRDF by computing the z coordinates of normals from the given x and y coordinates as well as 
+            by bringing the diffuse albedo, specular albedo and roughness to the range [0, 1].
         </p>
 
         <p>
