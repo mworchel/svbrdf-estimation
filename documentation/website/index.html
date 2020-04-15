@@ -183,7 +183,7 @@
                 <h5 id="fig:architecture_overview" class="docs-header">Figure 3</h5>
                 <img class="u-max-full-width" src="images/architecture_overview.svg">
                 <p>
-                    TODO: Description (size of the blocks is not to scale)., TODO: Dimension of bottleneck, dimensions of global track layers
+                    TODO: Description (size of the blocks is not to scale)., TODO: Dimension of bottleneck, dimensions of global track layers below blocks
                 </p>
             </div>
         </div>
@@ -254,7 +254,7 @@
             The camera and light positions above the patch are randomly varied between 
             samples to capture different alignments of camera lense and flash
             position as well as camera field of views. Additionally,
-            white balance and flash colors are varied between renderings.
+            white balance and flash colors are varied.
             The final image is then artificially degenerated using Gaussian noise in an attempt
             to simulate sensor noise. <a href="#fig:materials">Figure 5</a> shows
             three material samples and their corresponding rendered input images.
@@ -274,7 +274,25 @@
 
         <p>
             Since the number of materials obtained this way is still too<br/>
-            - Material mixing (from multi-view)<br/>
+            - Material mixing<br/>
+            - Blend between certain materials (e.g. stone and metal) does not produce physically plausible results<br/>
+            - Variety is increased<br/>
+        </p>
+
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <h5 id="fig:mixed_materials" class="docs-header">Figure 6</h5>
+                <img class="u-max-full-width" src="images/mat1xmat3.png">
+                <p>
+                    TODO: Description.
+                </p>
+            </div>
+        </div>
+
+        <p>
+            - In single-view paper data generation is done offline (dataset of ~80 GB)<br/>
+            - In multi-view paper data generation is done online at loading (dataset of ~? GB)<br/>
+            - We are using the lazy generation
         </p>
 
         <h5>Training Objective</h5>
