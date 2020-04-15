@@ -183,7 +183,7 @@
                 <h5 id="fig:architecture_overview" class="docs-header">Figure 3</h5>
                 <img class="u-max-full-width" src="images/architecture_overview.svg">
                 <p>
-                    TODO: Description (size of the blocks is not to scale).
+                    TODO: Description (size of the blocks is not to scale)., TODO: Dimension of bottleneck, dimensions of global track layers
                 </p>
             </div>
         </div>
@@ -202,7 +202,7 @@
 
         <p>
             In order to stabilize training, the network performs instance normalization between each convolutional layer
-            and its preceeding activation function. However, the authors found that using this normalization
+            and its preceeding activation function. However, the authors found that this normalization
             reduces the network's ability to maintain non-local information effectively. They showed that even
             a simple task such as predicting a constant colored diffuse albedo can impose a significant challenge
             on such an architecture. Their proposed solution is a second network parallel to the main encoder-decoder
@@ -216,7 +216,7 @@
             another fully connected layer and then added
             to the output feature maps of the instance normalization.
             Using this second track, the network is able to propagate non-local information
-            as part of the global feature vector.
+            as part of a global feature vector.
         </p>
 
         <div class="row">
