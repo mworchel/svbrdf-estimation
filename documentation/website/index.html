@@ -317,11 +317,28 @@
         <h5>Training Objective</h5>
 
         <p>
+            One important ingredient for training the network is the choice
+            of training objective, i.e., the loss function. In the concret scenario,
+            the loss function has to compare SVBRDF maps predicted by the network 
+            to the ground truth maps belonging to the input image. 
+
             - Rendering loss
         </p>
 
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <h5 id="fig:l1vsrendering" class="docs-header">Figure 7</h5>
+                <img class="u-max-full-width" src="images/l1vsrendering_gt.png">
+                <img class="u-max-full-width" src="images/l1vsrendering_l1.png">
+                <img class="u-max-full-width" src="images/l1vsrendering_rendering.png">
+                <p>
+                    TODO: Description. Images and figure adopted from <a href="#deschaintre_2018">[TODO]</a>.
+                </p>
+            </div>
+        </div>
+
         <div class="u-pull-right" style="text-align: center; width:200px; margin-left:20px">
-            <h5 id="fig:metal_wo_ambient" class="docs-header">Figure 7</h5>
+            <h5 id="fig:metal_wo_ambient" class="docs-header">Figure 8</h5>
             <img class="u-max-full-width" src="images/metal_wo_ambient.png">
             <p>
                 TODO: Description.
@@ -332,16 +349,23 @@
             Our rendering differs from the original work as follows. 
             First, we do not simulate the flash as spot light with angular
             fall-off, but rather use a simple point light with radial fall-off.
-            This was done for simplicity in our implementation but also for compatability
-            with the renderer to be integrated.
+            This was done for simplicity in our implementation but also for compatibility
+            with the renderer to be integrated. It does not directly pose a problem
+            to the rendering loss but rather affects the input image 
+            generation as it is meant to produce artificial flash-lit images.
+            Therefore, the network might perform worse than expected
+            when fed with real captured images.
             Second, we don't use ambient lighting, so the scene is only illuminated
             by one light source. While we initially assumed that it would not be
             very beneficial to use ambient lighting, we saw certain problems when
             rendering metallic materials without it. As reflection on metals
             is dominated by the specular component, only specular highlights
-            are really visible, leaving the rest of the material patch unlighted (see <a href="#fig:mixed_materials">Figure 7</a>).
-            This way, a lot of structural information is lost when generating
-            the input renderings or comparing appearance.
+            are really visible, leaving the rest of the material patch unlighted (see <a href="#fig:mixed_materials">Figure 8</a>).
+            Thus, some structural information is lost when generating
+            the input renderings or comparing the appearance. Similar to the first 
+            difference, this might affect the results for real images negatively
+            as in real scenes there usually is some form of environment lighting
+            (other light sources or indirect illumination).
         </p>
 
 
