@@ -143,28 +143,32 @@ class OrthoToPerspectiveMapping:
             # Assemble the full projection matrix
             P      = np.dot(K, E)
 
-            # Since the material sample is a plane, we can transform the orthographically rendered sample directly
-            # into the projective camera by using a homography.
-            src_points = np.float32([
-                [0,    0, 1],
-                [0,  256, 1],
-                [256,256, 1],
-                [256,  0, 1],
-            ])
-
-            target_points = np.float32([
+            self.target_points = np.float32([
                 [ -1,  1, 0, 1],
                 [ -1, -1, 0, 1],
                 [  1, -1, 0, 1],
                 [  1,  1, 0, 1],
             ])
             
-            target_points = np.transpose(np.dot(P, np.transpose(target_points)))
-            target_points = np.divide(target_points, target_points[:,2:3])
-            self.H, _     = cv2.findHomography(src_points, target_points) # Ta-dah, there's the magic ortho-to-projective mapping
+            self.target_points = np.transpose(np.dot(P, np.transpose(self.target_points)))
+            self.target_points = np.divide(self.target_points, self.target_points[:,2:3])
 
-    def apply(self, image):
-        return cv2.warpPerspective(image, self.H, dsize=self.sensor_size)
+    def get_homography(self, input_size):
+            # Since the material sample is a plane, we can transform the orthographically rendered sample directly
+            # into the projective camera by using a homography.
+            src_points = np.float32([
+                [0,                         0, 1],
+                [0,             input_size[1], 1],
+                [input_size[0], input_size[1], 1],
+                [input_size[0],             0, 1],
+            ])
+
+            H, _     = cv2.findHomography(src_points, self.target_points) # Ta-dah, there's the magic ortho-to-projective mapping
+            return H
+            
+    def apply(self, image, t=1.0):
+        H = t * self.get_homography(image.shape[:2][::-1]) + (1.0 - t) * np.eye(3)
+        return cv2.warpPerspective(image, H, dsize=self.sensor_size)
 
 class RednerRenderer:
     def __init__(self, use_gpu=True):
