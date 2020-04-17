@@ -2,5 +2,6 @@
 /logs
 /models
 /.vscode
+/.ipynb_checkpoints
 /generate_scenes_test
 /tmp
