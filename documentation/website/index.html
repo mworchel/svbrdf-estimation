@@ -382,12 +382,38 @@
             this small supervision to stabilize the training.
         </p>
 
+        <div class="u-pull-left" style="text-align: center; width:20%; margin-right:20px">
+            <h5 id="fig:patchsampling" class="docs-header">Figure 8</h5>
+            <video class="u-max-full-width" controls loop>
+                <source src="videos/patchsampling_static_light.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <video class="u-max-full-width" controls loop>
+                <source src="videos/patchsampling_dynamic_light.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <p>
+                TODO: Description.
+            </p> 
+        </div>
+
         <p>
             - Explain renderer (patch sampling)
+            <br/>
+            <br/>
+            <br/>
+            <br/>
+            <br/>
+            <br/>
+            <br/>
+            <br/>
+            <br/>
+            <br/>
+            <br/>
         </p>
 
         <div class="u-pull-right" style="text-align: center; width:20%; margin-left:20px">
-            <h5 id="fig:metal_wo_ambient" class="docs-header">Figure 8</h5>
+            <h5 id="fig:metal_wo_ambient" class="docs-header">Figure 9</h5>
             <img class="u-max-full-width" src="images/metal_wo_ambient.png">
             <p>
                 TODO: Description.
@@ -409,7 +435,7 @@
             very beneficial to use ambient lighting, we saw certain problems when
             rendering metallic materials without it. As reflection on metals
             is dominated by the specular component, only specular highlights
-            are really visible, leaving the rest of the material patch unlighted (see <a href="#fig:mixed_materials">Figure 8</a>).
+            are really visible, leaving the rest of the material patch unlighted (see <a href="#fig:mixed_materials">Figure 9</a>).
             Thus, some structural information is lost when generating
             the input renderings or comparing the appearance. Similar to the first 
             difference, this might affect the results for real images negatively
@@ -422,14 +448,54 @@
         <h5>Implementation</h5>
 
         <p>
-            - PyTorch implementation<br/>
-            - Validation of the architecture with TensorboardX (multi-view 'Generator' as reference)<br/>
+            While there is a publicly available implementation of the multi-view work,
+            there is none of the single-view one, unfortunately. This as well as the
+            better flexibility of a custom implementation and for the sake of gaining 
+            practical experience in the project, motivated us to reimplement the 
+            presented method. As mentioned earlier, the implementation does
+            not strictly follow the single-view work, but can be thought of as
+            a crossover between both methods, as it adopts aspects of either one.
+            Since the backend of potentially renderers to integrate was known
+            beforehand, the reimplementation is based on PyTorch as opposed to
+            the original work which uses TensorFlow.
+        </p>
+
+        <p>
+            The single-view convolutional network is implemented by the class
+            <code>SingleViewModel</code> which operates on batches of input images
+            returning batches of predicted SVBRDFs. Although we never used the multi-view 
+            network other than for small tests, we still implemented it in a similar class <code>MultiViewModel</code>.
+            The core of both networks is the <code>Generator</code> which encapsulates
+            the encoder-decoder architecture together with the global track.
+            Its building blocks are meant to cleanly encapsulate the interaction
+            happening in both the main and global track but also the interaction
+            between the tracks:
+            <ul>
+                <li><code>EncodingLayer</code>
+                    <ul>
+                        <li>Convolution (downsampling) of the 2d feature map and integration of the global feature vector through a <code>MergeLayer</code>.</li>
+                        <li>Outputs the new 2d feature map and the mean before normalization.</li>
+                    </ul>
+                <li><code>DecodingLayer</code>
+                    <ul>
+                        <li>Deconvolution (upsampling) of the 2d feature map and integration of the global feature vector through a <code>MergeLayer</code>.</li>
+                        <li>Outputs the new 2d feature map and the mean before normalization.</li>
+                    </ul>
+                <li><code>GlobalTrackLayer</code>
+                    <ul>
+                        <li>Integration of the previous global feature vector and the current per-channel mean.</li>
+                    </ul>
+            </ul>
+            Using the library TensorboardX [NEEDCITATION], the reimplemented 
+            PyTorch models could be compared to the original models visually by
+            inspecting them in the Tensorboard web interface. This way, we 
+            were able to verify that boths architectures operate the same.
         </p>
 
         <div class="row">
             <div class="column category" style="text-align: center;">
                 <h5 class="docs-header">Video Title</h5>
-                <video class="u-max-full-width" controls loop>
+                <video class="u-max-full-width" controls>
                     <source src="videos/optimization_local_fixed.mp4" type="video/ogg">
                     Your browser does not support the video tag.
                 </video>
@@ -444,7 +510,7 @@
         <div class="row"/>
             <div class="column category" style="text-align: center;">
                 <h5 class="docs-header">Video Title</h5>
-                <video class="u-max-full-width" controls loop>
+                <video class="u-max-full-width" controls>
                     <source src="videos/optimization_local_flex.mp4" type="video/ogg">
                     Your browser does not support the video tag.
                 </video>
