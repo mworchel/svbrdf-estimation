@@ -209,7 +209,7 @@
             reduces the network's ability to maintain non-local information effectively. They showed that even
             a simple task such as predicting a constant colored diffuse albedo can impose a significant challenge
             on such an architecture. Their proposed solution is a second network parallel to the main encoder-decoder
-            track that explicitely propagates global information.
+            track that explicitly propagates global information.
             <a href="#fig:architecture_exchange">Figure 4</a> shows a detailed visualization of the 
             information exchange between the main track (in the encoding part) and the global track.
             The per-channel means that are subtracted by the instance normalization flow into
@@ -320,9 +320,40 @@
             One important ingredient for training the network is the choice
             of training objective, i.e., the loss function. In the concret scenario,
             the loss function has to compare SVBRDF maps predicted by the network 
-            to the ground truth maps belonging to the input image. 
-            <br/>
-            - Rendering loss
+            to the ground truth maps belonging to the input image. The obvious
+            and most intuitive choice would be simple losses like 
+            \(l_1\) or \(l_2\) which compare the SVBRDF maps pixel-wise like
+            multi-channel images. However, as the authors note, the 
+            current parametrization of the SVBRDF as Cook-Torrance maps
+            is rather arbitrary and the magnitude of numerical differences
+            between two parametrizations is only a weak indicator for 
+            their visual difference. They instead propose a loss function,
+            that compares the appearance of two SVBRDFs, independent of their
+            specific parametrization. This <i>rendering loss</i> renders both
+            the ground truth SVBRDF as well as the estimated SVBRDF as flat
+            material patches under varying viewing and lighting conditions 
+            and only compares the rendered images pixel-wise. <a href="#fig:mixed_materials">Figure 7</a>
+            shows the difference between using only a simple \(l_1\) loss
+            and the rendering loss.
+        </p>
+
+        <p>
+            Faithfully comparing two SVBRDFs at each step
+            would require rendering under a large amount of fixed light 
+            and camera positions to cover all possible angles. 
+            Instead, they chose a stochastic approach
+            where only a semi-randomly sampled subset of nine configurations 
+            is evaluated at each step. In the first three configurations,
+            the light and camera position are independently sampled from
+            a cosine distribution over the upper hemisphere. The remaining
+            six configurations are intended to explicitly cover specular
+            configurations, that appear less often when performing independent
+            sampling but potentially carry rich information about the material in their
+            specular highlights. These configurations are obtained by
+            only randomly sampling the view position and then using 
+            the mirrored vector as light position. By introducing a random
+            shift and distance offsets, specular highlights of various sizes
+            and positions on the material patch can be generated.
         </p>
 
         <div class="row">
@@ -336,6 +367,20 @@
                 </p>
             </div>
         </div>
+
+        <p>
+            While the single-view work only relies on the rendering loss, 
+            the multi-view work complements the loss function by individual
+            \(l_1\) losses between parts of the SVBRDF maps. The <i>mixed loss</i>
+            is defined as 
+            \[L \triangleq L_\text{R} + 0.1 (L_\text{Normal} + L_\text{Diffuse} + L_\text{Roughness} + L_\text{Specular})\]
+            where \(L_\text{R}\) is the rendering loss and \(L_\text{Normal}\), \(L_\text{Diffuse}\), \(L_\text{Roughness}\) and \(L_\text{Specular}\)
+            are \(l_1\) losses between the normal maps, diffuse albedo maps,
+            roughness maps and specular albedo maps, respectively.
+            We also chose to adapt this mixed loss formulation 
+            for our loss function as the authors report 
+            this small supervision to stabilize the training.
+        </p>
 
         <p>
             - Explain renderer (patch sampling)
@@ -393,7 +438,7 @@
         </div>
 
         <p>
-            
+
         </p>
 
         <div class="row"/>
