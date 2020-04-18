@@ -27,6 +27,8 @@ class LocalRenderer:
         return (alpha_squared * self.xi(NH)) / (math.pi * denominator_part**2)
 
     def compute_fresnel(self, specular, VH):
+        # The reference work uses an approximation from:
+        # https://cdn2.unrealengine.com/Resources/files/2013SiggraphPresentationsNotes-26915738.pdf
         return specular + (1.0 - specular) * (1.0 - VH)**5
 
     def compute_g1(self, roughness, XH, XN):
@@ -171,11 +173,12 @@ class OrthoToPerspectiveMapping:
         return cv2.warpPerspective(image, H, dsize=self.sensor_size)
 
 class RednerRenderer:
-    def __init__(self, use_gpu=True):
+    def __init__(self, use_gpu=True, camera_type=pyredner.camera_type.fullpatchsample):
         pyredner.set_print_timing(False)
         pyredner.set_use_gpu(use_gpu)
         self.redner_device = pyredner.get_device()
-        print("Using device '{}' for redner".format(self.redner_device))
+        self.camera_type   = camera_type
+        print("Using device '{}' and camera type '{}' for redner".format(self.redner_device, self.camera_type))
 
         # Define vertices, uv coordinates and faces for a
         # material patch in the origin (essentially a quad).
@@ -234,9 +237,9 @@ class RednerRenderer:
             if np.linalg.norm(np.cross(cz, up)) == 0.0:     
                 up = np.array([0.0, 1.0, 0.0])
 
-            camera = pyredner.Camera(torch.FloatTensor(position).to(self.redner_device), torch.FloatTensor(lookat).to(self.redner_device), 
-                                     torch.FloatTensor(up).to(self.redner_device), torch.FloatTensor([90]).to(self.redner_device), resolution=(256,256),
-                                     camera_type=pyredner.camera_type.fullpatchsample)
+            camera = pyredner.Camera(position=torch.FloatTensor(position).to(self.redner_device), look_at=torch.FloatTensor(lookat).to(self.redner_device), 
+                                     up=torch.FloatTensor(up).to(self.redner_device), fov=torch.FloatTensor([90]), resolution=(256,256),
+                                     camera_type=self.camera_type)
 
             # # The deferred rendering path. 
             # # It does not have a specular model and therefore is of limited usability for us
