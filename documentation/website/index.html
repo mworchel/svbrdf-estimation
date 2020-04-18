@@ -338,18 +338,18 @@
         </p>
 
         <p>
-            Faithfully comparing two SVBRDFs at each step
-            would require rendering under a large amount of fixed light 
+            Faithfully comparing two SVBRDFs at each training step
+            would require rendering them under a large amount of fixed light 
             and camera positions to cover all possible angles. 
-            Instead, they chose a stochastic approach
+            Instead, the authors went for a stochastic approach
             where only a semi-randomly sampled subset of nine configurations 
             is evaluated at each step. In the first three configurations,
             the light and camera position are independently sampled from
             a cosine distribution over the upper hemisphere. The remaining
             six configurations are intended to explicitly cover specular
             configurations, that appear less often when performing independent
-            sampling but potentially carry rich information about the material in their
-            specular highlights. These configurations are obtained by
+            sampling but potentially carry rich information about the material in the
+            appearing specular highlights. These configurations are obtained by
             only randomly sampling the view position and then using 
             the mirrored vector as light position. By introducing a random
             shift and distance offsets, specular highlights of various sizes
@@ -382,70 +382,7 @@
             this small supervision to stabilize the training.
         </p>
 
-        <div class="u-pull-left" style="text-align: center; width:20%; margin-right:20px">
-            <h5 id="fig:patchsampling" class="docs-header">Figure 8</h5>
-            <video class="u-max-full-width" controls loop>
-                <source src="videos/patchsampling_static_light.mp4" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-            <video class="u-max-full-width" controls loop>
-                <source src="videos/patchsampling_dynamic_light.mp4" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-            <p>
-                TODO: Description.
-            </p> 
-        </div>
-
-        <p>
-            - Explain renderer (patch sampling)
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-        </p>
-
-        <div class="u-pull-right" style="text-align: center; width:20%; margin-left:20px">
-            <h5 id="fig:metal_wo_ambient" class="docs-header">Figure 9</h5>
-            <img class="u-max-full-width" src="images/metal_wo_ambient.png">
-            <p>
-                TODO: Description.
-            </p> 
-        </div>
-
-        <p>
-            Our rendering differs from the original work as follows. 
-            First, we do not simulate the flash as spot light with angular
-            fall-off, but rather use a simple point light with radial fall-off.
-            This was done for simplicity in our implementation but also for compatibility
-            with the renderer to be integrated. It does not directly pose a problem
-            to the rendering loss but rather affects the input image 
-            generation as it is meant to produce artificial flash-lit images.
-            Therefore, the network might perform worse than expected
-            when fed with real captured images.
-            Second, we don't use ambient lighting, so the scene is only illuminated
-            by one light source. While we initially assumed that it would not be
-            very beneficial to use ambient lighting, we saw certain problems when
-            rendering metallic materials without it. As reflection on metals
-            is dominated by the specular component, only specular highlights
-            are really visible, leaving the rest of the material patch unlighted (see <a href="#fig:mixed_materials">Figure 9</a>).
-            Thus, some structural information is lost when generating
-            the input renderings or comparing the appearance. Similar to the first 
-            difference, this might affect the results for real images negatively
-            as in real scenes there usually is some form of environment lighting
-            (other light sources or indirect illumination).
-        </p>
-
-
-
-        <h5>Implementation</h5>
+        <h5>Implementation (TODO: Find right place and shorten)</h5>
 
         <p>
             While there is a publicly available implementation of the multi-view work,
@@ -491,35 +428,182 @@
             inspecting them in the Tensorboard web interface. This way, we 
             were able to verify that boths architectures operate the same.
         </p>
+    </div>
+
+    <div class="docs-section" id="method">
+        <h3 class="section-heading">Differentiable Rendering</h3>
+
+        <div class="u-pull-left" style="text-align: center; width:25%; margin-right:20px">
+            <h5 id="fig:patchsampling" class="docs-header">Figure 8</h5>
+            <video class="u-max-full-width" controls loop>
+                <source src="videos/patchsampling_static_light.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <video class="u-max-full-width" controls loop>
+                <source src="videos/patchsampling_dynamic_light.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <p>
+                TODO: Description. Notice, that in the scene with a static light,
+                the highlights stay exactly the same, thus the BRDF is evaluated
+                exactly the same.
+            </p> 
+        </div>
+
+        <p>
+            In contrast to conventional forward renderers that,
+            given a scene, synthesize an image, the renderer
+            used for computing the rendering loss has to support
+            a backward pass. More precisely, since training the network
+            with backpropagation requires computing the gradients
+            of all operations contributing to the loss function,
+            the rendering itself has to be differentiable with
+            respect to the scene parameters (in this case the SVBRDF maps).
+            Renderers that allow differentiation through the 
+            rendering operation are called <i>differentiable renderers</i>.
+        </p>
+
+        <h5>In-Network Renderer</h5>
+
+        <p>
+            Similar to other works (e.g. <a href="#aittala_2016">[TODO]</a> or <a href="#gao_2019">[TODO]</a>), 
+            the presented approach relies on a renderer that is directly
+            integrated into the network architecture. It uses the same
+            framework to formulate the rendering steps as is used for
+            implementing and training the models. As pointed out 
+            by the authors, frameworks like TensorFlow 
+            or PyTorch provide certain advantages when implementating
+            a differentiable renderer, like automatic GPU acceleration and differentiation. 
+            Similar to the models themselves we also reimplemented
+            the renderer in PyTorch and used it for both, 
+            generating artificial input images as well as
+            evaluating the rendering loss. 
+        </p>
+
+        <p>
+            When comparing the renderer output to traditional
+            renderings, it is noticeable that even when the location
+            of the camera is not immediatly above the material patch,
+            there is no perspective distortion. This results from
+            the renderer operating in the coordinate space of the
+            patch as opposed to traditionally operating
+            in the coordinate space of the image plane in front of the
+            camera. When thinking in terms of rays that originate from
+            the camera center, each pixel in the resulting image 
+            corresponds to a ray that samples a specific point on
+            the material patch. The animations in <a href="#fig:mixed_materials">Figure 8</a>
+            visualize the difference between this patch sampling approach
+            and a conventional perspective rendering. The technique
+            is advantageous when computing the rendering loss,
+            as it only produces pixels that depend on the SVBRDF
+            parameters. In contrast, a perspective rendering,
+            would most likely contain pixels that do not show the material
+            patch, thus have a gradient of zero.
+        </p>
+
+        <p>
+            In order to verify our renderer implementation and
+            its capability to correctly compute derivatives of 
+            the rendering operation, 
+        </p>
 
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 class="docs-header">Video Title</h5>
+                <h5 id="fig:optimization_local" class="docs-header">Figure 9</h5>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_local_fixed.mp4" type="video/ogg">
                     Your browser does not support the video tag.
                 </video>
-                <p>Video description</p>
-            </div>
-        </div>
-
-        <p>
-
-        </p>
-
-        <div class="row"/>
-            <div class="column category" style="text-align: center;">
-                <h5 class="docs-header">Video Title</h5>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_local_flex.mp4" type="video/ogg">
                     Your browser does not support the video tag.
                 </video>
-                <p>Video description</p>
+                <p>TODO: Description.</p>
             </div>
         </div>
 
-        <h5>Pathtracer Integration</h5>
+        <div class="u-pull-right" style="text-align: center; width:25%; margin-left:20px">
+            <h5 id="fig:metal_wo_ambient" class="docs-header">Figure 10</h5>
+            <img class="u-max-full-width" src="images/metal_wo_ambient.png">
+            <p>
+                TODO: Description.
+            </p> 
+        </div>
 
+        <p>
+            Our rendering differs from the original work as follows. 
+            First, we do not simulate the flash as spot light with angular
+            fall-off, but rather use a simple point light with radial fall-off.
+            This was done for simplicity in our implementation but also for compatibility
+            with the renderer to be integrated. It does not directly pose a problem
+            to the rendering loss but rather affects the input image 
+            generation as it is meant to produce artificial flash-lit images.
+            Therefore, the network might perform worse than expected
+            when fed with real captured images.
+            Second, we don't use ambient lighting, so the scene is only illuminated
+            by one light source. While we initially assumed that it would not be
+            very beneficial to use ambient lighting, we saw certain problems when
+            rendering metallic materials without it. As reflection on metals
+            is dominated by the specular component, only specular highlights
+            are really visible, leaving the rest of the material patch unlighted (see <a href="#fig:metal_wo_ambient">Figure 10</a>).
+            Thus, some structural information is lost when generating
+            the input renderings or comparing the appearance. Similar to the first 
+            difference, this might affect the results for real images negatively
+            as in real scenes there usually is some form of environment lighting
+            (other light sources or indirect illumination).
+        </p>
+
+        <h5>Differentiable Path Tracer</h5>
+
+        <div class="u-pull-left" style="text-align: center; width:25%; margin-right:20px">
+            <h5 id="fig:renderer_comparison" class="docs-header">Figure 11</h5>
+            <video class="u-max-full-width" controls loop>
+                <source src="videos/rendering_local.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <video class="u-max-full-width" controls loop>
+                <source src="videos/rendering_pathtracing.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <p>
+                TODO: Description.
+            </p> 
+        </div>
+
+        <p>
+            However, the caveat of using in-network renderers is usually
+            that they lack flexibility due to their custom formulation...
+            <br/> 
+            - One purpose (material patch, one camera, one light)<br/>
+            - Not powerful enough to cover all problems (occlusions...integrand in light transport equation becomes discontinuous)<br/>
+            - Only direct illumination<br/>
+            <br/>
+            - Originally intended to use Mitsuba 2 (not released at the time but now is)<br/>
+            - Used Redner<br/>
+            - C++ implementation with Python bindings and PyTorch integration<br/>
+            - Straight forward to integrate into our framework ()<br/>
+            - Uses phong shading (converted from cook torrance roughness to phong exponent)<br/>
+            - Area light instead of point light<br/>
+            - Tried to match size and brightness of the light to the one used in the in-network renderer -> producing similar specular highlights<br/>
+            - Area lights visible but zero gradients<br/>
+            - Implemented a patch sampling camera in the spirit of the in-network renderer<br/>
+            - Verified camera by running similar optimization tests (ref to figure)<br/>
+        </p>
+
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <h5 id="fig:optimization_pathtracing" class="docs-header">Figure 9</h5>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_pathtracing_fixed.mp4" type="video/ogg">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_pathtracing_flex.mp4" type="video/ogg">
+                    Your browser does not support the video tag.
+                </video>
+                <p>TODO: Description.</p>
+            </div>
+        </div>
     </div>
 
     <div class="docs-section" id="evaluation">
@@ -582,6 +666,16 @@
             <li class="popover-item" id="torrance_1982">
                 [6] Torrance, K. E., Cook, R. L., 1982, A Reflectance Model for Computer Graphics
             </li>
+
+            <li class="popover-item" id="aittala_2016">
+                [6] Aittala, M., Aila, T., Lehtinen, J., 2016, Reflectance Modeling by Neural Texture Synthesis
+            </li>
+            
+
+            <li class="popover-item" id="gao_2019">
+                [6] Gao, D., Li, X., Dong, Y., Peers, P., Xu, K., Tong, X., 2019, Deep Inverse Rendering for High-Resolution SVBRDF Estimation from an Arbitrary Number of Images
+            </li>
+            
         </ul>
     </div>
 
