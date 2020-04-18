@@ -510,7 +510,9 @@
         </div>
 
         <p>
-            Our rendering differs from the original work as follows. 
+            While we tried to follow the original in-network renderer
+            as close as possible, ours still differs from it in some details
+            (mainly the Cook-Torrance implementation) and two major points.
             First, we do not simulate the flash as spot light with angular
             fall-off, but rather use a simple point light with radial fall-off.
             This was done for simplicity in our implementation but also for compatibility
@@ -605,6 +607,10 @@
                 </video>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_pathtracing_flex.mp4" type="video/ogg">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_pathtracing_flex_perspective.mp4" type="video/ogg">
                     Your browser does not support the video tag.
                 </video>
                 <p>TODO: Description.</p>
