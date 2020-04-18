@@ -49,8 +49,7 @@ class RenderingLoss(nn.Module):
 
         loss = nn.functional.l1_loss(batch_input_renderings_logged, batch_target_renderings_logged)
 
-        return loss, batch_input_renderings, batch_target_renderings
-        #return loss
+        return loss
 
 class MixedLoss(nn.Module):
     def __init__(self, renderer, l1_weight = 0.1):
