@@ -501,29 +501,8 @@
             patch, thus have a gradient of zero.
         </p>
 
-        <p>
-            In order to verify our renderer implementation and
-            its capability to correctly compute derivatives of 
-            the rendering operation, 
-        </p>
-
-        <div class="row">
-            <div class="column category" style="text-align: center;">
-                <h5 id="fig:optimization_local" class="docs-header">Figure 9</h5>
-                <video class="u-max-full-width" controls>
-                    <source src="videos/optimization_local_fixed.mp4" type="video/ogg">
-                    Your browser does not support the video tag.
-                </video>
-                <video class="u-max-full-width" controls>
-                    <source src="videos/optimization_local_flex.mp4" type="video/ogg">
-                    Your browser does not support the video tag.
-                </video>
-                <p>TODO: Description.</p>
-            </div>
-        </div>
-
         <div class="u-pull-right" style="text-align: center; width:25%; margin-left:20px">
-            <h5 id="fig:metal_wo_ambient" class="docs-header">Figure 10</h5>
+            <h5 id="fig:metal_wo_ambient" class="docs-header">Figure 9</h5>
             <img class="u-max-full-width" src="images/metal_wo_ambient.png">
             <p>
                 TODO: Description.
@@ -545,7 +524,7 @@
             very beneficial to use ambient lighting, we saw certain problems when
             rendering metallic materials without it. As reflection on metals
             is dominated by the specular component, only specular highlights
-            are really visible, leaving the rest of the material patch unlighted (see <a href="#fig:metal_wo_ambient">Figure 10</a>).
+            are really visible, leaving the rest of the material patch unlighted (see <a href="#fig:metal_wo_ambient">Figure 9</a>).
             Thus, some structural information is lost when generating
             the input renderings or comparing the appearance. Similar to the first 
             difference, this might affect the results for real images negatively
@@ -556,7 +535,7 @@
         <h5>Differentiable Path Tracer</h5>
 
         <div class="u-pull-left" style="text-align: center; width:25%; margin-right:20px">
-            <h5 id="fig:renderer_comparison" class="docs-header">Figure 11</h5>
+            <h5 id="fig:renderer_comparison" class="docs-header">Figure 10</h5>
             <video class="u-max-full-width" controls loop>
                 <source src="videos/rendering_local.mp4" type="video/mp4">
                 Your browser does not support the video tag.
@@ -587,8 +566,35 @@
             - Tried to match size and brightness of the light to the one used in the in-network renderer -> producing similar specular highlights<br/>
             - Area lights visible but zero gradients<br/>
             - Implemented a patch sampling camera in the spirit of the in-network renderer<br/>
-            - Verified camera by running similar optimization tests (ref to figure)<br/>
         </p>
+    </div>
+
+    <div class="docs-section" id="evaluation">
+        <h3 class="section-heading">Evaluation</h3>
+
+        <h5>Differentiability of Rendering Operation</h5>
+
+        <p>
+            In order to verify our renderer implementation and
+            its capability to correctly compute derivatives of 
+            the rendering operation, we conducted two small 
+            optimization test. 
+        </p>
+
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <h5 id="fig:optimization_local" class="docs-header">Figure 9</h5>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_local_fixed.mp4" type="video/ogg">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_local_flex.mp4" type="video/ogg">
+                    Your browser does not support the video tag.
+                </video>
+                <p>TODO: Description.</p>
+            </div>
+        </div>
 
         <div class="row">
             <div class="column category" style="text-align: center;">
@@ -604,10 +610,6 @@
                 <p>TODO: Description.</p>
             </div>
         </div>
-    </div>
-
-    <div class="docs-section" id="evaluation">
-        <h3 class="section-heading">Evaluation</h3>
 
         - Comparison with my local renderer to reference renderer (reimplementation)<br/>
 
