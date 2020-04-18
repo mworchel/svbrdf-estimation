@@ -206,6 +206,8 @@ class RednerRenderer:
 
         svbrdf = svbrdf.unsqueeze(0) if len(svbrdf.shape) == 3 else svbrdf
 
+        sensor_size = (svbrdf.shape[-1], svbrdf.shape[-2])
+
         for svbrdf_single in torch.split(svbrdf, 1, dim=0):
             normals, diffuse, roughness, specular = utils.unpack_svbrdf(svbrdf_single.squeeze(0))
             # Redner expects the normal map to be in range [0, 1]
@@ -238,7 +240,7 @@ class RednerRenderer:
                 up = np.array([0.0, 1.0, 0.0])
 
             camera = pyredner.Camera(position=torch.FloatTensor(position).to(self.redner_device), look_at=torch.FloatTensor(lookat).to(self.redner_device), 
-                                     up=torch.FloatTensor(up).to(self.redner_device), fov=torch.FloatTensor([90]), resolution=(256,256),
+                                     up=torch.FloatTensor(up).to(self.redner_device), fov=torch.FloatTensor([90]), resolution=sensor_size,
                                      camera_type=self.camera_type)
 
             # # The deferred rendering path. 
