@@ -282,7 +282,7 @@
         </div>
 
         <p>
-            Since the amount of materials obtained this way is still too low, the authors propose
+            Since the amount of materials obtained this way is still too small, the authors propose
             to increase the variety by mixing randomly selected pairs of materials. Specifically,
             they combine different SVBRDF maps using alpha blending with a randomly chosen
             alpha value. The result of such a mixing operation can be seen in <a href="#fig:mixed_materials">Figure 6</a>.
@@ -345,7 +345,8 @@
             where only a semi-randomly sampled subset of nine configurations 
             is evaluated at each step. In the first three configurations,
             the light and camera position are independently sampled from
-            a cosine distribution over the upper hemisphere. The remaining
+            a cosine distribution over the upper hemisphere above the material patch. 
+            The remaining
             six configurations are intended to explicitly cover specular
             configurations, that appear less often when performing independent
             sampling but potentially carry rich information about the material in the
@@ -382,7 +383,7 @@
             this small supervision to stabilize the training.
         </p>
 
-        <h5>Implementation (TODO: Find right place and shorten)</h5>
+        <h5>Implementation</h5>
 
         <p>
             While there is a publicly available implementation of the multi-view work,
@@ -394,10 +395,13 @@
             a crossover between both methods, as it adopts aspects of either one.
             Since the backend of potential renderers to integrate was known
             beforehand, the reimplementation is based on PyTorch as opposed to
-            the original work which uses TensorFlow.
+            the original work which uses TensorFlow. 
+            By exporting our reimplemented PyTorch models with the library
+            TensorboardX [NEEDCITATION], we were able to visually inspect
+            them in the Tensorboard web interface and verify their architectures
+            by comparing them to the reference models.
         </p>
-
-        <p>
+        <!-- <p>
             The single-view convolutional network is implemented by the class
             <code>SingleViewModel</code> which operates on batches of input images
             returning batches of predicted SVBRDFs. Although we never used the multi-view 
@@ -423,11 +427,7 @@
                         <li>Integration of the previous global feature vector and the current per-channel mean.</li>
                     </ul>
             </ul>
-            Using the library TensorboardX [NEEDCITATION], the reimplemented 
-            PyTorch models could be compared to the original models visually by
-            inspecting them in the Tensorboard web interface. This way, we 
-            were able to verify that boths architectures operate the same.
-        </p>
+        </p> -->
     </div>
 
     <div class="docs-section" id="method">
@@ -542,12 +542,18 @@
                 <source src="videos/rendering_local.mp4" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
+            <p>
+                (a) In-network renderer
+            </p> 
             <video class="u-max-full-width" controls loop>
                 <source src="videos/rendering_pathtracing.mp4" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
             <p>
-                TODO: Description.
+                (b) Redner (path tracer)
+            </p>
+            <p>
+                Outputs of both renderers for the same scene (perspective view).
             </p> 
         </div>
 
@@ -572,19 +578,44 @@
             redudancy is created between different research works.
             Therefore, in this project we propose to solve such inverse problems
             using general differentiable renderers which are developed independent
-            of any specific problems. As a proof-of-concept we integrate
-            such a renderer into the presented single-view approach.
+            of any specific problems.
         </p>
 
         <p>
-            - Used Redner<br/>
-            - C++ implementation with Python bindings and PyTorch integration<br/>
-            - Straight forward to integrate into our framework ()<br/>
-            - Uses phong shading (converted from cook torrance roughness to phong exponent)<br/>
-            - Area light instead of point light<br/>
-            - Tried to match size and brightness of the light to the one used in the in-network renderer -> producing similar specular highlights<br/>
-            - Area lights visible but zero gradients<br/>
-            - Implemented a patch sampling camera in the spirit of the in-network renderer<br/>
+            As a proof-of-concept we integrated Redner <a href="#li_2018">[TODO]</a>, 
+            a differentiable path tracer, into the presented single-view approach.
+            This general purpose renderer supports arbitrary scenes composed
+            of meshes, light sources and environment lighting. Due to it being
+            a path tracer, it inherently simulates global effects like indirect 
+            illumination and shadows. Although the renderer itself is written in
+            C++, it provides Python bindings and is compatible with PyTorch.
+            Thus, integrating it into our framework was rather straightforward
+            from a technical point of view and only three details required
+            special attention. First, the renderer assumes a Blinn-Phong
+            distribution [NEEDCITATION] instead of a GGX distribution <a href="#walter_2007">[TODO]</a> for the microfacets.
+            As a consequence, the interpretation of the roughness is different
+            and we need to convert the roughness values before rendering our
+            SVBRDFs with Redner. Second, all lights in the scene need 
+            to be represented as area lights instead of point lights. 
+            Since we want to produce similar looking images for the same
+            scene independent of which renderer is used (in-network
+            or path tracer), we tweaked the size of the area light
+            to match the appearance of the point light source in the
+            in-network renderer. <a href="#fig:renderer_comparison">Figure 10</a>
+            shows a scene rendererd with both renderers (perspecively mapped).
+            As a result, both the brightness and size of specular highlights
+            are comparable.
+            Third, Redner supports only common camera types like perspective or
+            orthographic cameras. Due to its advantages for the task at hand,
+            we implement a patch sampling camera similar to the one used by the
+            in-network renderer. The implementation of such a camera in a path
+            tracer turned out to be rather simple: whenever a primary ray is
+            requested for a position \(\mathbf{u}\) in the image, we treat
+            it as if it was located on the material patch and point the ray
+            at the corresponding patch position in 3d space. The most tedious
+            and error-prone part was the definition of the backward pass, 
+            which required manual derivation of all computations related
+            to the new camera type.
         </p>
     </div>
 
@@ -598,17 +629,82 @@
             its capability to correctly compute derivatives of 
             the rendering operation, we conducted two small 
             optimization test. 
+            - Area lights visible in Redner but zero gradients<br/>
         </p>
 
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:optimization_local" class="docs-header">Figure 9</h5>
+                <h5 id="fig:optimization_local_fixed" class="docs-header">Figure 9</h5>
                 <video class="u-max-full-width" controls>
-                    <source src="videos/optimization_local_fixed.mp4" type="video/ogg">
+                    <source src="videos/optimization_local_fixed_normal.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
                 <video class="u-max-full-width" controls>
-                    <source src="videos/optimization_local_flex.mp4" type="video/ogg">
+                    <source src="videos/optimization_pathtracing_fixed_normal.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <p>TODO: Description.</p>
+            </div>
+        </div>
+
+        <p>
+            - Figure flex shows the same experiment using 
+        </p>
+
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <h5 id="fig:optimization_local_flex" class="docs-header">Figure 9</h5>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_local_flex_normal.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_local_flex_diffuse.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_local_flex_roughness.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_local_flex_specular.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <p>TODO: Description.</p>
+            </div>
+        </div>
+
+        <p>
+
+        </p>
+
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <h5 id="fig:optimization_local_flex_roughnessexp" class="docs-header">Figure 9</h5>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_local_flex_roughness_nogeom.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_local_flex_roughness_nodistrib.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <p>TODO: Description.</p>
+            </div>
+        </div>
+        <p>
+
+        </p>
+
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <h5 id="fig:optimization_pathtracing_flex" class="docs-header">Figure 9</h5>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_pathtracing_flex_normal.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_pathtracing_flex_diffuse.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
                 <p>TODO: Description.</p>
@@ -617,17 +713,9 @@
 
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:optimization_pathtracing" class="docs-header">Figure 9</h5>
+                <h5 id="fig:optimization_pathtracing_flex_perspective" class="docs-header">Figure 9</h5>
                 <video class="u-max-full-width" controls>
-                    <source src="videos/optimization_pathtracing_fixed.mp4" type="video/ogg">
-                    Your browser does not support the video tag.
-                </video>
-                <video class="u-max-full-width" controls>
-                    <source src="videos/optimization_pathtracing_flex.mp4" type="video/ogg">
-                    Your browser does not support the video tag.
-                </video>
-                <video class="u-max-full-width" controls>
-                    <source src="videos/optimization_pathtracing_flex_perspective.mp4" type="video/ogg">
+                    <source src="videos/optimization_pathtracing_flex_perspective.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
                 <p>TODO: Description.</p>
@@ -701,9 +789,16 @@
                 [6] Aittala, M., Aila, T., Lehtinen, J., 2016, Reflectance Modeling by Neural Texture Synthesis
             </li>
             
-
             <li class="popover-item" id="gao_2019">
                 [6] Gao, D., Li, X., Dong, Y., Peers, P., Xu, K., Tong, X., 2019, Deep Inverse Rendering for High-Resolution SVBRDF Estimation from an Arbitrary Number of Images
+            </li>
+            
+            <li class="popover-item" id="li_2018">
+                [6] Li, T.-M., Aittala, M., Durand, F., Lehtinen, J., 2018, Differentiable Monte Carlo Ray Tracing through Edge Sampling
+            </li>
+            
+            <li class="popover-item" id="walter_2007">
+                [6] Walter, B., Marschner, S. R., Li, H., Torrance, K. E., 2007, Microfacet models for refraction through rough surfaces
             </li>
             
         </ul>
