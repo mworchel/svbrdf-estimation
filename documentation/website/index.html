@@ -528,8 +528,8 @@
             is dominated by the specular component, only specular highlights
             are really visible, leaving the rest of the material patch unlighted (see <a href="#fig:metal_wo_ambient">Figure 9</a>).
             Thus, some structural information is lost when generating
-            the input renderings or comparing the appearance. Similar to the first 
-            difference, this might affect the results for real images negatively
+            the input renderings. Again,
+            this might affect the results for real images negatively
             as in real scenes there usually is some form of environment lighting
             (other light sources or indirect illumination).
         </p>
@@ -552,14 +552,31 @@
         </div>
 
         <p>
-            However, the caveat of using in-network renderers is usually
-            that they lack flexibility due to their custom formulation...
-            <br/> 
-            - One purpose (material patch, one camera, one light)<br/>
-            - Not powerful enough to cover all problems (occlusions...integrand in light transport equation becomes discontinuous)<br/>
-            - Only direct illumination<br/>
-            <br/>
-            - Originally intended to use Mitsuba 2 (not released at the time but now is)<br/>
+            While the in-network renderer is sufficient for the specific
+            task at hand, it lacks the flexibility to be potentially 
+            useful for other variations of the same problem. 
+            A major issue of the scene representation is its
+            constraint to only contain one material patch, 
+            one type of camera and one (point) light source 
+            (multiple spot lights in the reference implementation).
+            Additionally, the renderer only supports local shading,
+            so only direct illumination from light sources contributes
+            to the final image. If one wants to support more complex
+            geometry or scenes, these scenes need to be representable
+            and global illumination has to be considered
+            for a faithful light transport simulation. Finally,
+            relying on automatic differentiation can lead to wrong gradients 
+            for the rendering operation as it becomes non-differentiable
+            at the presence of occlusions. Extending such custom renderers
+            with the required features can become a tedious task and a lot of 
+            redudancy is created between different research works.
+            Therefore, in this project we propose to solve such inverse problems
+            using general differentiable renderers which are developed independent
+            of any specific problems. As a proof-of-concept we integrate
+            such a renderer into the presented single-view approach.
+        </p>
+
+        <p>
             - Used Redner<br/>
             - C++ implementation with Python bindings and PyTorch integration<br/>
             - Straight forward to integrate into our framework ()<br/>
@@ -574,7 +591,7 @@
     <div class="docs-section" id="evaluation">
         <h3 class="section-heading">Evaluation</h3>
 
-        <h5>Differentiability of Rendering Operation</h5>
+        <h5>Differentiability of the Rendering Operation</h5>
 
         <p>
             In order to verify our renderer implementation and
@@ -627,6 +644,11 @@
 
     <div class="docs-section" id="conclusion">
         <h3 class="section-heading">Conclusion</h3>
+
+        <p>
+            - Originally intended to use Mitsuba 2 (not released at the time but now is)<br/>
+        </p>
+
     </div>
 
     <div class="docs-section" id="downloads">
