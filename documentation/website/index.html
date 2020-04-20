@@ -78,8 +78,9 @@
             Recent advances in computer graphics allow the simulation of virtual environments with quality closer
             to photo realism than ever before. This requires not only physically correct light transport
             simulations but also high quality assets that faithfully capture objects of the real world.
-            Several industries including game development <a href="#brown_2016">[TODO]</a><a href="#bishop_2017">[TODO]</a>, movie production [NEEDCITATION] as well as projects concerned
-            with cultural heritage [NEEDCITATION] rely on photogrammetry for asset acquisition.
+            Several industries including game development <a href="#brown_2016">[TODO]</a><a href="#bishop_2017">[TODO]</a>, 
+            movie production <a href="#giardina_2018">[TODO]</a> as well as projects concerned
+            with cultural heritage <a href="#cultlab3d_">[TODO]</a> rely on photogrammetry for asset acquisition.
             It allows reconstructing geometry and color information of real world objects
             only based on images, thus is a relatively light-weight capture process yielding
             high quality assets. While geometry reconstruction can be automated for the most parts due to the 
@@ -169,7 +170,7 @@
         <h5>Architecture</h5>
 
         <p>
-            At the heart of the presented approach is a deep convolutional network that adopts the U-Net architecture [NEEDCITATION]
+            At the heart of the presented approach is a deep convolutional network that adopts the U-Net architecture <a href="#ronneberger_2015">[TODO]</a>
             which has shown to be suitable for other image-to-image translation problems. The input to the network is a conventional 
             three channel RGB image of the surface and the output is a nine channel image, where two channels represent
             the per-pixel normal (the z coordinate is inferred from the x and y coordinates), three channels represent
@@ -249,7 +250,7 @@
             real world surfaces in the necessary quantity, the authors chose to 
             use artificial training data that is representative for a large variety 
             of real materials. More specifically, they obtained a set of 1850 
-            samples (SVBRDF maps) by selecting 155 materials from Allegorithmic Substance Share [NEEDCITATION]
+            samples (SVBRDF maps) by selecting 155 materials from <a href="https://share.substance3d.com/">Allegorithmic Substance Share</a>
             (a dataset of artist-generated procedural materials) and permutating 
             their important procedural parameters. However, in practice we found that their publicly available <a href="https://repo-sam.inria.fr/fungraph/multi_image_materials/supplemental_multi_images/materialsData_multi_image.zip">dataset</a> 
             does not contain 1850 but only 1628 samples: 1590 for training and 38 for testing.
@@ -400,7 +401,7 @@
             beforehand, the reimplementation is based on PyTorch as opposed to
             the original work which uses TensorFlow. 
             By exporting our reimplemented PyTorch models with the library
-            TensorboardX [NEEDCITATION], we were able to visually inspect
+            <a href="https://github.com/lanpa/tensorboardX">TensorboardX</a>, we were able to visually inspect
             them in the Tensorboard web interface and verify their architectures
             by comparing them to the reference models.
         </p>
@@ -594,8 +595,8 @@
             C++, it provides Python bindings and is compatible with PyTorch.
             Thus, integrating it into our framework was rather straightforward
             from a technical point of view and only three details required
-            special attention. First, the renderer assumes a Blinn-Phong
-            distribution [NEEDCITATION] instead of a GGX distribution <a href="#walter_2007">[TODO]</a> for the microfacets.
+            special attention. First, the renderer assumes a Blinn
+            distribution <a href="#blinn_1976">[TODO]</a><a href="#blinn_1977">[TODO]</a> instead of a GGX distribution <a href="#walter_2007">[TODO]</a> for the microfacets.
             As a consequence, the interpretation of the roughness is different
             and we need to convert the roughness values before rendering our
             SVBRDFs with Redner. Second, all lights in the scene need 
@@ -662,7 +663,7 @@
             same between target and estimate and are
             kept fixed. 
             We use the \(l_1\) loss between the images
-            as loss function and Adam [NEEDCITATION] 
+            as loss function and Adam <a href="#kingma_2015">[TODO]</a>
             as optimizer (same learning rate for both
             renderers). While the normal map does not
             converge to the ground truth normal map as
@@ -805,7 +806,7 @@
         <p>
             Interestingly, the roughness converges faster 
             than for the in-network renderer. As mentioned earlier,
-            Redner uses a Blinn-Phong microfacet distribution, 
+            Redner uses a Blinn microfacet distribution, 
             which is much simpler than the GGX distribution. 
             This supports the hypothesis for complex functional
             relationships as cause for slow roughness convergence
@@ -942,7 +943,7 @@
         </div>
 
         <p>
-            
+
         </p>
 
         <!-- Figure title -->
@@ -1110,11 +1111,27 @@
             </li>
 
             <li class="popover-item" id="bishop_2017">
-                [1] Bishop, L., Cowan, C., Jancosek, M., 2017,  	Photogrammetry for Games: Art, Technology and Pipeline Integration for Amazing Worlds, GDC 2017, <a href="https://www.gdcvault.com/play/1024340/Photogrammetry-for-Games-Art-Technology">https://www.gdcvault.com/play/1024340/Photogrammetry-for-Games-Art-Technology</a>, last retrieved March 2020
+                [1] Bishop, L., Cowan, C., Jancosek, M., 2017, Photogrammetry for Games: Art, Technology and Pipeline Integration for Amazing Worlds, <a href="https://www.gdcvault.com/play/1024340/Photogrammetry-for-Games-Art-Technology">https://www.gdcvault.com/play/1024340/Photogrammetry-for-Games-Art-Technology</a>, last retrieved March 2020.
+            </li>
+
+            <li class="popover-item" id="blinn_1976">
+                [6] Blinn, Z. F., Newell, M. E., 1976, Texture and reflection in computer generated images
+            </li>
+
+            <li class="popover-item" id="blinn_1977">
+                [6] Blinn, Z. F., 1977, Models of light reflection for computer synthesized pictures
             </li>
 
             <li class="popover-item" id="brown_2016">
-                [2] Brown, K., Hamilton, A., 2016, Photogrammetry and 'Star Wars Battlefront', GDC 2016, <a href="https://www.gdcvault.com/play/1022981/Photogrammetry-and-Star-Wars-Battlefront">https://www.gdcvault.com/play/1022981/Photogrammetry-and-Star-Wars-Battlefront</a>, last retrieved March 2020
+                [2] Brown, K., Hamilton, A., 2016, Photogrammetry and 'Star Wars Battlefront', <a href="https://www.gdcvault.com/play/1022981/Photogrammetry-and-Star-Wars-Battlefront">https://www.gdcvault.com/play/1022981/Photogrammetry-and-Star-Wars-Battlefront</a>, last retrieved March 2020.
+            </li>
+
+            <li class="popover-item" id="cultlab3d_">
+                [2] CultLab3D, <a href="https://www.cultlab3d.de/">https://www.cultlab3d.de/</a>, last retrieved April 2020.
+            </li>
+
+            <li class="popover-item" id="giardina_2018">
+                [2] Giardina, C., 2018, 3D Face Scanning Start Up In Talks With Studios for Film Use, <a href="https://www.hollywoodreporter.com/behind-screen/3d-face-scanning-start-up-talks-studios-film-use-1075170">https://www.hollywoodreporter.com/behind-screen/3d-face-scanning-start-up-talks-studios-film-use-1075170</a>, last retrieved April 2020.
             </li>
 
             <li class="popover-item" id="deschaintre_2018">
@@ -1129,12 +1146,20 @@
                 [6] Gao, D., Li, X., Dong, Y., Peers, P., Xu, K., Tong, X., 2019, Deep Inverse Rendering for High-Resolution SVBRDF Estimation from an Arbitrary Number of Images
             </li>
 
+            <li class="popover-item" id="kingma_2015">
+                [6] Kingma, D. P., Ba, L. J., 2015, Adam: A Method for Stochastic Optimization
+            </li>
+
             <li class="popover-item" id="li_2018">
                 [6] Li, T.-M., Aittala, M., Durand, F., Lehtinen, J., 2018, Differentiable Monte Carlo Ray Tracing through Edge Sampling
             </li>
 
             <li class="popover-item" id="pharr_2016">
                 [5] Pharr, M., Jakob, W., Humphreys, G., 2016, Physically Based Rendering: From Theory to Implementation
+            </li>
+
+            <li class="popover-item" id="ronneberger_2015"></li>
+                [5] O. Ronneberger, P.Fischer, and T. Brox, 2015, U-Net: Convolutional Networks for Biomedical Image Segmentation
             </li>
 
             <li class="popover-item" id="torrance_1982">
