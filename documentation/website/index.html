@@ -332,9 +332,12 @@
             specific parametrization. This <i>rendering loss</i> renders both
             the ground truth SVBRDF as well as the estimated SVBRDF as flat
             material patches under varying viewing and lighting conditions 
-            and only compares the rendered images pixel-wise. <a href="#fig:mixed_materials">Figure 7</a>
-            shows the difference between using only a simple \(l_1\) loss
-            and the rendering loss.
+            and only compares the rendered images pixel-wise. More
+            precisely, it computes the \(l_1\) loss between the log-transformed
+            renderings.
+            <a href="#fig:mixed_materials">Figure 7</a>
+            shows the difference of using only a simple \(l_1\) loss
+            between SVBRDF maps and the rendering loss.
         </p>
 
         <p>
@@ -767,8 +770,8 @@
             the path tracer and our patch sampling camera. One notable 
             difference to the in-network renderer is that the area light
             in the scene can (partially) occlude the material patch 
-            because in the used version of Redner it is not possible
-            to disable rendering of lights. However, while this
+            because in the used version of Redner it is impossible
+            to hide area light meshes. However, while this
             affects the rendering visually, it does not break
             the optimization. Since the appearance of the area light 
             does not depend on the SVBRDF maps, the gradients of
@@ -800,7 +803,7 @@
         </div>
 
         <p>
-            Interestingly, the roughness estimate converges faster 
+            Interestingly, the roughness converges faster 
             than for the in-network renderer. As mentioned earlier,
             Redner uses a Blinn-Phong microfacet distribution, 
             which is much simpler than the GGX distribution. 
@@ -828,8 +831,8 @@
             there is still a bug in the renderer, similar to
             an earlier 
             <a href="https://github.com/BachiLi/redner/issues/113">issue</a>
-            that completely prevented optimization of the 
-            normal map due to wrong gradients.
+            that completely prevented optimization of 
+            normal maps due to wrong gradient computations.
         </p>
 
         <div class="row">
@@ -844,6 +847,19 @@
         </div>
 
         <h5>SVBRDF Estimation</h5>
+
+        <p>
+            - Compare reference to reimplementation in-network to reimplementation path tracer(qualitatively)<br/>
+            -- artificial images
+            -- real images
+            - Half the learning rate<br/>
+            - Name training time
+            - Comparison between in-network renderer and path tracer<br/>
+            - Training time<br/>
+            - Qualitative comparisons<br/>
+            (- Quantitative comparisons (SSIM))<br/>
+            - Point out issues and reference back to differentiability
+        </p>
 
         <!-- Figure title -->
         <div class="row">
@@ -926,16 +942,7 @@
         </div>
 
         <p>
-            - Compare reference to reimplementation in-network to reimplementation path tracer(qualitatively)<br/>
-            -- artificial images
-            -- real images
-            - Half the learning rate<br/>
-            - Name training time
-            - Comparison between in-network renderer and path tracer<br/>
-            - Training time<br/>
-            - Qualitative comparisons<br/>
-            (- Quantitative comparisons (SSIM))<br/>
-            - Point out issues and reference back to differentiability
+            
         </p>
 
         <!-- Figure title -->
