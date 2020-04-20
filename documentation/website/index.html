@@ -430,7 +430,7 @@
         </p> -->
     </div>
 
-    <div class="docs-section" id="method">
+    <div class="docs-section" id="method_diffrendering">
         <h3 class="section-heading">Differentiable Rendering</h3>
 
         <div class="u-pull-left" style="text-align: center; width:25%; margin-right:20px">
@@ -622,19 +622,53 @@
     <div class="docs-section" id="evaluation">
         <h3 class="section-heading">Evaluation</h3>
 
+        <p>
+            In this section, we will evaluate both,
+            the capability of differentiating outputs
+            of the renderers with respect to SVBRDF parameters
+            as well as the performance of our 
+            implementation for SVBRDF estimation from images.
+        </p>
+
         <h5>Differentiability of the Rendering Operation</h5>
 
         <p>
-            In order to verify our renderer implementation and
-            its capability to correctly compute derivatives of 
-            the rendering operation, we conducted two small 
-            optimization test. 
-            - Area lights visible in Redner but zero gradients<br/>
+            In order to verify that the renderers presented
+            in section <a href="#method_diffrendering">Differentiable Rendering</a>
+            are able to differentiate the rendering operation
+            with respect to arbitrary SVBRDF parameters, we
+            conducted a series of small optimization tests.
+            Although for Redner this requirement should be
+            fulfilled by design, it is still helpful to 
+            confirm its workings and check the correctness of our 
+            patch sampling camera extension. <a href="#fig:optimization_local_fixed">Figure [TODO]</a>
+            shows results of both renderers for the first experiment. 
+            Given a fixed configuration of camera and light, 
+            the goal of the experiment is to find a 
+            normal map that when used in rendering,
+            reproduces the target image rendered with
+            the ground truth normal map. Thus, we start
+            with a randomly initialized normal map and
+            optimize its values only by comparing 
+            the rendered result to the target. 
+            All other parameters like diffuse albedo,
+            roughness and specular albedo are the 
+            same between target and estimate and are
+            kept fixed. 
+            We use the \(l_1\) loss between the images
+            as loss function and Adam [NEEDCITATION] 
+            as optimizer. While the normal map does not
+            converge to the ground truth normal map as
+            expected, the result still <i>looks</i> like
+            the target image. A notable difference between
+            the in-network renderer and Redner is the longer 
+            convergence time, which might be caused by
+            flatter or more noisy gradients in the path tracer.
         </p>
 
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:optimization_local_fixed" class="docs-header">Figure 9</h5>
+                <h5 id="fig:optimization_local_fixed" class="docs-header">Figure TODO</h5>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_local_fixed_normal.mp4" type="video/mp4">
                     Your browser does not support the video tag.
@@ -648,12 +682,23 @@
         </div>
 
         <p>
-            - Figure flex shows the same experiment using 
+            <a href="#fig:optimization_local_flex">Figure [TODO]</a>
+            shows an extension to the first experiment for the in-network
+            renderer. Each of the four animations correspond to the optimization
+            of one SVBRDF map while keeping the other maps fixed.
+            Instead of only having a fixed loss function with 
+            one camera and light position, we directly use the rendering loss.
+            Since there are now multiple configurations of camera and light
+            for each optimization step, we show the per-step average target and
+            average estimate image. By optimizing the SVBRDF maps 
+            in this way, we are able to recover good approximations
+            of the ground truth maps only through visual comparison.
+            <br/>
         </p>
 
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:optimization_local_flex" class="docs-header">Figure 9</h5>
+                <h5 id="fig:optimization_local_flex" class="docs-header">Figure TODO</h5>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_local_flex_normal.mp4" type="video/mp4">
                     Your browser does not support the video tag.
@@ -675,30 +720,48 @@
         </div>
 
         <p>
-
+            The only outlier is the estimate of the roughness map
+            which still appears very noisy after 200 iterations.
+            As the roughness contributes to two rather complex
+            terms in the BRDF model (microfacet distribution and 
+            geometry function) we ran two more experiments
+            with either of the terms disabled. The results in 
+            <a href="#fig:optimization_local_flex_roughnessexp">Figure [TODO]</a>
+            suggest that the slow convergence of roughness
+            is only a consequence of the combination of both
+            terms which might produces noisy gradients 
+            and makes the optimization more challenging.
+            Overall, these experiments show that the in-network
+            renderer is able to correctly differentiate through
+            the rendering operation and also that our formulation
+            of the rendering loss is correct.
         </p>
 
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:optimization_local_flex_roughnessexp" class="docs-header">Figure 9</h5>
-                <video class="u-max-full-width" controls>
-                    <source src="videos/optimization_local_flex_roughness_nogeom.mp4" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
+                <h5 id="fig:optimization_local_flex_roughnessexp" class="docs-header">Figure TODO</h5>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_local_flex_roughness_nodistrib.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
+                <p>(a) Without distribution term</p>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_local_flex_roughness_nogeom.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <p>(b) Without geometry term</p>
                 <p>TODO: Description.</p>
             </div>
         </div>
-        <p>
 
+        <p>
+            - Figure flex shows the same experiment using RenderingLoss
+            - Area lights visible in Redner but zero gradients<br/>
         </p>
 
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:optimization_pathtracing_flex" class="docs-header">Figure 9</h5>
+                <h5 id="fig:optimization_pathtracing_flex" class="docs-header">Figure TODO</h5>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_pathtracing_flex_normal.mp4" type="video/mp4">
                     Your browser does not support the video tag.
@@ -707,13 +770,25 @@
                     <source src="videos/optimization_pathtracing_flex_diffuse.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_pathtracing_flex_roughness.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/optimization_pathtracing_flex_specular.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
                 <p>TODO: Description.</p>
             </div>
         </div>
 
+        <p>
+            - Normal map loss very noise and convergence does not look 
+        </p>
+
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:optimization_pathtracing_flex_perspective" class="docs-header">Figure 9</h5>
+                <h5 id="fig:optimization_pathtracing_flex_perspective" class="docs-header">Figure TODO</h5>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_pathtracing_flex_normal_perspective.mp4" type="video/mp4">
                     Your browser does not support the video tag.
