@@ -532,6 +532,9 @@ body {
     .one-half.column {
         width: 48%
     }
+    .one-quarter.column {
+        width: 22%
+    }
     .offset-by-one.column,
     .offset-by-one.columns {
         margin-left: 8.66666666667%

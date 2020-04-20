@@ -641,7 +641,10 @@
             Although for Redner this requirement should be
             fulfilled by design, it is still helpful to 
             confirm its workings and check the correctness of our 
-            patch sampling camera extension. <a href="#fig:optimization_local_fixed">Figure [TODO]</a>
+            patch sampling camera extension. In all experiments
+            that include Redner, we used 16 samples per pixel 
+            in the forward pass and 8 samples per pixel in the backward pass.
+            <a href="#fig:optimization_local_fixed">Figure [TODO]</a>
             shows results of both renderers for the first experiment. 
             Given a fixed configuration of camera and light, 
             the goal of the experiment is to find a 
@@ -657,7 +660,8 @@
             kept fixed. 
             We use the \(l_1\) loss between the images
             as loss function and Adam [NEEDCITATION] 
-            as optimizer. While the normal map does not
+            as optimizer (same learning rate for both
+            renderers). While the normal map does not
             converge to the ground truth normal map as
             expected, the result still <i>looks</i> like
             the target image. A notable difference between
@@ -729,7 +733,10 @@
             <a href="#fig:optimization_local_flex_roughnessexp">Figure [TODO]</a>
             suggest that the slow convergence of roughness
             is only a consequence of the combination of both
-            terms which might produces noisy gradients 
+            terms. The dependence of the combined terms on the
+            roughness is possibly more complex than that 
+            on the normals (which they also depend on),
+            which might results in more noisy gradients
             and makes the optimization more challenging.
             Overall, these experiments show that the in-network
             renderer is able to correctly differentiate through
@@ -755,8 +762,18 @@
         </div>
 
         <p>
-            - Figure flex shows the same experiment using RenderingLoss
-            - Area lights visible in Redner but zero gradients<br/>
+            <a href="#fig:optimization_pathtracing_flex">Figure [TODO]</a> 
+            shows the same optimization experiments when using 
+            the path tracer and our patch sampling camera. One notable 
+            difference to the in-network renderer is that the area light
+            in the scene can (partially) occlude the material patch 
+            because in the used version of Redner it is not possible
+            to disable rendering of lights. However, while this
+            affects the rendering visually, it does not break
+            the optimization. Since the appearance of the area light 
+            does not depend on the SVBRDF maps, the gradients of
+            the pixels it covers are zero, so they simply do not contribute
+            to the optimization step.
         </p>
 
         <div class="row">
@@ -783,7 +800,36 @@
         </div>
 
         <p>
-            - Normal map loss very noise and convergence does not look 
+            Interestingly, the roughness estimate converges faster 
+            than for the in-network renderer. As mentioned earlier,
+            Redner uses a Blinn-Phong microfacet distribution, 
+            which is much simpler than the GGX distribution. 
+            This supports the hypothesis for complex functional
+            relationships as cause for slow roughness convergence
+            of the in-network renderer. The diffuse and specular maps
+            seem to converge to (noisy) approximations of the ground
+            truth maps, with the specular map converging a little
+            bit slower at the floorboard gaps. A similar behavior
+            can be observed for the in-network renderer (iteration 150),
+            although it is not as apparent. The outlier here is the
+            normal map which, while it resembles the ground truth
+            normal map at some parts, does not converge
+            to a very good approximation, at least not in the time given.
+            The results in
+            <a href="#fig:optimization_pathtracing_flex_perspective">Figure [TODO]</a> 
+            were produced using the built-in perspective camera 
+            instead of our patch sampling camera and they show 
+            that the convergence behavior is not caused by
+            a bug in our extension to Redner. To this point,
+            we cannot explain the behavior. Since the loss
+            is decreasing it might converge to a (good) approximation
+            after a very long time, but the slow convergence
+            time is suspicious anyway. It is possible that
+            there is still a bug in the renderer, similar to
+            an earlier 
+            <a href="https://github.com/BachiLi/redner/issues/113">issue</a>
+            that completely prevented optimization of the 
+            normal map due to wrong gradients.
         </p>
 
         <div class="row">
@@ -797,23 +843,228 @@
             </div>
         </div>
 
-        <h5>Reproducing the Reference</h5>
+        <h5>SVBRDF Estimation</h5>
+
+        <!-- Figure title -->
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <h5 id="fig:todo" class="docs-header">Figure TODO</h5>
+            </div>
+        </div>
+        <!-- Figure content -->
+        <div class="row">
+            <div class="one-quarter column category" style="text-align: center;">
+                <img class="u-max-full-width" src="images/estimation/artificial/0.png">
+                <img class="u-max-full-width" src="images/estimation/artificial/1.png">
+                <img class="u-max-full-width" src="images/estimation/artificial/2.png">
+                <img class="u-max-full-width" src="images/estimation/artificial/3.png">
+                <p>Input image</p>
+            </div>
+            <div class="one-quarter column category" style="text-align: center;">
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/artificial/reference/0.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/artificial/reference/1.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/artificial/reference/2.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/artificial/reference/3.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <p>Reference</p>
+            </div>
+            <div class="one-quarter column category" style="text-align: center;">
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/artificial/local/0.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/artificial/local/1.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/artificial/local/2.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/artificial/local/3.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <p>In-network renderer</p>
+            </div>
+            <div class="one-quarter column category" style="text-align: center;">
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/artificial/pathtracing/0.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/artificial/pathtracing/1.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/artificial/pathtracing/2.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/artificial/pathtracing/3.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <p>Path tracer</p>
+            </div>
+        </div>
+        <!-- Figure description -->
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <p>TODO: Description.</p>
+            </div>
+        </div>
 
         <p>
-            - Compare reimplementation with reference implementation (qualitatively)<br/>
+            - Compare reference to reimplementation in-network to reimplementation path tracer(qualitatively)<br/>
+            -- artificial images
+            -- real images
             - Half the learning rate<br/>
             - Name training time
-        </p>
-
-        <h5>SVBRDF Estimation using the Path Tracer</h5>
-
-        <p>
             - Comparison between in-network renderer and path tracer<br/>
             - Training time<br/>
             - Qualitative comparisons<br/>
             (- Quantitative comparisons (SSIM))<br/>
             - Point out issues and reference back to differentiability
         </p>
+
+        <!-- Figure title -->
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <h5 id="fig:todo" class="docs-header">Figure TODO</h5>
+            </div>
+        </div>
+        <!-- Figure content -->
+        <div class="row">
+            <div class="one-quarter column category" style="text-align: center;">
+                <img class="u-max-full-width" src="images/estimation/real/0.png">
+                <img class="u-max-full-width" src="images/estimation/real/1.png">
+                <img class="u-max-full-width" src="images/estimation/real/2.png">
+                <img class="u-max-full-width" src="images/estimation/real/3.png">
+                <p>Input image</p>
+            </div>
+            <div class="one-quarter column category" style="text-align: center;">
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/real/reference/0.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/real/reference/1.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/real/reference/2.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/real/reference/3.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <p>Reference</p>
+            </div>
+            <div class="one-quarter column category" style="text-align: center;">
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/real/local/0.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/real/local/1.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/real/local/2.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/real/local/3.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <p>In-network renderer</p>
+            </div>
+            <div class="one-quarter column category" style="text-align: center;">
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/real/pathtracing/0.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/real/pathtracing/1.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/real/pathtracing/2.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <video class="u-max-full-width" controls>
+                    <source src="videos/estimation/real/pathtracing/3.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <p>Path tracer</p>
+            </div>
+        </div>
+        <!-- Figure description -->
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <p>TODO: Description.</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <h5 id="fig:todo" class="docs-header">Figure TODO</h5>
+                <img class="u-max-full-width" src="images/svbrdf_locallow.png">
+                <img class="u-max-full-width" src="images/svbrdf_pathtracing.png">
+                <p>
+                    TODO: Description.
+                </p>
+            </div>
+        </div>
+    
+        <!-- Figure title -->
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <h5 id="fig:todo" class="docs-header">Figure TODO</h5>
+            </div>
+        </div>
+        <div class="row">   
+            <div class="one-half column category" style="text-align: center;">
+                <img class="u-max-full-width" src="images/loss_local.png">
+                <p>(a) In-network renderer</p>
+            </div>
+
+            <div class="one-half column category" style="text-align: center;">
+                <img class="u-max-full-width" src="images/loss_pathtracing_broken_314.png">
+                <p>(b) Path tracer</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <p>
+                    TODO: Description.
+                </p>
+            </div>
+        </div>
+    
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <h5 id="fig:todo" class="docs-header">Figure TODO</h5>
+                <img class="u-max-full-width" src="images/svbrdf_pathtracing_broken_311.png">
+                <img class="u-max-full-width" src="images/svbrdf_pathtracing_broken_314.png">
+                <p>
+                    TODO: Description.
+                </p>
+            </div>
+        </div>
+
     </div>
 
     <div class="docs-section" id="conclusion">
