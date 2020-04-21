@@ -159,7 +159,7 @@
             The main focus of this project is the work of Deschaintre et al. <a href="#deschaintre_2018">[TODO]</a>, 
             a light-weight image-based method for capturing SVBRDFs of real world surfaces.
             Given a single flash-lit image of a flat surface, they are able to reconstruct its 
-            Cook Torrance SVBRDF maps using a deep convolutional network. Thus, they cast material
+            Cook-Torrance SVBRDF maps using a deep convolutional network. Thus, they cast material
             reflectance estimation as an image-to-image translation problem.
             Their follow-up work <a href="#deschaintre_2019">[TODO]</a> extends the idea by using multiple uncalibrated
             but aligned images of the same surface. While we initially planned to base the whole project on the multi-view approach,
@@ -175,7 +175,7 @@
             three channel RGB image of the surface and the output is a nine channel image, where two channels represent
             the per-pixel normal (the z coordinate is inferred from the x and y coordinates), three channels represent
             the diffuse albedo, one channel represents the roughness and the last three channels represent the specular albedo.
-            As this reflectance representation is conformant to the Cook Torrance model (see section <a href="#fundamentals">Material Model</a>),
+            As this reflectance representation is conformant to the Cook-Torrance model (see section <a href="#fundamentals">Material Model</a>),
             the approach intrinsically assumes that the surface can be represented by it.
         </p>
 
@@ -252,8 +252,9 @@
             of real materials. More specifically, they obtained a set of 1850 
             samples (SVBRDF maps) by selecting 155 materials from <a href="https://share.substance3d.com/">Allegorithmic Substance Share</a>
             (a dataset of artist-generated procedural materials) and permutating 
-            their important procedural parameters. However, in practice we found that their publicly available <a href="https://repo-sam.inria.fr/fungraph/multi_image_materials/supplemental_multi_images/materialsData_multi_image.zip">dataset</a> 
-            does not contain 1850 but only 1628 samples: 1590 for training and 38 for testing.
+            their important procedural parameters. In practice, we found their publicly available 
+            <a href="https://repo-sam.inria.fr/fungraph/multi_image_materials/supplemental_multi_images/materialsData_multi_image.zip">dataset</a> 
+            to contain not 1850 but only 1628 samples: 1590 for training and 38 for testing.
         </p>
 
         <p>
@@ -554,7 +555,7 @@
                 Your browser does not support the video tag.
             </video>
             <p>
-                (b) Redner (path tracer)
+                (b) Redner
             </p>
             <p>
                 Outputs of both renderers for the same scene (perspective view).
@@ -603,7 +604,7 @@
             to be represented as area lights instead of point lights. 
             Since we want to produce similar looking images for the same
             scene independent of which renderer is used (in-network
-            or path tracer), we tweaked the size of the area light
+            or Redner), we tweaked the size of the area light
             to match the appearance of the point light source in the
             in-network renderer. <a href="#fig:renderer_comparison">Figure 10</a>
             shows a scene rendererd with both renderers (perspecively mapped).
@@ -768,7 +769,7 @@
         <p>
             <a href="#fig:optimization_pathtracing_flex">Figure [TODO]</a> 
             shows the same optimization experiments when using 
-            the path tracer and our patch sampling camera. One notable 
+            Redner and our patch sampling camera. One notable 
             difference to the in-network renderer is that the area light
             in the scene can (partially) occlude the material patch 
             because in the used version of Redner it is impossible
@@ -850,22 +851,56 @@
         <h5>SVBRDF Estimation</h5>
 
         <p>
-            - Compare reference to reimplementation in-network to reimplementation path tracer(qualitatively)<br/>
-            -- artificial images
-            -- real images
-            - Half the learning rate<br/>
-            - Name training time
-            - Comparison between in-network renderer and path tracer<br/>
-            - Training time<br/>
-            - Qualitative comparisons<br/>
-            (- Quantitative comparisons (SSIM))<br/>
-            - Point out issues and reference back to differentiability
+            Our reimplementation of the single-view work was
+            done in a way that allows plugging in different 
+            renderers to be used for computing the rendering loss.
+            This flexibility enabled us to train the model from 
+            scratch with either of the renderers. We used
+            1590 training samples and the online data 
+            generation approach explained earlier 
+            to increase the variety of materials
+            and augment the base samples.
+            The model that uses the in-network renderer 
+            was trained for 2050 epochs
+            and a batch size of 8 (roughly 400000 training steps). 
+            We use the following formula to convert
+            from epochs to training steps
+            \[ \text{steps} = \frac{0.99 \cdot 1590 \cdot \text{epochs}}{8}, \]
+            where the factor 0.99 results from a 1% 
+            validation split. Unfortunately we did not compute
+            the validation loss at training time, so 
+            we cannot report any results. We used the
+            Adam optimizer for training the network
+            but only with half the learning rate (\(1 \cdot 10^{-5}\)) of 
+            that used in the reference work. 
+            This stabilizes the training a little bit more 
+            but results in slower convergence.
+            As opposed to the reference, we also did not
+            use any adaptive learning rate techniques.
+            The model that uses Redner as renderer was
+            trained for 377 epochs. The low number of 
+            epochs is mainly a limitation of the largely
+            increased training time. From the time
+            measurements we estimated that training 
+            with the in-network renderer takes approximately
+            1 hour per epoch while Redner requires 8.5 hours
+            on average. This discrepancy mainly results from
+            the increased complexity of the path tracing
+            operation but also the more involved approach
+            of differentiation. We show rendered
+            SVBRDFs produced by the reference single-view model, 
+            our in-network model and our Redner model on a 
+            set of artificial input images 
+            (<a href="#fig:estimation_artificial">Figure [TODO]</a>) 
+            as well as on real images captured with 
+            mobile phones
+            (<a href="#fig:estimation_real">Figure [TODO]</a>).
         </p>
 
         <!-- Figure title -->
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:todo" class="docs-header">Figure TODO</h5>
+                <h5 id="fig:estimation_artificial" class="docs-header">Figure TODO</h5>
             </div>
         </div>
         <!-- Figure content -->
@@ -875,7 +910,7 @@
                 <img class="u-max-full-width" src="images/estimation/artificial/1.png">
                 <img class="u-max-full-width" src="images/estimation/artificial/2.png">
                 <img class="u-max-full-width" src="images/estimation/artificial/3.png">
-                <p>Input image</p>
+                <p>(a) Input image</p>
             </div>
             <div class="one-quarter column category" style="text-align: center;">
                 <video class="u-max-full-width" controls>
@@ -894,7 +929,7 @@
                     <source src="videos/estimation/artificial/reference/3.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
-                <p>Reference</p>
+                <p>(b) Reference</p>
             </div>
             <div class="one-quarter column category" style="text-align: center;">
                 <video class="u-max-full-width" controls>
@@ -913,7 +948,7 @@
                     <source src="videos/estimation/artificial/local/3.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
-                <p>In-network renderer</p>
+                <p>(c) In-network renderer</p>
             </div>
             <div class="one-quarter column category" style="text-align: center;">
                 <video class="u-max-full-width" controls>
@@ -932,24 +967,44 @@
                     <source src="videos/estimation/artificial/pathtracing/3.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
-                <p>Path tracer</p>
+                <p>(d) Redner</p>
             </div>
         </div>
         <!-- Figure description -->
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <p>TODO: Description.</p>
+                <p>
+                    Input images and rendered results of different models. 
+                    The images show artificial surfaces rendered with our renderer from ground truth SVBRDFs.
+                </p>
             </div>
         </div>
 
         <p>
-
+            The reference model seems to produce plausible 
+            results for all input images, except for the
+            metallic sample. As mentioned earlier, this
+            is due to a limitation of our data generation approach
+            which does not use any ambient lighting for
+            input image rendering. This results in
+            low brightness areas for specular materials, 
+            where the models have
+            difficulties with picking up useful information.
+            Overall, the in-network model is able to
+            produce results comparable to the reference,
+            despite of some weaknesses like normal maps
+            not being as pronounced and an apparent bias
+            to glossy materials.
+            While the Redner model is at least able
+            to correctly extract some color information,
+            the estimated materials appear as mostly
+            flat and unstructured surfaces.
         </p>
 
         <!-- Figure title -->
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:todo" class="docs-header">Figure TODO</h5>
+                <h5 id="fig:estimation_real" class="docs-header">Figure TODO</h5>
             </div>
         </div>
         <!-- Figure content -->
@@ -959,7 +1014,7 @@
                 <img class="u-max-full-width" src="images/estimation/real/1.png">
                 <img class="u-max-full-width" src="images/estimation/real/2.png">
                 <img class="u-max-full-width" src="images/estimation/real/3.png">
-                <p>Input image</p>
+                <p>(a) Input image</p>
             </div>
             <div class="one-quarter column category" style="text-align: center;">
                 <video class="u-max-full-width" controls>
@@ -978,7 +1033,7 @@
                     <source src="videos/estimation/real/reference/3.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
-                <p>Reference</p>
+                <p>(b) Reference</p>
             </div>
             <div class="one-quarter column category" style="text-align: center;">
                 <video class="u-max-full-width" controls>
@@ -997,7 +1052,7 @@
                     <source src="videos/estimation/real/local/3.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
-                <p>In-network renderer</p>
+                <p>(c) In-network renderer</p>
             </div>
             <div class="one-quarter column category" style="text-align: center;">
                 <video class="u-max-full-width" controls>
@@ -1016,59 +1071,137 @@
                     <source src="videos/estimation/real/pathtracing/3.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
-                <p>Path tracer</p>
+                <p>(d) Redner</p>
             </div>
         </div>
         <!-- Figure description -->
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <p>TODO: Description.</p>
+                <p>
+                    Input images and rendered results of different models. 
+                    The images show real surfaces captured with mobile phones.
+                    First three images by Deschaintre et al. <a href="#deschaintre_2018">[TODO]</a>.
+                </p>
             </div>
         </div>
 
+        <p>
+            Considering the low number of training steps
+            it has gone through, the weak performance
+            of the Redner model is not a surprise. 
+            However, there is another factor
+            that decreases its training performance.
+            The slow convergence
+            times observed in the differentiability 
+            experiments seem to result in a network
+            that is learning much slower than
+            that using the in-network renderer.
+            <a href="#fig:estimation_same_epochs">Figure [TODO]</a>
+            shows SVBRDF maps estimated by an in-network model
+            that was trained for roughly
+            the same number of epochs in comparison
+            to the SVBRDF estimated by the Redner model.
+            The estimate of the in-network model 
+            appears much more pronounced and detailed
+            at this stage.
+        </p>
+        
+
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:todo" class="docs-header">Figure TODO</h5>
+                <h5 id="fig:estimation_same_epochs" class="docs-header">Figure TODO</h5>
                 <img class="u-max-full-width" src="images/svbrdf_locallow.png">
+                <p>
+                    (a) In-network renderer (313 epochs)
+                </p>
                 <img class="u-max-full-width" src="images/svbrdf_pathtracing.png">
                 <p>
-                    TODO: Description.
+                    (b) Redner (377 epochs)
+                </p>
+                <p>
+                    SVBRDF estimates produced by models trained with different renderers but roughly the same number of epochs.
                 </p>
             </div>
         </div>
     
+        <p>
+            Naturally, we tried to train the Redner model
+            for a longer time to see how the quality
+            of the estimation evolves over time. 
+            Unfortunately, as the network was trained
+            for a longer time, we noticed more and more
+            issues appearing, like the loss suddenly
+            becoming invalid or increasing by a large
+            margin. 
+            <a href="#fig:estimation_losses">Figure [TODO]</a>
+            shows the training loss over
+            time for both the in-network model and
+            a Redner model that was trained for 467 epochs.
+            While the in-network model learned
+            until the training was terminated,
+            the loss of the Redner model decreases
+            but spikes to a plateau after around 75000 steps (~381 epochs).
+        </p>
+
         <!-- Figure title -->
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:todo" class="docs-header">Figure TODO</h5>
+                <h5 id="fig:estimation_losses" class="docs-header">Figure TODO</h5>
             </div>
         </div>
         <div class="row">   
             <div class="one-half column category" style="text-align: center;">
                 <img class="u-max-full-width" src="images/loss_local.png">
-                <p>(a) In-network renderer</p>
+                <p>(a) In-network renderer (2500 epochs)</p>
             </div>
 
             <div class="one-half column category" style="text-align: center;">
                 <img class="u-max-full-width" src="images/loss_pathtracing_broken_314.png">
-                <p>(b) Path tracer</p>
+                <p>(b) Redner (467 epochs)</p>
             </div>
         </div>
         <div class="row">
             <div class="column category" style="text-align: center;">
                 <p>
-                    TODO: Description.
+                    Training loss of models trained with different renderers.
                 </p>
             </div>
         </div>
     
+        <p>
+            Although we observed a similar behavior when 
+            using a previous version of Redner (3.11)
+            that contained a bug in gradient computation,
+            we are not certain if this behavior in the
+            current version (3.14) is related in any
+            way. 
+            <a href="#fig:estimation_broken">Figure [TODO]</a>
+            shows SVBRDF estimates produced with
+            models that are trapped on a plateau 
+            for both versions.
+            The outputs contain constant colored
+            maps which suggests that some of the
+            layers in the network have been completely
+            thrown off by the optimization.
+            As explained in the section with
+            the differentiability experiments,
+            the slow convergence of the normal map
+            might hint at another bug in the renderer.
+        </p>
+
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:todo" class="docs-header">Figure TODO</h5>
+                <h5 id="fig:estimation_broken" class="docs-header">Figure TODO</h5>
                 <img class="u-max-full-width" src="images/svbrdf_pathtracing_broken_311.png">
+                <p>
+                    (a) Redner version 3.11 (24 epochs)
+                </p>
                 <img class="u-max-full-width" src="images/svbrdf_pathtracing_broken_314.png">
                 <p>
-                    TODO: Description.
+                    (b) Redner version 3.14 (467 epochs)
+                </p>
+                <p>
+                    SVBRDF estimates produced by models that were trained with different versions of Redner and became trapped on a plateau during training.
                 </p>
             </div>
         </div>
