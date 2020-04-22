@@ -20,9 +20,9 @@
                 <li class="navbar-item">
                     <a class="navbar-link" href="#introduction">Intro</a>
                 </li>
-                <li class="navbar-item">
+                <!-- <li class="navbar-item">
                     <a class="navbar-link" href="#motivation">Motivation</a>
-                </li>
+                </li> -->
                 <li class="navbar-item">
                     <a class="navbar-link" href="#fundamentals">Fundamentals</a>
                 </li>
@@ -45,7 +45,7 @@
         </div>
     </nav>
 
-    <section class="header" id="abstract">
+    <section class="header" id="introduction">
         <h2 class="title">SVBRDF Estimation using a Physically-based Differentiable Renderer</h2>
         <h6>Project by Markus Worchel (<a href="mailto:m.worchel@campus.tu-berlin.de">m.worchel@campus.tu-berlin.de</a>)
         </h6>
@@ -55,7 +55,13 @@
                 <img class="u-max-full-width" src="images/teaser_full.jpg">
                     <p>
                         Estimating scene parameters like geometry and material solely from images 
-                        has been a widely researched topic, especially in the domain of computer vision. 
+                        has been a widely researched topic, especially in the domain of computer vision.
+                        It is also of interest for a large industry including game development 
+                        <a href="#brown_2016">[TODO]</a><a href="#bishop_2017">[TODO]</a>, 
+                        movie production <a href="#giardina_2018">[TODO]</a> as well as projects concerned
+                        with cultural heritage <a href="#cultlab3d_">[TODO]</a>, as it enables them
+                        to create assets that faithfully capture
+                        objects of the real world.
                         While there are well established methods for geometric reconstruction that are often 
                         able to leverage implicit knowledge about the camera setup, material reconstruction 
                         is a more ill-conditioned inverse problem. Recent advances in machine learning and 
@@ -71,7 +77,7 @@
                         provide a general framework for advanced light transport simulations.
                         In this project, we will as a proof-of-concept replace the custom renderer 
                         embedded in an existing material reflectance pipeline with a general differentiable
-                        renderer (the teaser image is from the follow-up work <a href="#deschaintre_2019">[TODO]</a>). 
+                        renderer. 
                         We show that integrating an external renderer in such a 
                         pipeline requires low effort if certain flexibility is given by the
                         implementation and that parts of the renderer can be easily adapted
@@ -80,7 +86,7 @@
         </div>
     </section>
 
-    <div class="docs-section" id="motivation">
+    <!-- <div class="docs-section" id="motivation">
         <h3 class="section-heading">Motivation</h3>
 
         <p>
@@ -111,7 +117,7 @@
             a light-weight image-based method for capturing SVBRDFs of real world surfaces.
         </p>
 
-    </div>
+    </div> -->
 
     <div class="docs-section" id="fundamentals">
         <h3 class="section-heading">Material Model</h3>
@@ -169,13 +175,16 @@
         <h3 class="section-heading">SVBRDF Estimation from Images</h3>
 
         <p>
-            The main focus of this project is the work of Deschaintre et al. <a href="#deschaintre_2018">[TODO]</a>, 
-            a light-weight image-based method for capturing SVBRDFs of real world surfaces.
-            Given a single flash-lit image of a flat surface, they are able to reconstruct its 
-            Cook-Torrance SVBRDF maps using a deep convolutional network. Thus, they cast material
-            reflectance estimation as an image-to-image translation problem.
+            Deschaintre et al. <a href="#deschaintre_2018">[TODO]</a> propose a method for
+            reconstructing material reflectance of a flat surface only given a flash-lit
+            photograph of it. While the imposed constraints are rather strict, we 
+            find the light-weight nature of the process very appealing. They cast
+            material reflectance estimation as an image-to-image translation problem:
+            an image is fed into a deep convolutional network which predicts
+            the Cook-Torrance SVBRDF maps of the visible surface.
             Their follow-up work <a href="#deschaintre_2019">[TODO]</a> extends the idea by using multiple uncalibrated
-            but aligned images of the same surface. While we initially planned to base the whole project on the multi-view approach,
+            but aligned images of the same surface (this is where the teaser image is taken from). 
+            While we initially planned to base the whole project on the multi-view approach,
             time constraints and lower overall complexity lead us to focus only on the single-view case. However, some ideas
             and the implementation reference are mainly borrowed from the multi-view approach.
         </p>
@@ -592,11 +601,11 @@
             relying on automatic differentiation can lead to wrong gradients 
             for the rendering operation as it becomes non-differentiable
             at the presence of occlusions. Extending such custom renderers
-            with the required features can become a tedious task and a lot of 
-            redudancy is created between different research works.
+            with the required features can become a tedious task and 
+            complete reimplementations for a different use case create redundancy.
             Therefore, in this project we propose to solve such inverse problems
-            using general differentiable renderers which are developed independent
-            of any specific problems.
+            using general differentiable renderers which are developed as 
+            stand-alone systems.
         </p>
 
         <p>
