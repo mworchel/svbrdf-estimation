@@ -57,9 +57,9 @@
                         Estimating scene parameters like geometry and material solely from images 
                         has been a widely researched topic, especially in the domain of computer vision.
                         It is also of interest for a large industry including game development 
-                        <a href="#brown_2016">[TODO]</a><a href="#bishop_2017">[TODO]</a>, 
-                        movie production <a href="#giardina_2018">[TODO]</a> as well as projects concerned
-                        with cultural heritage <a href="#cultlab3d_">[TODO]</a>, as it enables them
+                        <a href="#brown_2016">[5]</a><a href="#bishop_2017">[2]</a>, 
+                        movie production <a href="#giardina_2018">[7]</a> as well as projects concerned
+                        with cultural heritage <a href="#cultlab3d_">[6]</a>, as it enables them
                         to create assets that faithfully capture
                         objects of the real world.
                         While there are well established methods for geometric reconstruction that are often 
@@ -93,9 +93,9 @@
             Recent advances in computer graphics allow the simulation of virtual environments with quality closer
             to photorealism than ever before. This requires not only physically correct light transport
             simulations but also high-quality assets that faithfully capture objects of the real world.
-            Several industries including game development <a href="#brown_2016">[TODO]</a><a href="#bishop_2017">[TODO]</a>, 
-            movie production <a href="#giardina_2018">[TODO]</a> as well as projects concerned
-            with cultural heritage <a href="#cultlab3d_">[TODO]</a> rely on photogrammetry for asset acquisition.
+            Several industries including game development <a href="#brown_2016">[5]</a><a href="#bishop_2017">[2]</a>, 
+            movie production <a href="#giardina_2018">[7]</a> as well as projects concerned
+            with cultural heritage <a href="#cultlab3d_">[6]</a> rely on photogrammetry for asset acquisition.
             It allows reconstructing geometry and color information of real world objects
             only based on images, thus is a relatively light-weight capture process. 
             While geometry reconstruction can be automated for the most parts due to the 
@@ -107,14 +107,10 @@
             These photogrammetry workflows greatly benefit from methods that provide automatic estimation of 
             appearant material properties, especially if they do not require expensive
             and difficult to deploy hardware. In this context, image-based approaches appear to be particularly interesting
-            as they could be easily integrated into existing workflows. Deschaintre et al. <a href="#deschaintre_2018">[TODO]</a>
+            as they could be easily integrated into existing workflows. Deschaintre et al. <a href="#deschaintre_2018">[8]</a>
             propose a method for reconstructing material reflectance only given a flash-lit image of a flat surface.
             While the imposed constraints are potentially too strict for a production environment, it is still
             a relevant approach as the process itself is extremely light-weight. 
-            <br/>
-
-            The main focus of this project is the work of Deschaintre et al. <a href="#deschaintre_2018">[TODO]</a>, 
-            a light-weight image-based method for capturing SVBRDFs of real world surfaces.
         </p>
 
     </div> -->
@@ -134,13 +130,13 @@
             In computer graphics, surface reflectance properties are typically represented by a 
             bidirectional reflectance distribution function (BRDF) \( f_r(\mathbf{\omega}_i, \mathbf{\omega}_o) \).
             It defines the fraction of (differential) irradiance coming from a direction \(\mathbf{\omega}_i\) 
-            that is reflected towards a direction \(\mathbf{\omega}_o\) <a href="#pharr_2016">[TODO]</a>. As most
+            that is reflected towards a direction \(\mathbf{\omega}_o\) <a href="#pharr_2016">[14]</a>. As most
             surfaces are not fully homogeneous, the BRDF is usually given as a function of surface position 
             \(f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o)\), which is then also called spatially varying BRDF (SVBRDF).
-            <a href="#fig:svbrdf">Figure 2</a> shows a visualization of the SVBRDF parameters. 
+            <a href="#fig:svbrdf">Figure 1</a> shows a visualization of the SVBRDF parameters. 
             Note that the directional quantities in this function are relative to the local coordinate system that is
             defined by the surface normal \(\mathbf{n}\). 
-            Additionally, a physically correct BRDF fulfills two properties <a href="#pharr_2016">[TODO]</a>:
+            Additionally, a physically correct BRDF fulfills two properties <a href="#pharr_2016">[14]</a>:
             <ol>
                 <li>Helmholtz reciprocity: \(f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o) = f_r(\mathbf{x}, \mathbf{\omega}_o, \mathbf{\omega}_i)\) for all \(\mathbf{\omega}_i, \mathbf{\omega}_o\)</li>
                 <li>Energy Conservation: \(\int\limits_{\Omega} \, f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o) \, \cos \theta_i \, d\mathbf{\omega}_i \leq 1, \) 
@@ -155,7 +151,7 @@
 
         <p>
             The physically-based Cook-Torrance model 
-            <a href="#torrance_1982">[TODO]</a> assumes that 
+            <a href="#torrance_1982">[17]</a> assumes that 
             a surface is composed of small mirror-like facets
             (microfacets) and models a BRDF as sum  
             of two components. The diffuse component \(f_d\) 
@@ -179,10 +175,10 @@
             the microfacet normal distribution \(D\) and the geometric
             shadowing function \(G\). In this project, we use
             Schlick's approximation
-            <a href="#schlick_1994">[TODO]</a> for the Fresnel term,
+            <a href="#schlick_1994">[16]</a> for the Fresnel term,
             which depends on the specular albedo
             or <q>specular reflectance at normal incidence</q> \(\rho_s\).
-            We use GGX <a href="#walter_2007">[TODO]</a> as microfacet
+            We use GGX <a href="#walter_2007">[18]</a> as microfacet
             normal distribution and the associated Smith geometric
             shadowing function. Both depend on the roughness
             of the material \(r\).
@@ -203,7 +199,7 @@
             Additionally, a normal map provides the orientation
             of the microscopic surface normal \(n\) in tangent
             space.
-            <a href="#fig:svbrdf_maps">Figure [TODO]</a>
+            <a href="#fig:svbrdf_maps">Figure 2</a>
             shows examples of the SVBRDF parameter
             maps for a surface.
         </p>
@@ -246,14 +242,14 @@
         <h3 class="section-heading">SVBRDF Estimation from Images</h3>
 
         <p>
-            Deschaintre et al. <a href="#deschaintre_2018">[TODO]</a> propose a method for
+            Deschaintre et al. <a href="#deschaintre_2018">[8]</a> propose a method for
             reconstructing material reflectance of a flat surface only given a flash-lit
             photograph of it. While the imposed constraints are rather strict, we 
             find the light-weight nature of the process very appealing. They cast
             material reflectance estimation as an image-to-image translation problem:
             an image is fed into a deep convolutional network which predicts
             the Cook-Torrance SVBRDF maps of the visible surface.
-            Their follow-up work <a href="#deschaintre_2019">[TODO]</a> extends the idea by using multiple uncalibrated
+            Their follow-up work <a href="#deschaintre_2019">[9]</a> extends the idea by using multiple uncalibrated
             but aligned images of the same surface (this is where the teaser image is taken from). 
             While we initially planned to base the whole project on the multi-view approach,
             time constraints and lower overall complexity lead us to focus only on the single-view case. However, some ideas
@@ -263,7 +259,7 @@
         <h5>Architecture</h5>
 
         <p>
-            At the heart of the presented approach is a deep convolutional network that adopts the U-Net architecture <a href="#ronneberger_2015">[TODO]</a>
+            At the heart of the presented approach is a deep convolutional network that adopts the U-Net architecture <a href="#ronneberger_2015">[15]</a>
             which has shown to be suitable for other image-to-image translation problems. The input to the network is a conventional 
             three channel RGB image of the surface and the output is a nine channel image, where two channels represent
             the per-pixel normal (the z coordinate is inferred from the x and y coordinates), three channels represent
@@ -277,7 +273,7 @@
                 <h5 id="fig:architecture_overview" class="docs-header">Figure 3</h5>
                 <img class="u-max-full-width" src="images/architecture_overview.svg">
                 <p>
-                    TODO: Description (size of the blocks is not to scale).
+                    Overview of the network architecture. It contains of a U-Net (blue) augmented by a parallel global track (green).
                 </p>
             </div>
         </div>
@@ -321,7 +317,7 @@
                 <h5 id="fig:architecture_exchange" class="docs-header">Figure 4</h5>
                 <img class="u-max-full-width" src="images/architecture_exchange.svg">
                 <p>
-                    TODO: Description.
+                    Interaction between the main track and the global track.
                 </p>
             </div>
         </div>
@@ -371,7 +367,7 @@
                 <img class="u-max-full-width" src="images/mat2.png">
                 <img class="u-max-full-width" src="images/mat3.png">
                 <p>
-                    TODO: Description.
+                    Examples of the four SVBRDF maps (left) and the artificial input image generated from each of them (right).
                 </p>
             </div>
         </div>
@@ -393,7 +389,7 @@
                 <h5 id="fig:mixed_materials" class="docs-header">Figure 6</h5>
                 <img class="u-max-full-width" src="images/mat1xmat3.png">
                 <p>
-                    TODO: Description.
+                    Example of an SVBRDF that is a mixture of two materials (left) and the generated input image (right).
                 </p>
             </div>
         </div>
@@ -462,7 +458,10 @@
                 <img class="u-max-full-width" src="images/l1vsrendering_l1.png">
                 <img class="u-max-full-width" src="images/l1vsrendering_rendering.png">
                 <p>
-                    TODO: Description. Images and figure adopted from <a href="#deschaintre_2018">[TODO]</a>.
+                    SVBRDF maps and renderings for the ground truth (top), prediction
+                    of a model trained only with \(l_1\) loss between the SVBRDF maps (middle)
+                    and a model trained with the rendering loss (bottom). Images and figure
+                    adopted from <a href="#deschaintre_2018">[8]</a>.
                 </p>
             </div>
         </div>
@@ -542,9 +541,8 @@
                 Your browser does not support the video tag.
             </video>
             <p>
-                TODO: Description. Notice, that in the scene with a static light,
-                the highlights stay exactly the same, thus the BRDF is evaluated
-                exactly the same.
+                Difference between a perspective rendering and the patch sampling approach
+                for a scene with static light (top) and a scene with moving light (bottom).
             </p> 
         </div>
 
@@ -564,7 +562,7 @@
         <h5>In-Network Renderer</h5>
 
         <p>
-            Similar to other works (e.g. <a href="#aittala_2016">[TODO]</a> or <a href="#gao_2019">[TODO]</a>), 
+            Similar to other works (e.g. <a href="#aittala_2016">[1]</a> or <a href="#gao_2019">[10]</a>), 
             the presented approach relies on a renderer that is directly
             integrated into the network architecture. It uses the same
             framework to formulate the rendering steps as is used for
@@ -603,7 +601,8 @@
             <h5 id="fig:metal_wo_ambient" class="docs-header">Figure 9</h5>
             <img class="u-max-full-width" src="images/metal_wo_ambient.png">
             <p>
-                TODO: Description.
+                Highly specular materials appear mostly dark as there is no ambient 
+                or environment light.
             </p> 
         </div>
 
@@ -680,7 +679,7 @@
         </p>
 
         <p>
-            As a proof-of-concept we integrated Redner <a href="#li_2018">[TODO]</a>, 
+            As a proof-of-concept we integrated Redner <a href="#li_2018">[12]</a>, 
             a differentiable path tracer, into the presented single-view approach.
             This general purpose renderer supports arbitrary scenes composed
             of meshes, light sources and environment lighting. Due to it being
@@ -690,8 +689,8 @@
             Thus, integrating it into our framework was rather straightforward
             from a technical point of view and only three details required
             special attention. First, the renderer assumes a Blinn
-            distribution <a href="#blinn_1976">[TODO]</a><a href="#blinn_1977">[TODO]</a> 
-            instead of a GGX distribution <a href="#walter_2007">[TODO]</a> for the microfacets.
+            distribution <a href="#blinn_1976">[3]</a><a href="#blinn_1977">[4]</a> 
+            instead of a GGX distribution <a href="#walter_2007">[18]</a> for the microfacets.
             As a consequence, the interpretation of the roughness is different
             and we need to convert the roughness values before rendering our
             SVBRDFs with Redner. Second, all lights in the scene need 
@@ -758,7 +757,7 @@
             same between target and estimate and are
             kept fixed. 
             We use the \(l_1\) loss between the images
-            as loss function and Adam <a href="#kingma_2015">[TODO]</a>
+            as loss function and Adam <a href="#kingma_2015">[11]</a>
             as optimizer (same learning rate for both
             renderers). While the normal map does not
             converge to the ground truth normal map as
@@ -771,16 +770,21 @@
 
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:optimization_local_fixed" class="docs-header">Figure TODO</h5>
+                <h5 id="fig:optimization_local_fixed" class="docs-header">Figure 11</h5>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_local_fixed_normal.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
+                <p>(a) In-network renderer</p>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_pathtracing_fixed_normal.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
-                <p>TODO: Description.</p>
+                <p>(b) Redner</p>
+                <p>
+                    Optimization of the normal map only by visual comparison of the ground truth rendering to a rendering obtained using the estimated normal map.
+                    Loss (left), ground truth normal map and ground truth rendering (middle), estimated normal map and rendered estimate (right).
+                </p>
             </div>
         </div>
 
@@ -801,24 +805,31 @@
 
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:optimization_local_flex" class="docs-header">Figure TODO</h5>
+                <h5 id="fig:optimization_local_flex" class="docs-header">Figure 12</h5>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_local_flex_normal.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
+                <p>(a) Normals</p>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_local_flex_diffuse.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
+                <p>(b) Diffuse albedo</p>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_local_flex_roughness.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
+                <p>(c) Roughness</p>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_local_flex_specular.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
-                <p>TODO: Description.</p>
+                <p>(d) Specular albedo</p>
+                <p>
+                    Optimization of the SVBRDF maps by using the rendering loss with the in-network renderer.
+                    Loss (left), ground truth map and average ground truth rendering (middle), estimated map and average rendered estimate (right).
+                </p>
             </div>
         </div>
 
@@ -826,8 +837,8 @@
             The only outlier is the estimate of the roughness map
             which still appears very noisy after 200 iterations.
             As the roughness contributes to two rather complex
-            terms in the BRDF model (microfacet distribution and 
-            geometry function) we ran two more experiments
+            terms in the BRDF model (microfacet normal distribution and 
+            geometric shadowing function) we ran two more experiments
             with either of the terms disabled. The results in 
             <a href="#fig:optimization_local_flex_roughnessexp">Figure [TODO]</a>
             suggest that the slow convergence of roughness
@@ -845,7 +856,7 @@
 
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:optimization_local_flex_roughnessexp" class="docs-header">Figure TODO</h5>
+                <h5 id="fig:optimization_local_flex_roughnessexp" class="docs-header">Figure 13</h5>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_local_flex_roughness_nodistrib.mp4" type="video/mp4">
                     Your browser does not support the video tag.
@@ -856,7 +867,10 @@
                     Your browser does not support the video tag.
                 </video>
                 <p>(b) Without geometry term</p>
-                <p>TODO: Description.</p>
+                <p>
+                    Optimizing the roughness map using the rendering loss with the in-network renderer
+                    and parts of the specular model disabled.
+                </p>
             </div>
         </div>
 
@@ -877,24 +891,31 @@
 
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:optimization_pathtracing_flex" class="docs-header">Figure TODO</h5>
+                <h5 id="fig:optimization_pathtracing_flex" class="docs-header">Figure 14</h5>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_pathtracing_flex_normal.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
+                <p>(a) Normals</p>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_pathtracing_flex_diffuse.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
+                <p>(b) Diffuse albedo</p>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_pathtracing_flex_roughness.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
+                <p>(c) Roughness</p>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_pathtracing_flex_specular.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
-                <p>TODO: Description.</p>
+                <p>(d) Specular albedo</p>
+                <p>
+                    Optimization of the SVBRDF maps by using the rendering loss with Redner.
+                    Loss (left), ground truth map and average ground truth rendering (middle), estimated map and average rendered estimate (right).
+                </p>
             </div>
         </div>
 
@@ -933,12 +954,12 @@
 
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:optimization_pathtracing_flex_perspective" class="docs-header">Figure TODO</h5>
+                <h5 id="fig:optimization_pathtracing_flex_perspective" class="docs-header">Figure 15</h5>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_pathtracing_flex_normal_perspective.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
-                <p>TODO: Description.</p>
+                <p>Optimization of the normal map by using the rendering loss with Redner and the built-in perspective camera.</p>
             </div>
         </div>
 
@@ -994,7 +1015,7 @@
         <!-- Figure title -->
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:estimation_artificial" class="docs-header">Figure TODO</h5>
+                <h5 id="fig:estimation_artificial" class="docs-header">Figure 16</h5>
             </div>
         </div>
         <!-- Figure content -->
@@ -1098,7 +1119,7 @@
         <!-- Figure title -->
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:estimation_real" class="docs-header">Figure TODO</h5>
+                <h5 id="fig:estimation_real" class="docs-header">Figure 17</h5>
             </div>
         </div>
         <!-- Figure content -->
@@ -1174,7 +1195,7 @@
                 <p>
                     Input images and rendered results of different models. 
                     The images show real surfaces captured with mobile phones.
-                    First three images by Deschaintre et al. <a href="#deschaintre_2018">[TODO]</a>.
+                    First three images by Deschaintre et al. <a href="#deschaintre_2018">[8]</a>.
                 </p>
             </div>
         </div>
@@ -1203,7 +1224,7 @@
 
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:estimation_same_epochs" class="docs-header">Figure TODO</h5>
+                <h5 id="fig:estimation_same_epochs" class="docs-header">Figure 18</h5>
                 <img class="u-max-full-width" src="images/svbrdf_locallow.png">
                 <p>
                     (a) In-network renderer (313 epochs)
@@ -1240,7 +1261,7 @@
         <!-- Figure title -->
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:estimation_losses" class="docs-header">Figure TODO</h5>
+                <h5 id="fig:estimation_losses" class="docs-header">Figure 19</h5>
             </div>
         </div>
         <div class="row">   
@@ -1285,7 +1306,7 @@
 
         <div class="row">
             <div class="column category" style="text-align: center;">
-                <h5 id="fig:estimation_broken" class="docs-header">Figure TODO</h5>
+                <h5 id="fig:estimation_broken" class="docs-header">Figure 20</h5>
                 <img class="u-max-full-width" src="images/svbrdf_pathtracing_broken_311.png">
                 <p>
                     (a) Redner version 3.11 (24 epochs)
@@ -1306,9 +1327,47 @@
         <h3 class="section-heading">Conclusion</h3>
 
         <p>
-            - Originally intended to use Mitsuba 2 (not released at the time but now is)<br/>
+            In this project, we reimplemented the method
+            for single-view material reflectance estimation
+            by Deschaintre et al. <a href="#deschaintre_2018">[8]</a>.
+            It uses a highly specific differentiable 
+            renderer to train a deep convolutional network
+            with an appearance-based objective function.
+            As a proof-of-concept, we replaced the 
+            internal renderer with the external
+            differentiable renderer Redner <a href="#li_2018">[12]</a> that has a broader
+            feature set and is developed as a stand-alone
+            system. We demonstrated that not only the
+            integration of this renderer but also
+            the extension of parts of it to the 
+            specific use case are low effort. However,
+            we also encountered practical shortcomings
+            of such a solution. Higher complexity
+            of a general system and a more advanced
+            light transport simulation (which is possibly
+            not required) resulted in longer training
+            times for the network. Potential bugs
+            in the implementation become less traceable
+            with higher complexity and dependence on 
+            external code.
         </p>
 
+        <p>
+            Using a flexible and well-tested instead 
+            of a customly designed differentiable
+            renderer, allows quickly extending 
+            an approach beyond the originally intended
+            purpose. With the path tracer integrated
+            into the SVBRDF estimation pipeline, 
+            one could think of extending it to different
+            surface geometry (non-flat) or estimation
+            of reflectance and transmittance properties
+            (e.g. of transparent surfaces). Integrating
+            and testing other differentiable renderers 
+            like Mitsuba 2 <a href="#nimier_david_2019">[13]</a>, 
+            which have an even broader
+            feature set, could also be part of future work.
+        </p>
     </div>
 
     <div class="docs-section" id="downloads">
@@ -1327,78 +1386,84 @@
 
         <h5>Data and Code</h5>
 
-        https://github.com/mworchel/svbrdf-estimation
+        <a href="https://github.com/mworchel/svbrdf-estimation">https://github.com/mworchel/svbrdf-estimation</a>
     </div>
 
     <div class="docs-section" id="references">
         <h3 class="section-heading">References</h3>
         <ul class="popover-list">
             <li class="popover-item" id="aittala_2016">
-                [6] Aittala, M., Aila, T., Lehtinen, J., 2016, Reflectance Modeling by Neural Texture Synthesis
+                [1] Aittala, M., Aila, T., Lehtinen, J., 2016, Reflectance Modeling by Neural Texture Synthesis
             </li>
 
             <li class="popover-item" id="bishop_2017">
-                [1] Bishop, L., Cowan, C., Jancosek, M., 2017, Photogrammetry for Games: Art, Technology and Pipeline Integration for Amazing Worlds, <a href="https://www.gdcvault.com/play/1024340/Photogrammetry-for-Games-Art-Technology">https://www.gdcvault.com/play/1024340/Photogrammetry-for-Games-Art-Technology</a>, last retrieved March 2020.
+                [2] Bishop, L., Cowan, C., Jancosek, M., 2017, Photogrammetry for Games: Art, Technology and Pipeline Integration for Amazing Worlds, <a href="https://www.gdcvault.com/play/1024340/Photogrammetry-for-Games-Art-Technology">https://www.gdcvault.com/play/1024340/Photogrammetry-for-Games-Art-Technology</a>, last retrieved March 2020.
             </li>
 
             <li class="popover-item" id="blinn_1976">
-                [6] Blinn, Z. F., Newell, M. E., 1976, Texture and reflection in computer generated images
+                [3] Blinn, Z. F., Newell, M. E., 1976, Texture and reflection in computer generated images
             </li>
 
             <li class="popover-item" id="blinn_1977">
-                [6] Blinn, Z. F., 1977, Models of light reflection for computer synthesized pictures
+                [4] Blinn, Z. F., 1977, Models of light reflection for computer synthesized pictures
             </li>
 
             <li class="popover-item" id="brown_2016">
-                [2] Brown, K., Hamilton, A., 2016, Photogrammetry and 'Star Wars Battlefront', <a href="https://www.gdcvault.com/play/1022981/Photogrammetry-and-Star-Wars-Battlefront">https://www.gdcvault.com/play/1022981/Photogrammetry-and-Star-Wars-Battlefront</a>, last retrieved March 2020.
+                [5] Brown, K., Hamilton, A., 2016, Photogrammetry and 'Star Wars Battlefront', <a href="https://www.gdcvault.com/play/1022981/Photogrammetry-and-Star-Wars-Battlefront">https://www.gdcvault.com/play/1022981/Photogrammetry-and-Star-Wars-Battlefront</a>, last retrieved March 2020.
             </li>
 
             <li class="popover-item" id="cultlab3d_">
-                [2] CultLab3D, <a href="https://www.cultlab3d.de/">https://www.cultlab3d.de/</a>, last retrieved April 2020.
+                [6] CultLab3D, <a href="https://www.cultlab3d.de/">https://www.cultlab3d.de/</a>, last retrieved April 2020.
             </li>
 
             <li class="popover-item" id="giardina_2018">
-                [2] Giardina, C., 2018, 3D Face Scanning Start Up In Talks With Studios for Film Use, <a href="https://www.hollywoodreporter.com/behind-screen/3d-face-scanning-start-up-talks-studios-film-use-1075170">https://www.hollywoodreporter.com/behind-screen/3d-face-scanning-start-up-talks-studios-film-use-1075170</a>, last retrieved April 2020.
+                [7] Giardina, C., 2018, 3D Face Scanning Start Up In Talks With Studios for Film Use, <a href="https://www.hollywoodreporter.com/behind-screen/3d-face-scanning-start-up-talks-studios-film-use-1075170">https://www.hollywoodreporter.com/behind-screen/3d-face-scanning-start-up-talks-studios-film-use-1075170</a>, last retrieved April 2020.
             </li>
 
             <li class="popover-item" id="deschaintre_2018">
-                [3] Deschaintre, V., Aittala, M., Durand, F., Drettakis, G., Bousseau, A., 2018, Single-Image SVBRDF Capture with a Rendering-Aware Deep Network.
+                [8] Deschaintre, V., Aittala, M., Durand, F., Drettakis, G., Bousseau, A., 2018, Single-Image SVBRDF Capture with a Rendering-Aware Deep Network.
             </li>
 
             <li class="popover-item" id="deschaintre_2019">
-                [4] Deschaintre, V., Aittala, M., Durand, F., Drettakis, G., Bousseau, A., 2019, Flexible SVBRDF Capture with a Multi-Image Deep Network.
+                [9] Deschaintre, V., Aittala, M., Durand, F., Drettakis, G., Bousseau, A., 2019, Flexible SVBRDF Capture with a Multi-Image Deep Network.
             </li>
 
             <li class="popover-item" id="gao_2019">
-                [6] Gao, D., Li, X., Dong, Y., Peers, P., Xu, K., Tong, X., 2019, Deep Inverse Rendering for High-Resolution SVBRDF Estimation from an Arbitrary Number of Images
+                [10] Gao, D., Li, X., Dong, Y., Peers, P., Xu, K., Tong, X., 2019, Deep Inverse Rendering for High-Resolution SVBRDF Estimation from an Arbitrary Number of Images
             </li>
 
             <li class="popover-item" id="kingma_2015">
-                [6] Kingma, D. P., Ba, L. J., 2015, Adam: A Method for Stochastic Optimization
+                [11] Kingma, D. P., Ba, L. J., 2015, Adam: A Method for Stochastic Optimization
             </li>
 
             <li class="popover-item" id="li_2018">
-                [6] Li, T.-M., Aittala, M., Durand, F., Lehtinen, J., 2018, Differentiable Monte Carlo Ray Tracing through Edge Sampling
+                [12] Li, T.-M., Aittala, M., Durand, F., Lehtinen, J., 2018, Differentiable Monte Carlo Ray Tracing through Edge Sampling
             </li>
 
+
+            <li class="popover-item" id="nimier_david_2019">
+                [13] Nimier-David, M., Vicini, D., Zeltner, T., Jakob, W., 2019, Mitsuba 2: A Retargetable Forward and Inverse Renderer
+            </li>
+           
+
             <li class="popover-item" id="pharr_2016">
-                [5] Pharr, M., Jakob, W., Humphreys, G., 2016, Physically Based Rendering: From Theory to Implementation
+                [14] Pharr, M., Jakob, W., Humphreys, G., 2016, Physically Based Rendering: From Theory to Implementation
             </li>
 
             <li class="popover-item" id="ronneberger_2015">
-                [5] Ronneberger, O., Fischer, P., Brox, T., 2015, U-Net: Convolutional Networks for Biomedical Image Segmentation
+                [15] Ronneberger, O., Fischer, P., Brox, T., 2015, U-Net: Convolutional Networks for Biomedical Image Segmentation
             </li>
 
             <li class="popover-item" id="schlick_1994">
-                [5] Schlick, C., 1994, An Inexpensive BRDF Model for Physically-based Rendering
+                [16] Schlick, C., 1994, An Inexpensive BRDF Model for Physically-based Rendering
             </li>
 
             <li class="popover-item" id="torrance_1982">
-                [6] Torrance, K. E., Cook, R. L., 1982, A Reflectance Model for Computer Graphics
+                [17] Torrance, K. E., Cook, R. L., 1982, A Reflectance Model for Computer Graphics
             </li>
             
             <li class="popover-item" id="walter_2007">
-                [6] Walter, B., Marschner, S. R., Li, H., Torrance, K. E., 2007, Microfacet models for refraction through rough surfaces
+                [18] Walter, B., Marschner, S. R., Li, H., Torrance, K. E., 2007, Microfacet models for refraction through rough surfaces
             </li>
             
         </ul>
