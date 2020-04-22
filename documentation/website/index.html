@@ -123,7 +123,7 @@
         <h3 class="section-heading">Material Model</h3>
 
         <div class="u-pull-right" style="text-align: center; width:30%; margin-left:20px">
-            <h5 id="fig:svbrdf" class="docs-header">Figure 2</h5>
+            <h5 id="fig:svbrdf" class="docs-header">Figure 1</h5>
             <img class="u-max-full-width" src="images/fundamentals_svbrdf.png">
             <p>
                 Visualization of the parameters of a SVBRDF. \(\mathbf{x}\) is a spatial position on the surface, 
@@ -156,13 +156,14 @@
         </p>
 
         <p>
-            While it is possible to represent a BRDF as a set of samples over the full parameter space,
-            it is common to use simple and more intuitive models. In the Cook-Torrance microfacet model 
-            <a href="#torrance_1982">[TODO]</a> the BRDF is composed of two terms
-            \[ f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o) = k_d f_d(\mathbf{x}) + k_s f_s(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o), \quad k_d + k_s = 1. \]
-            The diffuse component \(f_d\) is only dependent on the position and captures effects 
-            such as internal scattering or surface interreflections. We assume it to follow the 
-            lambertian model
+            The physically-based Cook-Torrance model 
+            <a href="#torrance_1982">[TODO]</a> assumes that 
+            a surface is composed of small mirror-like facets
+            (microfacets) and models a BRDF as sum  
+            of two components. The diffuse component \(f_d\) is only 
+            dependent on the position and captures effects 
+            such as internal scattering or surface interreflections. 
+            We assume lambertian reflectivity, so it takes the form
             \[
                 f_d = \frac{\rho_d}{\pi},
             \]
@@ -171,17 +172,23 @@
             \[
                 f_s = \frac{F \cdot D \cdot G }{4 (\mathbf{\omega}_i \cdot \mathbf{n})(\mathbf{\omega}_o \cdot \mathbf{n})}
             \] 
+            is dependent on the directions of incoming and outgoing light and
             captures explicit reflectance effects that are not caused by surface penetration.
-            For the fresnel term \(F\) we assume Schlick's approximation <a href="#schlick_1994">[TODO]</a>,
-            which depends on the specular albedo \(\rho_s\). As in <a href="#walter_2007">[TODO]</a> 
-            the microfacet distribution \(D\) and the geometry term \(G\) are assumed to follow the 
-            GGX and Smith distribution, respectively. Both terms depend on a roughness value \(r\).
-            The factors \(k_d\) and \(k_s\) control the contribution of the diffuse
-            and specular terms to the final BRDF. While they are free parameters
-            in the original Cook-Torrance paper, they seem to be (partially) integrated into
-            the albedo values or dependent on e.g. the Fresnel term in other implementations.
-            Also note that the model assumes isotropic specular reflections, so materials
-            like brushed metal cannot be represented by it.
+            The component is modular in the Cook-Torrance model and different
+            functions can be plugged in for the Fresnel term \(F\),
+            the microfacet normal distribution \(D\) and the geometric
+            shadowing function \(G\). In this project, we use
+            Schlick's approximation
+            <a href="#schlick_1994">[TODO]</a> for the Fresnel term,
+            which depends on the specular albedo
+            or <q>specular reflectance at normal incidence</q> \(\rho_s\).
+            We use GGX <a href="#walter_2007">[TODO]</a> as microfacet
+            normal distribution and the associated Smith geometric
+            shadowing function. Both depend on the roughness
+            of the material \(r\).
+            Note that this model only handles isotropic 
+            specular reflections, so it cannot be used to simulate
+            materials like brushed metals.
         </p>
 
         <p>
@@ -190,16 +197,50 @@
             by the Cook-Torrance model and fully parametrized
             by the diffuse albedo \(\rho_d\), the specular albedo
             \(\rho_s\) and the roughness \(r\). We also assume
-            surfaces to be representable by a triangle mesh.
+            that surfaces are represented by triangle meshes.
             Variations of the parameters over a (mesh) surface 
             are captured in separate texture maps. 
-            Additionally, a normal map 
-            captures deviations of the microscopic surface normal
-            from the normal defined by the mesh geometry.
-            Figure [TODO] shows examples of the SVBRDF parameter
+            Additionally, a normal map provides the orientation
+            of the microscopic surface normal \(n\) in tangent
+            space.
+            <a href="#fig:svbrdf_maps">Figure [TODO]</a>
+            shows examples of the SVBRDF parameter
             maps for a surface.
         </p>
+
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <h5 id="fig:svbrdf_maps" class="docs-header">Figure 2</h5>
+            </div>
+        </div>
+        <div class="row">
+            <div class="one-quarter column category" style="text-align: center;">
+                <img class="u-max-full-width" src="images/normals1.png">
+                <p>(a) Normals</p>
+            </div>
+            <div class="one-quarter column category" style="text-align: center;">
+                <img class="u-max-full-width" src="images/diffuse1.png">
+                <p>(b) Diffuse albedo</p>
+            </div>
+            <div class="one-quarter column category" style="text-align: center;">
+                <img class="u-max-full-width" src="images/roughness1.png">
+                <p>(c) Roughness</p>
+            </div>
+            <div class="one-quarter column category" style="text-align: center;">
+                <img class="u-max-full-width" src="images/specular1.png">
+                <p>(d) Specular albedo</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="column category" style="text-align: center;">
+                <p>
+                    SVBRDF maps containing the parameters of a surface for the Cook-Torrance model.
+                </p>
+            </div>
+        </div>
     </div>
+
+
 
     <div class="docs-section" id="method">
         <h3 class="section-heading">SVBRDF Estimation from Images</h3>
