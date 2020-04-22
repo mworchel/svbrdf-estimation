@@ -59,14 +59,23 @@
                         While there are well established methods for geometric reconstruction that are often 
                         able to leverage implicit knowledge about the camera setup, material reconstruction 
                         is a more ill-conditioned inverse problem. Recent advances in machine learning and 
-                        computer graphics enable data driven approaches that use sophisticated light transport 
-                        simulations for both, data generation as well as novel training objectives. 
-                        So-called differentiable renderers allow using appearance-based objective functions for 
-                        the training of neural networks by making the rendering operation differentiable with 
-                        respect to arbitrary scene parameters.  
-                        - Many methods use handcrafted renderers for the specific use case. 
-                        - Scope of project: Integrate general renderer (pathtracer) into a pipeline for material reflectance estimation .
-                        - Teaser image from the follow-up work <a href="#deschaintre_2019">[TODO]</a>.
+                        computer graphics enable data-driven approaches that rely on light transport
+                        simulations for appearance-based material reconstruction. Differentiable
+                        renderers are an integral part of methods that use gradient-based optimization
+                        as they allow differentiating the rendering operation with respect
+                        to arbitrary scene parameters. Often, these renderers are handcrafted
+                        for the specific use case and deeply integrated into 
+                        the processing pipeline. Thus, they are inflexible and 
+                        lack reusability.
+                        On the other hand, there are stand-alone differentiable renderers, which
+                        provide a general framework for advanced light transport simulations.
+                        In this project, we will as a proof-of-concept replace the custom renderer 
+                        embedded in an existing material reflectance pipeline with a general differentiable
+                        renderer (the teaser image is from the follow-up work <a href="#deschaintre_2019">[TODO]</a>). 
+                        We show that integrating an external renderer in such a 
+                        pipeline requires low effort if certain flexibility is given by the
+                        implementation and that parts of the renderer can be easily adapted
+                        to the specific use case if required.
                     </p>
         </div>
     </section>
@@ -76,26 +85,30 @@
 
         <p>
             Recent advances in computer graphics allow the simulation of virtual environments with quality closer
-            to photo realism than ever before. This requires not only physically correct light transport
-            simulations but also high quality assets that faithfully capture objects of the real world.
+            to photorealism than ever before. This requires not only physically correct light transport
+            simulations but also high-quality assets that faithfully capture objects of the real world.
             Several industries including game development <a href="#brown_2016">[TODO]</a><a href="#bishop_2017">[TODO]</a>, 
             movie production <a href="#giardina_2018">[TODO]</a> as well as projects concerned
             with cultural heritage <a href="#cultlab3d_">[TODO]</a> rely on photogrammetry for asset acquisition.
             It allows reconstructing geometry and color information of real world objects
-            only based on images, thus is a relatively light-weight capture process yielding
-            high quality assets. While geometry reconstruction can be automated for the most parts due to the 
+            only based on images, thus is a relatively light-weight capture process. 
+            While geometry reconstruction can be automated for the most parts due to the 
             availability of robust algorithms, appearance-related material properties of the surfaces 
             like their reflectance behavior often have to be manually defined by artists.
         </p>
 
         <p>
-            Such photogrammetry workflows would greatly benefit from methods that provide automatic deduction of these 
-            appearant material properties, especially if they support a light-weight capture process without expensive
+            These photogrammetry workflows greatly benefit from methods that provide automatic estimation of 
+            appearant material properties, especially if they do not require expensive
             and difficult to deploy hardware. In this context, image-based approaches appear to be particularly interesting
-            as they could be easily integrated into existing workflows.<br/>
-            - Name research work focusing on material (reflectance) estimation<br/>
-            - Name the specific paper and problem<br/>
-            - Name the goal
+            as they could be easily integrated into existing workflows. Deschaintre et al. <a href="#deschaintre_2018">[TODO]</a>
+            propose a method for reconstructing material reflectance only given a flash-lit image of a flat surface.
+            While the imposed constraints are potentially too strict for a production environment, it is still
+            a relevant approach as the process itself is extremely light-weight. 
+            <br/>
+
+            The main focus of this project is the work of Deschaintre et al. <a href="#deschaintre_2018">[TODO]</a>, 
+            a light-weight image-based method for capturing SVBRDFs of real world surfaces.
         </p>
 
     </div>
@@ -1183,7 +1196,7 @@
             maps which suggests that some of the
             layers in the network have been completely
             thrown off by the optimization.
-            As explained in the section with
+            As explained in the section containing
             the differentiability experiments,
             the slow convergence of the normal map
             might hint at another bug in the renderer.
