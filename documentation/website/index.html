@@ -126,9 +126,7 @@
             <h5 id="fig:svbrdf" class="docs-header">Figure 1</h5>
             <img class="u-max-full-width" src="images/fundamentals_svbrdf.png">
             <p>
-                Visualization of the parameters of a SVBRDF. \(\mathbf{x}\) is a spatial position on the surface, 
-                \(\mathbf{\omega}_i\) the direction of irradiance and \(\mathbf{\omega}_o\) the direction
-                of reflected radiance. \(\mathbf{n}\) is the local normal.
+                Visualization of the SVBRDF parameters.
             </p> 
         </div>
 
@@ -160,14 +158,16 @@
             <a href="#torrance_1982">[TODO]</a> assumes that 
             a surface is composed of small mirror-like facets
             (microfacets) and models a BRDF as sum  
-            of two components. The diffuse component \(f_d\) is only 
-            dependent on the position and captures effects 
-            such as internal scattering or surface interreflections. 
-            We assume lambertian reflectivity, so it takes the form
+            of two components. The diffuse component \(f_d\) 
+            captures effects such as internal scattering or 
+            surface interreflections.
+            Since we assume lambertian reflectivity, 
+            it takes the form
             \[
                 f_d = \frac{\rho_d}{\pi},
             \]
-            where \(\rho_d\) is the diffuse albedo of the surface.
+            and only depends on the diffuse albedo \(\rho_d\)
+            at the position \(\mathbf{x}\).
             The specular component 
             \[
                 f_s = \frac{F \cdot D \cdot G }{4 (\mathbf{\omega}_i \cdot \mathbf{n})(\mathbf{\omega}_o \cdot \mathbf{n})}
