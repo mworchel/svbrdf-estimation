@@ -150,24 +150,54 @@
                 </li>
             </ol>
             Intuitively, the reciprocity states, that the reflectance properties are the same
-            independent of the specific flow direction of light from one direction to the other.
-            The energy conservation ensures that not more radiance is reflected from the surface than
+            independent of the specific flow direction of light.
+            Energy conservation ensures that not more radiance is reflected from the surface than
             what is incident on it.
         </p>
 
         <p>
             While it is possible to represent a BRDF as a set of samples over the full parameter space,
-            it is common to use simple and more intuitive models. The Cook-Torrance microfacet model <a href="#torrance_1982">[TODO]</a>
-            is of particular interest for this project and will be the BRDF representation of choice.
-            In this model, the BRDF consists of two terms
+            it is common to use simple and more intuitive models. In the Cook-Torrance microfacet model 
+            <a href="#torrance_1982">[TODO]</a> the BRDF is composed of two terms
             \[ f_r(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o) = k_d f_d(\mathbf{x}) + k_s f_s(\mathbf{x}, \mathbf{\omega}_i, \mathbf{\omega}_o), \quad k_d + k_s = 1. \]
-            The diffuse component \(f_d\) is independent of the directions and captures effects 
-            such as internal scattering or surface interreflections while 
-            the specular component \(f_s\) captures explicit reflectance effects without surface penetration.
-            -- Surface consists of small differently oriented microfacets<br/>
-            -- Isotropic specular reflection -> only relative difference between \(\mathbf{\omega}_i\) and \(\mathbf{\omega}_o\) matter<br/>
-            - Four maps -> normal (in tangent space as variation from the macroscopic surface normal), diffuse albedo, roughness, specular albedo<br/>
-            (- Flat surface)
+            The diffuse component \(f_d\) is only dependent on the position and captures effects 
+            such as internal scattering or surface interreflections. We assume it to follow the 
+            lambertian model
+            \[
+                f_d = \frac{\rho_d}{\pi},
+            \]
+            where \(\rho_d\) is the diffuse albedo of the surface.
+            The specular component 
+            \[
+                f_s = \frac{F \cdot D \cdot G }{4 (\mathbf{\omega}_i \cdot \mathbf{n})(\mathbf{\omega}_o \cdot \mathbf{n})}
+            \] 
+            captures explicit reflectance effects that are not caused by surface penetration.
+            For the fresnel term \(F\) we assume Schlick's approximation <a href="#schlick_1994">[TODO]</a>,
+            which depends on the specular albedo \(\rho_s\). As in <a href="#walter_2007">[TODO]</a> 
+            the microfacet distribution \(D\) and the geometry term \(G\) are assumed to follow the 
+            GGX and Smith distribution, respectively. Both terms depend on a roughness value \(r\).
+            The factors \(k_d\) and \(k_s\) control the contribution of the diffuse
+            and specular terms to the final BRDF. While they are free parameters
+            in the original Cook-Torrance paper, they seem to be (partially) integrated into
+            the albedo values or dependent on e.g. the Fresnel term in other implementations.
+            Also note that the model assumes isotropic specular reflections, so materials
+            like brushed metal cannot be represented by it.
+        </p>
+
+        <p>
+            We assume that the reflectivity of any material
+            encountered in this project can be represented
+            by the Cook-Torrance model and fully parametrized
+            by the diffuse albedo \(\rho_d\), the specular albedo
+            \(\rho_s\) and the roughness \(r\). We also assume
+            surfaces to be representable by a triangle mesh.
+            Variations of the parameters over a (mesh) surface 
+            are captured in separate texture maps. 
+            Additionally, a normal map 
+            captures deviations of the microscopic surface normal
+            from the normal defined by the mesh geometry.
+            Figure [TODO] shows examples of the SVBRDF parameter
+            maps for a surface.
         </p>
     </div>
 
@@ -619,7 +649,8 @@
             Thus, integrating it into our framework was rather straightforward
             from a technical point of view and only three details required
             special attention. First, the renderer assumes a Blinn
-            distribution <a href="#blinn_1976">[TODO]</a><a href="#blinn_1977">[TODO]</a> instead of a GGX distribution <a href="#walter_2007">[TODO]</a> for the microfacets.
+            distribution <a href="#blinn_1976">[TODO]</a><a href="#blinn_1977">[TODO]</a> 
+            instead of a GGX distribution <a href="#walter_2007">[TODO]</a> for the microfacets.
             As a consequence, the interpretation of the roughness is different
             and we need to convert the roughness values before rendering our
             SVBRDFs with Redner. Second, all lights in the scene need 
@@ -1313,8 +1344,12 @@
                 [5] Pharr, M., Jakob, W., Humphreys, G., 2016, Physically Based Rendering: From Theory to Implementation
             </li>
 
-            <li class="popover-item" id="ronneberger_2015"></li>
-                [5] O. Ronneberger, P.Fischer, and T. Brox, 2015, U-Net: Convolutional Networks for Biomedical Image Segmentation
+            <li class="popover-item" id="ronneberger_2015">
+                [5] Ronneberger, O., Fischer, P., Brox, T., 2015, U-Net: Convolutional Networks for Biomedical Image Segmentation
+            </li>
+
+            <li class="popover-item" id="schlick_1994">
+                [5] Schlick, C., 1994, An Inexpensive BRDF Model for Physically-based Rendering
             </li>
 
             <li class="popover-item" id="torrance_1982">
