@@ -120,7 +120,7 @@
 
         <div class="u-pull-right" style="text-align: center; width:30%; margin-left:20px">
             <h5 id="fig:svbrdf" class="docs-header">Figure 1</h5>
-            <img class="u-max-full-width" src="images/fundamentals_svbrdf.png">
+            <img class="u-full-width" src="images/svbrdf.png">
             <p>
                 Visualization of the SVBRDF parameters.
             </p> 
@@ -742,7 +742,7 @@
             patch sampling camera extension. In all experiments
             that include Redner, we used 16 samples per pixel 
             in the forward pass and 8 samples per pixel in the backward pass.
-            <a href="#fig:optimization_local_fixed">Figure [TODO]</a>
+            <a href="#fig:optimization_local_fixed">Figure [11]</a>
             shows results of both renderers for the first experiment. 
             Given a fixed configuration of camera and light, 
             the goal of the experiment is to find a 
@@ -789,7 +789,7 @@
         </div>
 
         <p>
-            <a href="#fig:optimization_local_flex">Figure [TODO]</a>
+            <a href="#fig:optimization_local_flex">Figure [12]</a>
             shows an extension to the first experiment for the in-network
             renderer. Each of the four animations correspond to the optimization
             of one SVBRDF map while keeping the other maps fixed.
@@ -840,7 +840,7 @@
             terms in the BRDF model (microfacet normal distribution and 
             geometric shadowing function) we ran two more experiments
             with either of the terms disabled. The results in 
-            <a href="#fig:optimization_local_flex_roughnessexp">Figure [TODO]</a>
+            <a href="#fig:optimization_local_flex_roughnessexp">Figure [13]</a>
             suggest that the slow convergence of roughness
             is only a consequence of the combination of both
             terms. The dependence of the combined terms on the
@@ -875,7 +875,7 @@
         </div>
 
         <p>
-            <a href="#fig:optimization_pathtracing_flex">Figure [TODO]</a> 
+            <a href="#fig:optimization_pathtracing_flex">Figure [14]</a> 
             shows the same optimization experiments when using 
             Redner and our patch sampling camera. One notable 
             difference to the in-network renderer is that the area light
@@ -936,7 +936,7 @@
             normal map at some parts, does not converge
             to a very good approximation, at least not in the time given.
             The results in
-            <a href="#fig:optimization_pathtracing_flex_perspective">Figure [TODO]</a> 
+            <a href="#fig:optimization_pathtracing_flex_perspective">Figure [15]</a> 
             were produced using the built-in perspective camera 
             instead of our patch sampling camera and they show 
             that the convergence behavior is not caused by
@@ -1006,10 +1006,10 @@
             SVBRDFs produced by the reference single-view model, 
             our in-network model and our Redner model on a 
             set of artificial input images 
-            (<a href="#fig:estimation_artificial">Figure [TODO]</a>) 
+            (<a href="#fig:estimation_artificial">Figure [16]</a>) 
             as well as on real images captured with 
             mobile phones
-            (<a href="#fig:estimation_real">Figure [TODO]</a>).
+            (<a href="#fig:estimation_real">Figure [17]</a>).
         </p>
 
         <!-- Figure title -->
@@ -1211,7 +1211,7 @@
             experiments seem to result in a network
             that is learning much slower than
             that using the in-network renderer.
-            <a href="#fig:estimation_same_epochs">Figure [TODO]</a>
+            <a href="#fig:estimation_same_epochs">Figure [18]</a>
             shows SVBRDF maps estimated by an in-network model
             that was trained for roughly
             the same number of epochs in comparison
@@ -1248,7 +1248,7 @@
             issues appearing, like the loss suddenly
             becoming invalid or increasing by a large
             margin. 
-            <a href="#fig:estimation_losses">Figure [TODO]</a>
+            <a href="#fig:estimation_losses">Figure [19]</a>
             shows the training loss over
             time for both the in-network model and
             a Redner model that was trained for 467 epochs.
@@ -1290,7 +1290,7 @@
             we are not certain if this behavior in the
             current version (3.14) is related in any
             way. 
-            <a href="#fig:estimation_broken">Figure [TODO]</a>
+            <a href="#fig:estimation_broken">Figure [20]</a>
             shows SVBRDF estimates produced with
             models that are trapped on a plateau 
             for both versions.
