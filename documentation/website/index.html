@@ -58,7 +58,7 @@
                         has been a widely researched topic, especially in the domain of computer vision.
                         It is also of interest for a large industry including game development 
                         <a href="#brown_2016">[5]</a><a href="#bishop_2017">[2]</a>, 
-                        movie production <a href="#giardina_2018">[7]</a> as well as projects concerned
+                        movie production <a href="#giardina_2018">[10]</a> as well as projects concerned
                         with cultural heritage <a href="#cultlab3d_">[6]</a>, as it enables them
                         to create assets that faithfully capture
                         objects of the real world.
@@ -94,7 +94,7 @@
             to photorealism than ever before. This requires not only physically correct light transport
             simulations but also high-quality assets that faithfully capture objects of the real world.
             Several industries including game development <a href="#brown_2016">[5]</a><a href="#bishop_2017">[2]</a>, 
-            movie production <a href="#giardina_2018">[7]</a> as well as projects concerned
+            movie production <a href="#giardina_2018">[10]</a> as well as projects concerned
             with cultural heritage <a href="#cultlab3d_">[6]</a> rely on photogrammetry for asset acquisition.
             It allows reconstructing geometry and color information of real world objects
             only based on images, thus is a relatively light-weight capture process. 
@@ -107,7 +107,7 @@
             These photogrammetry workflows greatly benefit from methods that provide automatic estimation of 
             appearant material properties, especially if they do not require expensive
             and difficult to deploy hardware. In this context, image-based approaches appear to be particularly interesting
-            as they could be easily integrated into existing workflows. Deschaintre et al. <a href="#deschaintre_2018">[8]</a>
+            as they could be easily integrated into existing workflows. Deschaintre et al. <a href="#deschaintre_2018">[7]</a>
             propose a method for reconstructing material reflectance only given a flash-lit image of a flat surface.
             While the imposed constraints are potentially too strict for a production environment, it is still
             a relevant approach as the process itself is extremely light-weight. 
@@ -242,14 +242,14 @@
         <h3 class="section-heading">SVBRDF Estimation from Images</h3>
 
         <p>
-            Deschaintre et al. <a href="#deschaintre_2018">[8]</a> propose a method for
+            Deschaintre et al. <a href="#deschaintre_2018">[7]</a> propose a method for
             reconstructing material reflectance of a flat surface only given a flash-lit
             photograph of it. While the imposed constraints are rather strict, we 
             find the light-weight nature of the process very appealing. They cast
             material reflectance estimation as an image-to-image translation problem:
             an image is fed into a deep convolutional network which predicts
             the Cook-Torrance SVBRDF maps of the visible surface.
-            Their follow-up work <a href="#deschaintre_2019">[9]</a> extends the idea by using multiple uncalibrated
+            Their follow-up work <a href="#deschaintre_2019">[8]</a> extends the idea by using multiple uncalibrated
             but aligned images of the same surface (this is where the teaser image is taken from). 
             While we initially planned to base the whole project on the multi-view approach,
             time constraints and lower overall complexity lead us to focus only on the single-view case. However, some ideas
@@ -462,7 +462,7 @@
                     SVBRDF maps and renderings for the ground truth (top), prediction
                     of a model trained only with \(l_1\) loss between the SVBRDF maps (middle)
                     and a model trained with the rendering loss (bottom). Images and figure
-                    adopted from <a href="#deschaintre_2018">[8]</a>.
+                    adopted from <a href="#deschaintre_2018">[7]</a>.
                 </p>
             </div>
         </div>
@@ -563,7 +563,7 @@
         <h5>In-Network Renderer</h5>
 
         <p>
-            Similar to other works (e.g. <a href="#aittala_2016">[1]</a> or <a href="#gao_2019">[10]</a>), 
+            Similar to other works (e.g. <a href="#aittala_2016">[1]</a> or <a href="#gao_2019">[9]</a>), 
             the presented approach relies on a renderer that is directly
             integrated into the network architecture. It uses the same
             framework to formulate the rendering steps as is used for
@@ -1196,7 +1196,7 @@
                 <p>
                     Input images and rendered results of different models. 
                     The images show real surfaces captured with mobile phones.
-                    First three images by Deschaintre et al. <a href="#deschaintre_2018">[8]</a>.
+                    First three images by Deschaintre et al. <a href="#deschaintre_2018">[7]</a>.
                 </p>
             </div>
         </div>
@@ -1330,7 +1330,7 @@
         <p>
             In this project, we reimplemented the method
             for single-view material reflectance estimation
-            by Deschaintre et al. <a href="#deschaintre_2018">[8]</a>.
+            by Deschaintre et al. <a href="#deschaintre_2018">[7]</a>.
             It uses a highly specific differentiable 
             renderer to train a deep convolutional network
             with an appearance-based objective function.
@@ -1417,20 +1417,20 @@
                 [6] CultLab3D, <a href="https://www.cultlab3d.de/">https://www.cultlab3d.de/</a>, last retrieved April 2020.
             </li>
 
-            <li class="popover-item" id="giardina_2018">
-                [7] Giardina, C., 2018, 3D Face Scanning Start Up In Talks With Studios for Film Use, <a href="https://www.hollywoodreporter.com/behind-screen/3d-face-scanning-start-up-talks-studios-film-use-1075170">https://www.hollywoodreporter.com/behind-screen/3d-face-scanning-start-up-talks-studios-film-use-1075170</a>, last retrieved April 2020.
-            </li>
-
             <li class="popover-item" id="deschaintre_2018">
-                [8] Deschaintre, V., Aittala, M., Durand, F., Drettakis, G., Bousseau, A., 2018, Single-Image SVBRDF Capture with a Rendering-Aware Deep Network.
+                [7] Deschaintre, V., Aittala, M., Durand, F., Drettakis, G., Bousseau, A., 2018, Single-Image SVBRDF Capture with a Rendering-Aware Deep Network.
             </li>
 
             <li class="popover-item" id="deschaintre_2019">
-                [9] Deschaintre, V., Aittala, M., Durand, F., Drettakis, G., Bousseau, A., 2019, Flexible SVBRDF Capture with a Multi-Image Deep Network.
+                [8] Deschaintre, V., Aittala, M., Durand, F., Drettakis, G., Bousseau, A., 2019, Flexible SVBRDF Capture with a Multi-Image Deep Network.
             </li>
 
             <li class="popover-item" id="gao_2019">
-                [10] Gao, D., Li, X., Dong, Y., Peers, P., Xu, K., Tong, X., 2019, Deep Inverse Rendering for High-Resolution SVBRDF Estimation from an Arbitrary Number of Images
+                [9] Gao, D., Li, X., Dong, Y., Peers, P., Xu, K., Tong, X., 2019, Deep Inverse Rendering for High-Resolution SVBRDF Estimation from an Arbitrary Number of Images
+            </li>
+
+            <li class="popover-item" id="giardina_2018">
+                [10] Giardina, C., 2018, 3D Face Scanning Start Up In Talks With Studios for Film Use, <a href="https://www.hollywoodreporter.com/behind-screen/3d-face-scanning-start-up-talks-studios-film-use-1075170">https://www.hollywoodreporter.com/behind-screen/3d-face-scanning-start-up-talks-studios-film-use-1075170</a>, last retrieved April 2020.
             </li>
 
             <li class="popover-item" id="kingma_2015">
