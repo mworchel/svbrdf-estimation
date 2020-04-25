@@ -273,17 +273,17 @@
                 <h5 id="fig:architecture_overview" class="docs-header">Figure 3</h5>
                 <img class="u-max-full-width" src="images/architecture_overview.svg">
                 <p>
-                    Overview of the network architecture. It contains of a U-Net (blue) augmented by a parallel global track (green).
+                    Overview of the network architecture. It consists of a U-Net (blue) augmented by a parallel global track (green).
                 </p>
             </div>
         </div>
 
         <p>
-            The used U-Net architecture implements an encoder-decoder structure resembling the well-known hourglass shape.
-            A coarse overview of the network is shown in <a href="#fig:architecture_overview">Figure 3</a>.
-            The encoder part consists of eight convolutional layers with feature counts 64, 128, 256, 512, 512, 512, 512, 512
+            As seen in the coarse overview in <a href="#fig:architecture_overview">Figure 3</a>, 
+            the U-Net architecture is composed of two successive parts: an encoder and a decoder.
+            The encoder consists of eight convolutional layers with feature counts 64, 128, 256, 512, 512, 512, 512, 512
             that gradually reduce the spatial size of the image (using a stride of two) while increasing the number of features. 
-            The bottleneck is followed by a decoder part which again consists of eight layers that perform spatial upsampling
+            The bottleneck is followed by the decoder which again consists of eight layers that perform spatial upsampling
             followed by two convolutions. The decoding layers have similar feature counts as the encoding layers, only in reversed order 
             with the last decoding layer having a feature count of nine to match the output format. In order to better reconstruct fine details
             that possibly have been lost in the bottleneck, each decoding layer is connected to the output of the same sized encoding layer
@@ -307,7 +307,7 @@
             transformed by a fully connected layer and then pass through a SELU activation function.
             In the other direction, the previous feature vector is transformed by 
             another fully connected layer and then added
-            to the output feature maps of the instance normalization.
+            to the feature maps after instance normalization.
             Using this second track, the network is able to propagate non-local information
             as part of a global feature vector.
         </p>
@@ -373,7 +373,7 @@
         </div>
 
         <p>
-            Since the amount of materials obtained this way is still too small, the authors propose
+            Since the number of materials obtained this way is still too small, the authors propose
             to increase the variety by mixing randomly selected pairs of materials. Specifically,
             they combine different SVBRDF maps using alpha blending with a randomly chosen
             alpha value. The result of such a mixing operation can be seen in <a href="#fig:mixed_materials">Figure 6</a>.
@@ -401,8 +401,9 @@
             having a size of over 80 GB. The multi-view work pursues a lazy approach,
             where material variations and input renderings are generated at load time.
             This results in a significantly reduced dataset size of roughly 1 GB,
-            as only the different base material samples have to be provided. As it
-            is a clear improvement over the offline method, we also use the latter approach.
+            as only the different base material samples have to be provided. For this project,
+            we also use the latter approach and thus the dataset provided 
+            with the multi-view work.
         </p>
 
         <h5>Training Objective</h5>
@@ -601,8 +602,8 @@
             <h5 id="fig:metal_wo_ambient" class="docs-header">Figure 9</h5>
             <img class="u-max-full-width" src="images/metal_wo_ambient.png">
             <p>
-                Highly specular materials appear mostly dark as there is no ambient 
-                or environment light.
+                Highly specular materials rendered without ambient or environment light
+                appear mostly dark.
             </p> 
         </div>
 
@@ -620,7 +621,7 @@
             when fed with real captured images.
             Second, we don't use ambient lighting, so the scene is only illuminated
             by one light source. While we initially assumed that it would not be
-            very beneficial to use ambient lighting, we saw certain problems when
+            crucial to use ambient lighting, we saw certain problems when
             rendering metallic materials without it. As reflection on metals
             is dominated by the specular component, only specular highlights
             are really visible, leaving the rest of the material patch unlighted (see <a href="#fig:metal_wo_ambient">Figure 9</a>).
@@ -667,19 +668,21 @@
             to the final image. If one wants to support more complex
             geometry or scenes, these scenes need to be representable
             and global illumination has to be considered
-            for a faithful light transport simulation. Finally,
-            relying on automatic differentiation can lead to wrong gradients 
-            for the rendering operation as it becomes non-differentiable
-            at the presence of occlusions. Extending such custom renderers
+            for a faithful light transport simulation. Naively
+            relying on automatic differentiation can potentially 
+            lead to wrong gradients as the rendering operation 
+            becomes non-differentiable at the presence of occlusions.
+            Special care has to be taken to explicitly handle these cases. 
+            Extending custom renderers
             with the required features can become a tedious task and 
-            complete reimplementations for a different use case create redundancy.
+            complete reimplementations for different use cases create redundancy.
             Therefore, in this project we propose to solve such inverse problems
             using general differentiable renderers which are developed as 
             stand-alone systems.
         </p>
 
         <p>
-            As a proof-of-concept we integrated Redner <a href="#li_2018">[12]</a>, 
+            As a proof-of-concept we integrate Redner <a href="#li_2018">[12]</a>, 
             a differentiable path tracer, into the presented single-view approach.
             This general purpose renderer supports arbitrary scenes composed
             of meshes, light sources and environment lighting. Due to it being
@@ -690,11 +693,12 @@
             from a technical point of view and only three details required
             special attention. First, the renderer assumes a Blinn
             distribution <a href="#blinn_1976">[3]</a><a href="#blinn_1977">[4]</a> 
-            instead of a GGX distribution <a href="#walter_2007">[18]</a> for the microfacets.
+            instead of a GGX distribution <a href="#walter_2007">[18]</a> for the 
+            microfacet normals.
             As a consequence, the interpretation of the roughness is different
             and we need to convert the roughness values before rendering our
             SVBRDFs with Redner. Second, all lights in the scene need 
-            to be represented as area lights instead of point lights. 
+            to be represented by area lights instead of point lights. 
             Since we want to produce similar looking images for the same
             scene independent of which renderer is used (in-network
             or Redner), we tweaked the size of the area light
@@ -708,8 +712,9 @@
             we implement a patch sampling camera similar to the one used by the
             in-network renderer. The implementation of such a camera in a path
             tracer turned out to be rather simple: whenever a primary ray is
-            requested for a position \(\mathbf{u}\) in the image, we treat
-            it as if it was located on the material patch and point the ray
+            requested for an image position \(\mathbf{u}\), we treat
+            \(\mathbf{u}\) as position on the material patch and generate a ray 
+            that points 
             at the corresponding patch position in 3d space. The most tedious
             and error-prone part was the definition of the backward pass, 
             which required manual derivation of all computations related
@@ -791,7 +796,7 @@
         <p>
             <a href="#fig:optimization_local_flex">Figure [12]</a>
             shows an extension to the first experiment for the in-network
-            renderer. Each of the four animations correspond to the optimization
+            renderer. Each of the four animations corresponds to the optimization
             of one SVBRDF map while keeping the other maps fixed.
             Instead of only having a fixed loss function with 
             one camera and light position, we directly use the rendering loss.
@@ -834,21 +839,19 @@
         </div>
 
         <p>
-            The only outlier is the estimate of the roughness map
-            which still appears very noisy after 200 iterations.
+            The roughness map seems to converge
+            slower and still appears noisy after 200 iterations.
             As the roughness contributes to two rather complex
             terms in the BRDF model (microfacet normal distribution and 
             geometric shadowing function) we ran two more experiments
             with either of the terms disabled. The results in 
             <a href="#fig:optimization_local_flex_roughnessexp">Figure [13]</a>
-            suggest that the slow convergence of roughness
-            is only a consequence of the combination of both
-            terms. The dependence of the combined terms on the
-            roughness is possibly more complex than that 
-            on the normals (which they also depend on),
-            which might results in more noisy gradients
-            and makes the optimization more challenging.
-            Overall, these experiments show that the in-network
+            show that only the combination of both terms leads
+            to the observed convergence behavior. Without further
+            experiments we can only speculate why the
+            optimization of the roughness appears to be more challenging
+            than e.g. that of the normal which also affects these terms.
+            Overall, the experiments show that the in-network
             renderer is able to correctly differentiate through
             the rendering operation and also that our formulation
             of the rendering loss is correct.
@@ -861,12 +864,12 @@
                     <source src="videos/optimization_local_flex_roughness_nodistrib.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
-                <p>(a) Without distribution term</p>
+                <p>(a) Without microfacet normal distribution</p>
                 <video class="u-max-full-width" controls>
                     <source src="videos/optimization_local_flex_roughness_nogeom.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
-                <p>(b) Without geometry term</p>
+                <p>(b) Without geometric shadowing function</p>
                 <p>
                     Optimizing the roughness map using the rendering loss with the in-network renderer
                     and parts of the specular model disabled.
@@ -921,12 +924,10 @@
 
         <p>
             Interestingly, the roughness converges faster 
-            than for the in-network renderer. As mentioned earlier,
-            Redner uses a Blinn microfacet distribution, 
-            which is much simpler than the GGX distribution. 
-            This supports the hypothesis for complex functional
-            relationships as cause for slow roughness convergence
-            of the in-network renderer. The diffuse and specular maps
+            than for the in-network renderer which might
+            be attributed to the simpler microfacet normal
+            distribution it uses (Blinn). 
+            The diffuse and specular maps
             seem to converge to (noisy) approximations of the ground
             truth maps, with the specular map converging a little
             bit slower at the floorboard gaps. A similar behavior
@@ -984,7 +985,7 @@
             where the factor 0.99 results from a 1% 
             validation split. Unfortunately we did not compute
             the validation loss at training time, so 
-            we cannot report any results. We used the
+            we cannot report any results for it. We used the
             Adam optimizer for training the network
             but only with half the learning rate (\(1 \cdot 10^{-5}\)) of 
             that used in the reference work. 
