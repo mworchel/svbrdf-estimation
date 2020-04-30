@@ -20,6 +20,11 @@ Here is a short overview of the most important modules:
 
 **Note**: The implementation is currently very rough around the edges and contains some legacy code or legacy naming (e.g. "multiImage_pytorch" itself is a misleading name as the code is mainly concerned with the single-view method)
 
+## Additional Material
+
+On top of the code, the repository contains the four presentations that were held during the semester as well as a website that serves as project documentation. The website can be accessed under the following link:
+[https://mworchel.github.io/projects/cgp/index.html](https://mworchel.github.io/projects/cgp/index.html)
+
 ## Requirements
 
 The following Python packages are required to run the code (tested version in parentheses)
