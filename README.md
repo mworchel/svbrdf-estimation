@@ -12,8 +12,13 @@ The folder `./development/multiImage_pytorch` contains the main entry point of t
 
 Here is a short overview of the most important modules:
 - `dataset.py`: Contains a class that implements the `torch.utils.data.Dataset` interface is able to consume the [single-view dataset](https://repo-sam.inria.fr/fungraph/deep-materials/DeepMaterialsData.zip) (~80GB), the [multi-view dataset](https://repo-sam.inria.fr/fungraph/multi_image_materials/supplemental_multi_images/materialsData_multi_image.zip) (~1GB) and folders containing photographs
+- `losses.py`: Contains the loss functions used by the pipeline like rendering loss and mixed loss.
+- `renderers.py`: Contains a simple differentiable renderer implemented in PyTorch ("in-network") and a renderer that wraps Redner. Both renderers implement the same interface and can be plugged into the rendering loss.
+- `environment.py`: Contains classes to set up a scene that can be rendered.
+- `models.py`: Contains implementations of the single-view and multi-view networks that follow the `torch.nn.Module` interface.
+- `persistance.py`: Contains means to load and save a model for testing or (partitioned) training.
 
-**Note**: The implementation is currently very rough around the edges and contains some legacy code or legacy naming (e.g. 'multiImage_pytorch' itself is a misleading name as the code is mainly concerned with the single-view method)
+**Note**: The implementation is currently very rough around the edges and contains some legacy code or legacy naming (e.g. "multiImage_pytorch" itself is a misleading name as the code is mainly concerned with the single-view method)
 
 ## References
 
