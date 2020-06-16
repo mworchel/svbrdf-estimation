@@ -213,9 +213,9 @@ class RednerRenderer:
             # Redner expects the normal map to be in range [0, 1]
             normals   = utils.encode_as_unit_interval(normals) 
             # Redner expects the roughness to have one channel only.
-            # We also need to convert from Cook-Torrance roughness to Blinn-Phong power.
+            # We also need to convert from GGX roughness to Blinn-Phong power.
             # See: https://github.com/iondune/csc473/blob/master/lectures/07-cook-torrance.md
-            roughness = torch.mean(torch.clamp(roughness, min=0.001), dim=0, keepdim=True) ** 4                
+            roughness = torch.mean(torch.clamp(roughness, min=0.001), dim=0, keepdim=True) ** 4
 
             # Convert from [c,h,w] to [h,w,c] for redner
             normals   = normals.permute(1, 2, 0)
