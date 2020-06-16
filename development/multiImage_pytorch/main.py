@@ -69,6 +69,7 @@ if args.mode == 'train':
     optimizer     = torch.optim.Adam(model.parameters(), lr=1e-5)
     if checkpoint.is_valid():
         optimizer = checkpoint.restore_optimizer_state(optimizer)
+        
     # TODO: Use scheduler if necessary
     #scheduler    = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min') 
 
