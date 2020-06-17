@@ -1,19 +1,20 @@
-import cli
-import dataset
-import losses
 import math
-import models
-import pathlib
-from persistence import Checkpoint
-import renderers
 from tensorboardX import SummaryWriter
 import torch
+
+from cli import parse_args
+from dataset import SvbrdfDataset
+from losses import MixedLoss
+from models import SingleViewModel
+from pathlib import Path
+from persistence import Checkpoint
+from renderers import LocalRenderer, RednerRenderer
 import utils
 
-args = cli.parse_args()
+args = parse_args()
 
 # Load the checkpoint 
-checkpoint_dir  = pathlib.Path(args.model_dir)
+checkpoint_dir  = Path(args.model_dir)
 checkpoint      = Checkpoint()
 if not (args.mode == 'train' and args.retrain):
     checkpoint = Checkpoint.load(checkpoint_dir)
@@ -32,7 +33,7 @@ if torch.cuda.is_available() and args.gpu_id >= 0:
 print("Using device '{}'".format(device))
 
 # Create the model
-model = models.SingleViewModel(use_coords=args.use_coords).to(device)
+model = SingleViewModel(use_coords=args.use_coords).to(device)
 if checkpoint.is_valid():
     model = checkpoint.restore_model_state(model)
 elif args.mode == 'test':
@@ -40,10 +41,10 @@ elif args.mode == 'test':
     exit(1)
 
 # TODO: Choose a random number for the used input image count if we are training and we don't request it to be fix (see fixImageNb for reference)
-data = dataset.SvbrdfDataset(data_directory=args.input_dir, 
-                             image_size=args.image_size, scale_mode=args.scale_mode, input_image_count=args.image_count, used_input_image_count=args.used_image_count, 
-                             use_augmentation=True, mix_materials=args.mode=='train',
-                             no_svbrdf=args.no_svbrdf_input, is_linear=args.linear_input)
+data = SvbrdfDataset(data_directory=args.input_dir, 
+                     image_size=args.image_size, scale_mode=args.scale_mode, input_image_count=args.image_count, used_input_image_count=args.used_image_count, 
+                     use_augmentation=True, mix_materials=args.mode=='train',
+                     no_svbrdf=args.no_svbrdf_input, is_linear=args.linear_input)
 
 epoch_start = 0
 if checkpoint.is_valid():
@@ -81,14 +82,15 @@ if args.mode == 'train':
     # Set up the loss
     loss_renderer = None
     if args.renderer == 'local':
-        loss_renderer = renderers.LocalRenderer()
+        loss_renderer = LocalRenderer()
     elif args.renderer == 'pathtracing':
-        loss_renderer = renderers.RednerRenderer()
+        loss_renderer = RednerRenderer()
     print("Using renderer '{}'".format(args.renderer))
-    loss_function = losses.MixedLoss(loss_renderer)
+
+    loss_function = MixedLoss(loss_renderer)
 
     # Setup statistics stuff
-    statistics_dir = pathlib.Path("./logs")
+    statistics_dir = Path("./logs")
     statistics_dir.mkdir(parents=True, exist_ok=True)
     writer            = SummaryWriter(str(statistics_dir.absolute()))
     last_batch_inputs = None
