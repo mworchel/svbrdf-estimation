@@ -1,0 +1,16 @@
+name: svbrdf-estimation
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - cudatoolkit=10.1.243
+  - pillow=7.1.2
+  - python=3.7.7
+  - pytorch=1.4.0
+  - pip:
+    - matplotlib==3.2.1
+    - numpy==1.18.5
+    - opencv-python==4.1.0.25
+    - redner-gpu==0.4.25
+    - tensorboardx==2.0
+
