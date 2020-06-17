@@ -173,11 +173,18 @@ class OrthoToPerspectiveMapping:
         return cv2.warpPerspective(image, H, dsize=self.sensor_size)
 
 class RednerRenderer:
-    def __init__(self, use_gpu=True, camera_type=pyredner.camera_type.fullpatchsample):
+    def __init__(self, use_gpu=True, camera_type='fullpatchsample'):
         pyredner.set_print_timing(False)
         pyredner.set_use_gpu(use_gpu)
         self.redner_device = pyredner.get_device()
-        self.camera_type   = camera_type
+
+        if not hasattr(pyredner.camera_type, camera_type):
+            print("""Warning: Redner does not support the camera type '{}'. 
+                  Falling back to a perspective camera. 
+                  While the code will probably run, the results might not be desired.""".format(camera_type))
+            camera_type = 'perspective'
+
+        self.camera_type = getattr(pyredner.camera_type, camera_type)
         print("Using device '{}' and camera type '{}' for redner".format(self.redner_device, self.camera_type))
 
         # Define vertices, uv coordinates and faces for a
