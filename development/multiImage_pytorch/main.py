@@ -1,5 +1,6 @@
 import math
 from tensorboardX import SummaryWriter
+import shutil
 import torch
 
 from cli import parse_args
@@ -13,10 +14,12 @@ import utils
 
 args = parse_args()
 
+clean_training = args.mode == 'train' and args.retrain
+
 # Load the checkpoint 
-checkpoint_dir  = Path(args.model_dir)
-checkpoint      = Checkpoint()
-if not (args.mode == 'train' and args.retrain):
+checkpoint_dir = Path(args.model_dir)
+checkpoint = Checkpoint()
+if not clean_training:
     checkpoint = Checkpoint.load(checkpoint_dir)
 
 # Immediatly restore the arguments if we have a valid checkpoint
@@ -86,9 +89,12 @@ if args.mode == 'train':
     loss_function = MixedLoss(loss_renderer)
 
     # Setup statistics stuff
-    statistics_dir = Path("./logs")
+    statistics_dir = checkpoint_dir / "logs"
+    if clean_training and statistics_dir.exists():
+        # Nuke the stats dir
+        shutil.rmtree(statistics_dir)
     statistics_dir.mkdir(parents=True, exist_ok=True)
-    writer            = SummaryWriter(str(statistics_dir.absolute()))
+    writer = SummaryWriter(str(statistics_dir.absolute()))
     last_batch_inputs = None
 
     # Clear checkpoint in order to free up some memory
