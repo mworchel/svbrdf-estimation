@@ -29,13 +29,13 @@ On top of the code, the repository contains the four presentations that were hel
 The following Python packages are required to run the code (tested version in parentheses)
 
 - cv2 (4.1.0.25)
-- json (0.8.5)
-- Pillow (6.1.0)
+- matplotlib (3.2.1)
+- numpy (1.18.5)
+- Pillow (7.1.2)
 - redner (0.3.14) 
     - The official pip package does **not** work since we require a new camera type. The `full-patch-sample-camera` branch in [this fork](https://github.com/mworchel/redner/tree/full-patch-sample-camera) must be used
-- torch (1.3.0)
-- numpy (1.16.4)
-- tensorboardX (1.9)
+- tensorboardX (2.0)
+- torch (1.4.0)
 
 ## References
 
