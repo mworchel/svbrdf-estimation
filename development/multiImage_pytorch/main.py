@@ -1,6 +1,5 @@
 import cli
 import dataset
-import json
 import losses
 import math
 import models
@@ -26,8 +25,14 @@ if checkpoint.is_valid():
 # Make the result reproducible
 utils.enable_deterministic_random_engine()
 
+# Determine the device
+device = 'cpu'
+if torch.cuda.is_available() and args.gpu_id >= 0:
+    device = 'cuda:{:d}'.format(args.gpu_id)
+print("Using device '{}'".format(device))
+
 # Create the model
-model = models.SingleViewModel(use_coords=args.use_coords).cuda()
+model = models.SingleViewModel(use_coords=args.use_coords).to(device)
 if checkpoint.is_valid():
     model = checkpoint.restore_model_state(model)
 elif args.mode == 'test':
@@ -69,7 +74,7 @@ if args.mode == 'train':
     optimizer     = torch.optim.Adam(model.parameters(), lr=1e-5)
     if checkpoint.is_valid():
         optimizer = checkpoint.restore_optimizer_state(optimizer)
-        
+
     # TODO: Use scheduler if necessary
     #scheduler    = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min') 
 
@@ -79,6 +84,7 @@ if args.mode == 'train':
         loss_renderer = renderers.LocalRenderer()
     elif args.renderer == 'pathtracing':
         loss_renderer = renderers.RednerRenderer()
+    print("Using renderer '{}'".format(args.renderer))
     loss_function = losses.MixedLoss(loss_renderer)
 
     # Setup statistics stuff
@@ -97,8 +103,8 @@ if args.mode == 'train':
             batch_index = epoch * batch_count + i
 
             # Construct inputs
-            batch_inputs = batch["inputs"].cuda()
-            batch_svbrdf = batch["svbrdf"].cuda()
+            batch_inputs = batch["inputs"].to(device)
+            batch_svbrdf = batch["svbrdf"].to(device)
 
             # Perform a step
             optimizer.zero_grad() 
@@ -140,8 +146,8 @@ row_count = 2 * len(test_data)
 col_count = 5
 for i_row, batch in enumerate(test_dataloader):
     # Construct inputs
-    batch_inputs = batch["inputs"].cuda()
-    batch_svbrdf = batch["svbrdf"].cuda()
+    batch_inputs = batch["inputs"].to(device)
+    batch_svbrdf = batch["svbrdf"].to(device)
 
     outputs = model(batch_inputs)
 

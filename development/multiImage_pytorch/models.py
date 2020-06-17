@@ -173,7 +173,7 @@ class CoordLayer(nn.Module):
         h          = x.shape[-2] #
         batch_size = x.shape[0]  #
 
-        xcoords_row  = torch.linspace(-1, 1, w).cuda()
+        xcoords_row  = torch.linspace(-1, 1, w).to(x.device)
         xcoords      = xcoords_row.unsqueeze(0).expand(h, w).unsqueeze(0)
         ycoords      = -1 * torch.transpose(xcoords, dim0=1, dim1=2)
         coords       = torch.cat((xcoords, ycoords), dim=0)

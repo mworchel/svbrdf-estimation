@@ -53,6 +53,10 @@ def parse_args():
                         choices=['single', 'multi'], default='single',
                         help='Which model to use (single-view or multi-view).')  
 
+    parser.add_argument('--gpu-id', '-g', dest='gpu_id', action='store', required=False,
+                        type=int, default=0,
+                        help='Id of the GPU to use. If it is < 0, the CPU is used.')
+
     parser.add_argument('--save-frequency', dest='save_frequency', action='store', required=False,
                         type=int, choices=range(1, 1000), default=50,
                         metavar="[0-1000]",
