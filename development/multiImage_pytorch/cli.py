@@ -62,6 +62,11 @@ def parse_args():
                         metavar="[0-1000]",
                         help='Number of consecutive training epochs after which a checkpoint of the model is saved. Default is %(default)s.')
 
+    parser.add_argument('--validation-frequency', dest='validation_frequency', action='store', required=False,
+                        type=int, choices=range(1, 1000), default=25,
+                        metavar="[0-1000]",
+                        help='Number of consecutive training epochs after which validation is performed. Default is %(default)s.')
+
     parser.add_argument('--epochs', '-e', dest='epochs', action='store',
                         type=int, default=100,
                         help='Maximum number of epochs to run the training for.')

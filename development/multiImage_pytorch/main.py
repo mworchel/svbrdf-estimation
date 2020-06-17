@@ -57,13 +57,9 @@ if args.mode == 'train':
     print("Training samples: {:d}.".format(len(training_data)))
     print("Validation samples: {:d}.".format(len(validation_data)))
 
-    if len(validation_data) == 0:
-        # Fixed fallback if the training set is too small
-        print("Training dataset too small for validation split. Using training data for validation.")
-        validation_data = training_data
-
     training_dataloader = torch.utils.data.DataLoader(training_data, batch_size=8, pin_memory=True, shuffle=True)
-    batch_count         = int(math.ceil(len(training_data) / training_dataloader.batch_size))
+    validation_dataloader = torch.utils.data.DataLoader(validation_data, batch_size=8, pin_memory=True, shuffle=False)
+    batch_count = int(math.ceil(len(training_data) / training_dataloader.batch_size))
 
     # Train as many epochs as specified
     epoch_end = args.epochs
@@ -124,12 +120,38 @@ if args.mode == 'train':
         if epoch % args.save_frequency == 0:
             Checkpoint.save(checkpoint_dir, args, model, optimizer, epoch)
 
+        if epoch % args.validation_frequency == 0 and len(validation_data) > 0:
+            model.eval()
+            
+            val_loss = 0.0
+            batch_count_val = 0
+            for batch in validation_dataloader:
+                # Construct inputs
+                batch_inputs = batch["inputs"].to(device)
+                batch_svbrdf = batch["svbrdf"].to(device)
+
+                outputs  = model(batch_inputs)
+                val_loss += loss_function(outputs, batch_svbrdf).item()
+                batch_count_val += 1
+            val_loss /= batch_count_val
+
+            print("Epoch {:d}, validation loss: {:f}".format(epoch, val_loss))
+            writer.add_scalar("val_loss", val_loss, epoch * batch_count)
+        
+            model.train()
+
     # Save a final snapshot of the model
     Checkpoint.save(checkpoint_dir, args, model, optimizer, epoch)
 
     # FIXME: This does not work with the last conv layers on both the single-view and multi-view model
     #writer.add_graph(model, last_batch_inputs) 
     writer.close()
+
+    # Use the validation dataset as test data
+    if len(validation_data) == 0:
+        # Fixed fallback if the training set is too small
+        print("Training dataset too small for validation split. Using training data for validation.")
+        validation_data = training_data
 
     # Use the validation dataset as test data
     test_data = validation_data 
