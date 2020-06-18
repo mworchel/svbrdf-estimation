@@ -11,6 +11,6 @@ dependencies:
     - matplotlib==3.2.1
     - numpy==1.18.5
     - opencv-python==4.1.0.25
+    - pytweening==1.0.3
     - redner-gpu==0.4.25
     - tensorboardx==2.0
-
