@@ -4,8 +4,7 @@ from PIL import Image
 import random
 import torch
 
-def enable_deterministic_random_engine():
-    seed = 313
+def enable_deterministic_random_engine(seed=313):
     random.seed(seed)
     np.random.seed(seed)
     torch.cuda.manual_seed(seed)
