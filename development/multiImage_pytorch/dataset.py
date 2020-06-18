@@ -193,7 +193,8 @@ class SvbrdfDataset(torch.utils.data.Dataset):
 
         return input_images, svbrdf
 
-    def mix(self, svbrdf_0, svbrdf_1):
+    def mix(self, svbrdf_0, svbrdf_1, alpha=None):
+        if alpha is None:
         alpha = torch.Tensor(1).uniform_(0.1, 0.9)
 
         normals_0, diffuse_0, roughness_0, specular_0 = utils.unpack_svbrdf(svbrdf_0)
