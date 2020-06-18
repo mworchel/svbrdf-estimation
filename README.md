@@ -39,7 +39,7 @@ The trained model can by tested by running
 The folder `development/multiImage_pytorch` contains the main entry point of the custom implementation. The script `main.py` can be used for training und (very basic) testing of the single-view model. Its usage is roughly outlined in the scripts `test.sh/bat` and `train.sh/bat`. To list available options, run `python main.py --help`.
 
 Here is a short overview of the most important modules:
-- `dataset.py`: Contains a class that implements the `torch.utils.data.Dataset` interface is able to consume the [single-view dataset](https://repo-sam.inria.fr/fungraph/deep-materials/DeepMaterialsData.zip) (~80GB), the [multi-view dataset](https://repo-sam.inria.fr/fungraph/multi_image_materials/supplemental_multi_images/materialsData_multi_image.zip) (~1GB) and folders containing photographs
+- `dataset.py`: Contains a class that implements the `torch.utils.data.Dataset` interface and is able to consume the [single-view dataset](https://repo-sam.inria.fr/fungraph/deep-materials/DeepMaterialsData.zip) (~80GB), the [multi-view dataset](https://repo-sam.inria.fr/fungraph/multi_image_materials/supplemental_multi_images/materialsData_multi_image.zip) (~1GB) and folders containing photographs
 - `losses.py`: Contains the loss functions used by the pipeline like rendering loss and mixed loss.
 - `renderers.py`: Contains a simple differentiable renderer implemented in PyTorch ("in-network") and a renderer that wraps Redner. Both renderers implement the same interface and can be plugged into the rendering loss.
 - `environment.py`: Contains classes to set up a scene that can be rendered.
