@@ -94,62 +94,8 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         # Images which cannot be read must be generated artificially
         generated_input_image_count = self.used_input_image_count - input_images.shape[0]
         if generated_input_image_count > 0:
-            # Constants as defined in the reference code
-            min_eps              = 0.001 # Reference: "allows near 90     degrees angles"
-            max_eps              = 0.02  # Reference: "removes all angles below 8.13 degrees."
-            fixed_light_distance = 2.197
-            fixed_view_distance  = 2.75  # Reference: "39.98 degrees FOV"
-
-            # Generate scenes (camera and light configurations)
-            # The in the first configuration, the light and view direction are guaranteed to be perpendicular to the material sample.
-            # For the remaining cases, both are randomly sampled from a hemisphere.
-            light_poses = torch.cat([torch.Tensor(2).uniform_(-0.75, 0.75), torch.ones(1) * fixed_light_distance], dim=-1).unsqueeze(0)
-            if generated_input_image_count > 1:
-                light_poses_hemisphere = utils.generate_normalized_random_direction(generated_input_image_count - 1, min_eps=min_eps, max_eps=max_eps) * fixed_light_distance
-                light_poses            = torch.cat([light_poses, light_poses_hemisphere], dim=0)
-
-            light_colors = torch.Tensor([30.0]).unsqueeze(-1)
-            if self.use_augmentation:
-                # Reference: "add a normal distribution to the stddev so that sometimes in a minibatch all the images are consistant and sometimes crazy".
-                # NOTE: For us, this effect will not be batch-wide but only for this individual sample.
-                # FIXME: Since our renderer is differently implemented, the color variations with the given standard deviations
-                #        merely have an effect.
-                std_deviation = torch.exp(torch.Tensor(1).normal_(mean = -2.0, std = 0.5)).numpy()[0]
-                light_colors  = torch.abs(torch.Tensor(generated_input_image_count).normal_(mean = 20.0, std = std_deviation)).unsqueeze(-1)
-            light_colors = light_colors.expand(generated_input_image_count, 3)
-
-            # Handle white balance by varying the light color not the camera properties
-            if self.use_augmentation:
-                white_balance = torch.abs(torch.Tensor(generated_input_image_count, 3).normal_(mean = 1.0, std = 0.03))
-                light_colors  = light_colors * white_balance
-
-            if self.use_augmentation:
-                # Reference: "Simulates a FOV between 30 degrees and 50 degrees centered around 40 degrees"
-                # NOTE: This probably does not do what the reference code expects it to do.
-                #       The uniform distribution generates view distances in [0.25, 2.75] which
-                #       correspond to FOVs between roughly 150 degrees and 40 degrees.
-                view_distance = torch.Tensor(generated_input_image_count).uniform_(0.25, 2.75) 
-            else:
-                view_distance = torch.ones(generated_input_image_count) * fixed_view_distance
-
-            view_poses = torch.cat([torch.Tensor(2).uniform_(-0.25, 0.25), view_distance[:1]], dim=-1).unsqueeze(0)
-            if generated_input_image_count > 1:
-                view_poses_hemisphere = utils.generate_normalized_random_direction(generated_input_image_count - 1, min_eps=min_eps, max_eps=max_eps) * view_distance[1:].unsqueeze(-1)
-                view_poses            = torch.cat([view_poses, view_poses_hemisphere], dim=0)
-
-            renderer = renderers.LocalRenderer()
-            for i in range(generated_input_image_count):
-                # TODO: Add spotlight support to the renderer (currentConeTargetPos in the reference code)
-                scene = env.Scene(env.Camera(view_poses[i]), env.Light(light_poses[i], light_colors[i]))
-                
-                rendering = renderer.render(scene, svbrdf.unsqueeze(0))
-
-                # Simulate noise
-                std_deviation_noise = torch.exp(torch.Tensor(1).normal_(mean = np.log(0.005), std=0.3)).numpy()[0]
-                noise               = torch.zeros_like(rendering).normal_(mean=0.0, std=std_deviation_noise)
-                rendering           = torch.clamp(rendering + noise, min=0.0, max=1.0)
-
-                input_images = torch.cat([input_images, rendering], dim=0)
+            renderings = self.render_inputs(svbrdf, generated_input_image_count)
+            input_images = torch.cat([input_images, renderings], dim=0)
 
         # TODO: For random jittering we would need to re-crop to the final size at this point 
         #       with individual crop anchors for all the images.
@@ -195,7 +141,7 @@ class SvbrdfDataset(torch.utils.data.Dataset):
 
     def mix(self, svbrdf_0, svbrdf_1, alpha=None):
         if alpha is None:
-        alpha = torch.Tensor(1).uniform_(0.1, 0.9)
+            alpha = torch.Tensor(1).uniform_(0.1, 0.9)
 
         normals_0, diffuse_0, roughness_0, specular_0 = utils.unpack_svbrdf(svbrdf_0)
         normals_1, diffuse_1, roughness_1, specular_1 = utils.unpack_svbrdf(svbrdf_1)
@@ -212,3 +158,64 @@ class SvbrdfDataset(torch.utils.data.Dataset):
         specular_mixed  = alpha * specular_0 + (1.0 - alpha) * specular_1
         
         return utils.pack_svbrdf(normals_mixed, diffuse_mixed, roughness_mixed, specular_mixed)
+
+    def render_inputs(self, svbrdf, count):
+        # Constants as defined in the reference code
+        min_eps              = 0.001 # Reference: "allows near 90     degrees angles"
+        max_eps              = 0.02  # Reference: "removes all angles below 8.13 degrees."
+        fixed_light_distance = 2.197
+        fixed_view_distance  = 2.75  # Reference: "39.98 degrees FOV"
+
+        # Generate scenes (camera and light configurations)
+        # The in the first configuration, the light and view direction are guaranteed to be perpendicular to the material sample.
+        # For the remaining cases, both are randomly sampled from a hemisphere.
+        light_poses = torch.cat([torch.Tensor(2).uniform_(-0.75, 0.75), torch.ones(1) * fixed_light_distance], dim=-1).unsqueeze(0)
+        if count > 1:
+            light_poses_hemisphere = utils.generate_normalized_random_direction(count - 1, min_eps=min_eps, max_eps=max_eps) * fixed_light_distance
+            light_poses            = torch.cat([light_poses, light_poses_hemisphere], dim=0)
+
+        light_colors = torch.Tensor([30.0]).unsqueeze(-1)
+        if self.use_augmentation:
+            # Reference: "add a normal distribution to the stddev so that sometimes in a minibatch all the images are consistant and sometimes crazy".
+            # NOTE: For us, this effect will not be batch-wide but only for this individual sample.
+            # FIXME: Since our renderer is differently implemented, the color variations with the given standard deviations
+            #        merely have an effect.
+            std_deviation = torch.exp(torch.Tensor(1).normal_(mean = -2.0, std = 0.5)).numpy()[0]
+            light_colors  = torch.abs(torch.Tensor(count).normal_(mean = 20.0, std = std_deviation)).unsqueeze(-1)
+        light_colors = light_colors.expand(count, 3)
+
+        # Handle white balance by varying the light color not the camera properties
+        if self.use_augmentation:
+            white_balance = torch.abs(torch.Tensor(count, 3).normal_(mean = 1.0, std = 0.03))
+            light_colors  = light_colors * white_balance
+
+        if self.use_augmentation:
+            # Reference: "Simulates a FOV between 30 degrees and 50 degrees centered around 40 degrees"
+            # NOTE: This probably does not do what the reference code expects it to do.
+            #       The uniform distribution generates view distances in [0.25, 2.75] which
+            #       correspond to FOVs between roughly 150 degrees and 40 degrees.
+            view_distance = torch.Tensor(count).uniform_(0.25, 2.75) 
+        else:
+            view_distance = torch.ones(count) * fixed_view_distance
+
+        view_poses = torch.cat([torch.Tensor(2).uniform_(-0.25, 0.25), view_distance[:1]], dim=-1).unsqueeze(0)
+        if count > 1:
+            view_poses_hemisphere = utils.generate_normalized_random_direction(count - 1, min_eps=min_eps, max_eps=max_eps) * view_distance[1:].unsqueeze(-1)
+            view_poses            = torch.cat([view_poses, view_poses_hemisphere], dim=0)
+
+        renderer = renderers.LocalRenderer()
+        renderings = []
+        for i in range(count):
+            # TODO: Add spotlight support to the renderer (currentConeTargetPos in the reference code)
+            scene = env.Scene(env.Camera(view_poses[i]), env.Light(light_poses[i], light_colors[i]))
+            
+            rendering = renderer.render(scene, svbrdf.unsqueeze(0))
+
+            # Simulate noise
+            std_deviation_noise = torch.exp(torch.Tensor(1).normal_(mean = np.log(0.005), std=0.3)).numpy()[0]
+            noise               = torch.zeros_like(rendering).normal_(mean=0.0, std=std_deviation_noise)
+            rendering           = torch.clamp(rendering + noise, min=0.0, max=1.0)
+
+            renderings.append(rendering)
+
+        return torch.cat(renderings, dim=0)
