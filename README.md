@@ -4,7 +4,7 @@ This is the repository to the WS 19/20 computer graphics project "SVBRDF Estimat
 
 In the course of this project, the differentiable path tracer Redner [1] was integrated into the deep network-based SVBRDF estimation pipeline by Deschaintre et al. [2][3].
 
-This repository contains custom PyTorch implementations of the single-view [2] as well as the multi-view method [3]. The [reference code](https://repo-sam.inria.fr/fungraph/multi_image_materials/supplemental_multi_images/multiImage_code.zip) was merely used as a guidance for the custom implementation and all rights are reserved by the original authors.
+This repository contains custom PyTorch implementations of the single-view [2] as well as the multi-view method [3]. I used the [reference code](https://github.com/valentin-deschaintre/multi-image-deepNet-SVBRDF-acquisition) as a guidance for the custom implementation and all rights are reserved by the original authors.
 
 ## Getting Started
 
