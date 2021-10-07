@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   - cudatoolkit=10.1.243
-  - pillow=7.1.2
+  - pillow=8.3.2
   - pip=20.1.1
   - python=3.7.7
   - pytorch=1.4.0
