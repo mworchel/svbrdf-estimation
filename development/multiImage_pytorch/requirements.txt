@@ -1,6 +1,6 @@
 ﻿matplotlib==3.2.1
 numpy==1.18.5
-opencv-python==4.1.0.25
+opencv-python==4.2.0.32
 Pillow==8.3.2
 pytweening==1.0.3
 redner-gpu==0.4.25
