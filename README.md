@@ -50,8 +50,7 @@ Here is a short overview of the most important modules:
 
 ## Additional Material
 
-On top of the code, the repository contains the four presentations that were held during the semester as well as a website that serves as project documentation. The website can be accessed under the following link:
-[https://mworchel.github.io/projects/cgp/index.html](https://mworchel.github.io/projects/cgp/index.html)
+On top of the code, the repository contains the four presentations that were held during the semester as well as a [website](https://mworchel.github.io/svbrdf-estimation) as project documentation.
 
 ## References
 
