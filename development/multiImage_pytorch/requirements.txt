@@ -1,10 +1,10 @@
-﻿matplotlib==3.2.1
+matplotlib==3.2.1
 numpy==1.22.0
 opencv-python==4.2.0.32
 Pillow==9.0.1
 pytweening==1.0.3
 redner-gpu==0.4.25
 scikit-image==0.17.2
-scipy==1.4.1
+scipy==1.10.0
 tensorboardX==2.0
 torch==1.4.0
